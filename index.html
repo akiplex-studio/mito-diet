@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#386641">
+<title>ミトコンドリア・ダイエット</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23A7C957'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23386641'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Design Tokens（Design.md §13 準拠） ============ */
+:root {
+  --primary-50:#EEF4E6; --primary-100:#D9E8C6; --primary-200:#BFD79C;
+  --primary-300:#A7C957; --primary-400:#88B154; --primary-500:#6A994E;
+  --primary-600:#557F46; --primary-700:#46703F; --primary-800:#386641; --primary-900:#2A4D31;
+  --neutral-0:#FFFFFF; --neutral-50:#FBF8F0; --neutral-100:#F2E8CF; --neutral-200:#E7DBC0;
+  --neutral-300:#D4C8AD; --neutral-400:#A89F8A; --neutral-500:#7C7565; --neutral-600:#5C5648;
+  --neutral-700:#403C32; --neutral-800:#2B2820; --neutral-900:#1A1813;
+  --danger-50:#FAEBEB; --danger-100:#F1CFCF; --danger-500:#BC4749; --danger-600:#A23C3E; --danger-700:#853032;
+  --success-500:#6A994E; --success-600:#557F46;
+  --warning-500:#E2A53C; --warning-600:#B97F22; --info-500:#4E8098;
+  --color-bg:var(--neutral-50); --color-surface:var(--neutral-0);
+  --color-surface-warm:var(--neutral-100); --color-border:var(--neutral-200);
+  --color-text:var(--neutral-800); --color-text-muted:var(--neutral-500);
+  --color-primary:var(--primary-800); --color-accent:var(--primary-300);
+  --font-sans:"Inter","Noto Sans JP",system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  --font-number:"Inter",system-ui,sans-serif;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:24px; --space-6:32px; --space-8:48px;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:20px; --radius-full:9999px;
+  --shadow-sm:0 1px 2px rgba(42,77,49,.08);
+  --shadow-md:0 4px 12px rgba(42,77,49,.10);
+  --shadow-lg:0 12px 32px rgba(42,77,49,.14);
+  --shadow-focus:0 0 0 3px rgba(106,153,78,.45);
+  --ease-standard:cubic-bezier(0.2,0.8,0.2,1);
+  --duration-fast:120ms; --duration-base:200ms; --duration-slow:320ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+
+/* ============ Base ============ */
+* { box-sizing:border-box; margin:0; padding:0; }
+html { -webkit-text-size-adjust:100%; }
+body {
+  font-family:var(--font-sans); background:var(--color-bg); color:var(--color-text);
+  font-size:16px; line-height:1.7;
+}
+button { font-family:inherit; font-size:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline:none; box-shadow:var(--shadow-focus); }
+input, select { font-family:inherit; font-size:16px; }
+.num { font-family:var(--font-number); font-variant-numeric:tabular-nums; }
+
+#app { max-width:560px; margin:0 auto; padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+main { padding:0 var(--space-4); }
+.card {
+  background:var(--color-surface); border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-md); padding:var(--space-5); margin-top:var(--space-4);
+}
+.card h2 {
+  font-size:14px; font-weight:700; color:var(--color-text-muted);
+  letter-spacing:.04em; margin-bottom:var(--space-3);
+  display:flex; align-items:center; gap:var(--space-2);
+}
+.card h2 svg { color:var(--primary-500); }
+
+/* ============ ① ヘッダー ============ */
+header {
+  position:sticky; top:0; z-index:20; background:var(--color-surface);
+  box-shadow:var(--shadow-sm); padding:var(--space-3) var(--space-4) var(--space-3);
+}
+.hdr-inner { max-width:560px; margin:0 auto; }
+.hdr-brand { font-size:11px; color:var(--color-text-muted); letter-spacing:.06em; }
+.hdr-row { display:flex; align-items:center; gap:var(--space-4); }
+.hdr-count { display:flex; align-items:baseline; gap:2px; white-space:nowrap; }
+.hdr-count .mito-num { font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:32px; font-weight:700; line-height:1; color:var(--primary-800); }
+.hdr-count .mito-unit { font-size:13px; color:var(--color-text-muted); font-weight:500; }
+.hdr-gauge { flex:1; min-width:0; }
+.gauge-label { display:flex; justify-content:space-between; font-size:11px; color:var(--color-text-muted); }
+.gauge-label b { color:var(--color-text); font-family:var(--font-number); }
+.gauge-bar { height:12px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden; }
+.gauge-fill { height:100%; border-radius:var(--radius-full); width:0; transition:width var(--duration-slow) var(--ease-standard), background-color var(--duration-slow); }
+.gauge-fill.g-low  { background:var(--info-500); }
+.gauge-fill.g-mid  { background:var(--primary-500); }
+.gauge-fill.g-high { background:linear-gradient(90deg,#E2A53C,#F0C75E); }
+
+/* ============ ② 週カレンダー ============ */
+.cal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2); }
+.cal-title { font-size:15px; font-weight:700; color:var(--primary-900); }
+.cal-nav { display:flex; gap:var(--space-1); }
+.cal-nav button {
+  width:36px; height:36px; border-radius:var(--radius-md); color:var(--primary-700);
+  display:grid; place-items:center; transition:background var(--duration-fast);
+}
+.cal-nav button:hover { background:var(--primary-50); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-dow { text-align:center; font-size:10px; color:var(--color-text-muted); padding-bottom:2px; }
+.cal-cell {
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  padding:6px 0 5px; border-radius:var(--radius-md);
+  transition:background var(--duration-fast);
+}
+.cal-cell .d { font-family:var(--font-number); font-size:15px; font-weight:600; line-height:1.2; }
+.cal-cell .pt { font-size:9px; line-height:1.2; color:var(--color-text-muted); font-family:var(--font-number); }
+.cal-cell .pt.plus  { color:var(--primary-700); font-weight:600; }
+.cal-cell .pt.minus { color:var(--warning-600); font-weight:600; }
+.cal-cell:hover { background:var(--primary-50); }
+.cal-cell.today { box-shadow:inset 0 0 0 2px var(--primary-300); }
+.cal-cell.selected { background:var(--primary-800); }
+.cal-cell.selected .d, .cal-cell.selected .pt { color:#fff; }
+.cal-cell.future { opacity:.35; cursor:default; }
+.cal-cell.future:hover { background:none; }
+.sel-banner {
+  margin-top:var(--space-3); padding:var(--space-2) var(--space-3);
+  background:var(--primary-50); border-radius:var(--radius-md);
+  font-size:13px; color:var(--primary-900);
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-2);
+}
+.sel-banner button {
+  color:var(--primary-700); font-size:13px; font-weight:600; text-decoration:underline;
+  padding:4px 8px; border-radius:var(--radius-sm);
+}
+
+/* ============ ③ ミトコンドリア表示 ============ */
+.mito-stage { position:relative; }
+#mitoCanvas { display:block; width:100%; height:240px; border-radius:var(--radius-md);
+  background:linear-gradient(180deg,var(--neutral-50),var(--primary-50)); }
+.mito-chips {
+  position:absolute; bottom:10px; left:0; right:0;
+  display:flex; justify-content:center; gap:var(--space-2); pointer-events:none;
+}
+.chip {
+  font-size:11px; padding:2px 12px; border-radius:var(--radius-full);
+  background:rgba(255,255,255,.85); color:var(--primary-900); font-weight:500;
+  box-shadow:var(--shadow-sm);
+}
+
+/* ============ ④ 食事の写真 ============ */
+.photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-2); }
+.photo-slot { position:relative; }
+.photo-btn {
+  width:100%; aspect-ratio:1; border-radius:var(--radius-md); overflow:hidden;
+  border:2px dashed var(--neutral-300); background:var(--neutral-50);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  color:var(--color-text-muted); font-size:12px;
+  transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.photo-btn:hover { border-color:var(--primary-400); background:var(--primary-50); }
+.photo-btn.filled { border:none; padding:0; }
+.photo-btn img { width:100%; height:100%; object-fit:cover; display:block; }
+.photo-del {
+  position:absolute; top:4px; right:4px; width:26px; height:26px;
+  border-radius:var(--radius-full); background:rgba(26,24,19,.55); color:#fff;
+  display:grid; place-items:center;
+}
+.photo-note { font-size:11px; color:var(--color-text-muted); margin-top:var(--space-2); }
+
+/* ============ 記録（歩数・睡眠） ============ */
+.rec-row { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) 0; }
+.rec-row + .rec-row { border-top:1px solid var(--color-border); }
+.rec-label { flex:1; font-size:14px; font-weight:500; }
+.rec-input { display:flex; align-items:center; gap:var(--space-2); }
+.rec-input input {
+  width:96px; height:44px; padding:0 var(--space-3); text-align:right;
+  border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff;
+  font-family:var(--font-number); font-variant-numeric:tabular-nums;
+}
+.rec-input input:focus { border-color:var(--primary-500); }
+.rec-unit { font-size:13px; color:var(--color-text-muted); }
+.rec-status { font-size:12px; line-height:1.5; margin-top:2px; }
+.rec-status.ok   { color:var(--success-600); font-weight:500; }
+.rec-status.ng   { color:var(--warning-600); font-weight:500; }
+.rec-status.wait { color:var(--color-text-muted); }
+
+/* ============ ⑤ TODO ============ */
+.todo-summary {
+  display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--space-2);
+  font-size:13px; color:var(--color-text-muted);
+}
+.todo-summary b { font-family:var(--font-number); font-size:20px; color:var(--primary-800); }
+.todo-summary b.minus { color:var(--warning-600); }
+.filter-chips { display:flex; gap:var(--space-1); flex-wrap:wrap; margin-bottom:var(--space-2); }
+.filter-chips button {
+  font-size:12px; padding:4px 14px; border-radius:var(--radius-full);
+  background:var(--neutral-50); color:var(--neutral-600); border:1px solid var(--color-border);
+  transition:all var(--duration-fast);
+}
+.filter-chips button.on { background:var(--primary-100); color:var(--primary-800); border-color:var(--primary-200); font-weight:600; }
+.todo-list { list-style:none; }
+.todo {
+  display:flex; align-items:center; gap:var(--space-3);
+  padding:var(--space-3) var(--space-1); min-height:52px;
+  border-bottom:1px solid var(--color-border); cursor:pointer;
+}
+.todo:last-child { border-bottom:none; }
+.todo input[type=checkbox] { width:22px; height:22px; flex:none; accent-color:var(--primary-600); cursor:pointer; }
+.todo.ng input[type=checkbox] { accent-color:var(--warning-500); }
+.todo-body { flex:1; min-width:0; }
+.todo-name { font-size:14px; font-weight:500; display:block; }
+.todo-meta { font-size:11px; color:var(--color-text-muted); display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center; }
+.todo.done { opacity:.55; }
+.todo .pri {
+  font-size:10px; font-weight:700; padding:0 7px; border-radius:var(--radius-full);
+  background:var(--primary-100); color:var(--primary-800);
+}
+.todo.ng .pri { background:#FBF3E2; color:var(--warning-600); }
+.todo .score { font-family:var(--font-number); }
+.score.plus { color:var(--primary-700); font-weight:600; }
+.score.minus { color:var(--warning-600); font-weight:600; }
+.ng-divider {
+  font-size:11px; color:var(--warning-600); font-weight:600;
+  padding:var(--space-3) var(--space-1) var(--space-1);
+  border-bottom:1px solid var(--color-border);
+}
+.timer-btn {
+  flex:none; display:flex; align-items:center; gap:4px;
+  font-size:12px; font-weight:600; color:var(--primary-800);
+  background:var(--primary-100); border-radius:var(--radius-full);
+  padding:8px 14px;
+}
+.timer-btn:hover { background:var(--primary-200); }
+
+/* ============ ⑥ フッター ============ */
+nav.footer {
+  position:fixed; bottom:0; left:0; right:0; z-index:20;
+  background:var(--color-surface); border-top:1px solid var(--color-border);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.footer-inner { max-width:560px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); }
+.footer button {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:10px 0 8px; font-size:10px; color:var(--neutral-500);
+  transition:color var(--duration-fast);
+}
+.footer button.on { color:var(--primary-800); }
+.footer button.on svg { color:var(--primary-800); }
+.footer svg { color:var(--neutral-400); }
+
+/* ============ モーダル ============ */
+.modal {
+  position:fixed; inset:0; z-index:50; display:none;
+  background:rgba(26,24,19,.5);
+}
+.modal.open { display:flex; align-items:flex-end; justify-content:center; }
+.sheet {
+  width:100%; max-width:560px; max-height:92dvh; overflow-y:auto;
+  background:var(--color-bg); border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  padding:var(--space-5) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
+}
+.sheet-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4); }
+.sheet-head h3 { font-size:18px; font-weight:700; color:var(--primary-900); }
+.sheet-close { width:40px; height:40px; border-radius:var(--radius-full); display:grid; place-items:center; color:var(--neutral-500); }
+.sheet-close:hover { background:var(--neutral-100); }
+.set-section { background:var(--color-surface); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-4); box-shadow:var(--shadow-sm); }
+.set-section h4 { font-size:13px; font-weight:700; color:var(--color-text-muted); margin-bottom:var(--space-3); }
+.set-stats { display:flex; gap:var(--space-5); margin-bottom:var(--space-3); }
+.set-stats div { text-align:center; }
+.set-stats .v { font-family:var(--font-number); font-size:22px; font-weight:700; color:var(--primary-800); }
+.set-stats .k { font-size:11px; color:var(--color-text-muted); }
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2);
+  height:44px; padding:0 var(--space-5); border-radius:var(--radius-md);
+  font-size:14px; font-weight:600;
+  transition:background var(--duration-fast);
+}
+.btn-primary { background:var(--primary-800); color:#fff; }
+.btn-primary:hover { background:var(--primary-900); }
+.btn-secondary { background:transparent; color:var(--primary-800); border:1.5px solid var(--primary-800); }
+.btn-secondary:hover { background:var(--primary-50); }
+.btn-danger { background:var(--danger-500); color:#fff; }
+.btn-danger:hover { background:var(--danger-600); }
+.btn-row { display:flex; gap:var(--space-2); flex-wrap:wrap; }
+.set-note { font-size:11px; color:var(--color-text-muted); margin-top:var(--space-2); }
+
+/* 項目エディタ */
+.item-editor { border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-2); background:var(--neutral-50); }
+.item-editor .row1 { display:flex; gap:var(--space-2); margin-bottom:var(--space-2); }
+.item-editor input[type=text] { flex:1; height:40px; padding:0 var(--space-3); border:1px solid var(--neutral-300); border-radius:var(--radius-sm); }
+.item-editor .row2 { display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center; font-size:12px; color:var(--color-text-muted); }
+.item-editor .fld { display:flex; flex-direction:column; gap:1px; }
+.item-editor .fld span { font-size:10px; }
+.item-editor input[type=number] { width:68px; height:36px; padding:0 var(--space-2); border:1px solid var(--neutral-300); border-radius:var(--radius-sm); text-align:right; }
+.item-editor select { height:36px; border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff; padding:0 var(--space-1); }
+.item-editor .row3 { display:flex; gap:var(--space-4); align-items:center; margin-top:var(--space-2); font-size:12px; }
+.item-editor label.ck { display:flex; align-items:center; gap:6px; cursor:pointer; }
+.item-editor .auto-badge { font-size:10px; background:var(--info-500); color:#fff; padding:1px 8px; border-radius:var(--radius-full); }
+.item-del { color:var(--danger-600); font-size:12px; font-weight:600; margin-left:auto; padding:6px 10px; border-radius:var(--radius-sm); }
+.item-del:hover { background:var(--danger-50); }
+
+/* 瞑想モーダル */
+#medModal.open { align-items:center; }
+.med-card {
+  background:var(--color-surface); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
+  padding:var(--space-6) var(--space-5); margin:var(--space-4); width:min(360px, calc(100% - 32px));
+  text-align:center;
+}
+.med-circle-wrap { height:180px; display:grid; place-items:center; margin:var(--space-4) 0; }
+#medCircle {
+  width:110px; height:110px; border-radius:var(--radius-full);
+  background:radial-gradient(circle at 35% 30%, var(--primary-300), var(--primary-600));
+  box-shadow:0 0 40px rgba(167,201,87,.5);
+}
+.med-phase { font-size:18px; font-weight:700; color:var(--primary-900); min-height:1.5em; }
+.med-count { font-family:var(--font-number); font-size:13px; color:var(--color-text-muted); margin-top:var(--space-1); }
+.med-note { font-size:12px; color:var(--color-text-muted); margin-top:var(--space-2); }
+
+/* トースト */
+#toast {
+  position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(8px); z-index:60;
+  background:var(--neutral-800); color:#fff; font-size:13px;
+  padding:10px 22px; border-radius:var(--radius-full); box-shadow:var(--shadow-lg);
+  opacity:0; pointer-events:none; transition:opacity var(--duration-base), transform var(--duration-base) var(--ease-standard);
+  max-width:calc(100% - 48px); text-align:center;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ① ヘッダー -->
+  <header>
+    <div class="hdr-inner">
+      <div class="hdr-brand">ミトコンドリア・ダイエット</div>
+      <div class="hdr-row">
+        <div class="hdr-count"><span class="mito-num" id="hdrCount">1</span><span class="mito-unit">匹</span></div>
+        <div class="hdr-gauge">
+          <div class="gauge-label"><span>活性ゲージ</span><span><b id="hdrAct">50</b>/100</span></div>
+          <div class="gauge-bar"><div class="gauge-fill" id="hdrGauge"></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ② 週カレンダー -->
+    <section class="card" id="calCard">
+      <div class="cal-head">
+        <div class="cal-title" id="calTitle">2026年7月</div>
+        <div class="cal-nav">
+          <button id="calPrev" aria-label="前の週"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button id="calNext" aria-label="次の週"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div id="selBanner" style="display:none" class="sel-banner">
+        <span id="selBannerText"></span>
+        <button id="selBannerBack">今日へ戻る</button>
+      </div>
+    </section>
+
+    <!-- ③ ミトコンドリア表示 -->
+    <section class="card mito-stage">
+      <canvas id="mitoCanvas"></canvas>
+      <div class="mito-chips">
+        <span class="chip" id="chipStage">種火</span>
+        <span class="chip" id="chipMood">元気</span>
+      </div>
+    </section>
+
+    <!-- ④ 食事の写真 -->
+    <section class="card">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
+      <div class="photo-grid" id="photoGrid"></div>
+      <div class="photo-note">タップで撮影・選択（長辺800pxに縮小して端末内に保存）</div>
+    </section>
+
+    <!-- 記録（自動判定：歩数・睡眠） -->
+    <section class="card">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>きょうの記録（自動判定）</h2>
+      <div class="rec-row">
+        <div class="rec-label">歩数<div class="rec-status" id="stepStatus"></div></div>
+        <div class="rec-input"><input type="number" inputmode="numeric" min="0" max="99999" id="stepInput" placeholder="0"><span class="rec-unit">歩</span></div>
+      </div>
+      <div class="rec-row">
+        <div class="rec-label">睡眠時間<div class="rec-status" id="sleepStatus"></div></div>
+        <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="24" step="0.5" id="sleepInput" placeholder="例: 7.5"><span class="rec-unit">時間</span></div>
+      </div>
+    </section>
+
+    <!-- ⑤ 今日やること -->
+    <section class="card" id="todoCard">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
+      <div class="todo-summary"><span>獲得ポイント</span><span><b class="num" id="dayPt">+0</b> pt</span></div>
+      <div class="filter-chips" id="filterChips"></div>
+      <ul class="todo-list" id="todoList"></ul>
+    </section>
+  </main>
+
+  <!-- ⑥ フッター -->
+  <nav class="footer">
+    <div class="footer-inner">
+      <button data-nav="運動"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></svg>運動</button>
+      <button data-nav="食事"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>食事</button>
+      <button data-nav="睡眠・生活"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>睡眠</button>
+      <button data-nav="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
+    </div>
+  </nav>
+
+  <!-- 設定モーダル -->
+  <div class="modal" id="settingsModal">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>設定</h3>
+        <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="set-section">
+        <h4>育成データ</h4>
+        <div class="set-stats">
+          <div><div class="v" id="setMito">1</div><div class="k">匹数（詳細）</div></div>
+          <div><div class="v" id="setPeak">1</div><div class="k">過去最高</div></div>
+          <div><div class="v" id="setAct">50</div><div class="k">活性</div></div>
+          <div><div class="v" id="setSize">0KB</div><div class="k">データ量</div></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnExport">書き出す（JSON）</button>
+          <button class="btn btn-secondary" id="btnImport">読み込む</button>
+          <button class="btn btn-danger" id="btnReset">全データを初期化</button>
+        </div>
+        <div class="set-note">書き出しには写真データも含まれます。機種変更前のバックアップに使えます。</div>
+      </div>
+      <div class="set-section">
+        <h4>項目の編集（変更は即保存されます）</h4>
+        <div id="itemEditors"></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn btn-secondary" id="btnAddItem">＋ 項目を追加</button>
+          <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
+        </div>
+      </div>
+      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+    </div>
+  </div>
+
+  <!-- 瞑想タイマーモーダル -->
+  <div class="modal" id="medModal">
+    <div class="med-card">
+      <div class="med-phase" id="medPhase">準備はいい？</div>
+      <div class="med-circle-wrap"><div id="medCircle"></div></div>
+      <div class="med-count" id="medCount">5秒吸って、8秒吐く × 20回（約4分半）</div>
+      <div class="btn-row" style="justify-content:center; margin-top:16px">
+        <button class="btn btn-primary" id="medStartBtn">はじめる</button>
+        <button class="btn btn-secondary" id="medStopBtn">やめる</button>
+      </div>
+      <div class="med-note">最後まで終えると自動でチェックされます</div>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+  <input type="file" accept="image/*" id="photoFile" hidden>
+</div>
+
+<script>
+'use strict';
+
+/* ==================================================================
+   @logic-start  純粋ロジック（DOM非依存・テスト可能）
+   ================================================================== */
+const CFG = {
+  ACT_START: 50,       // 活性ゲージ初期値・回帰の目標
+  REGRESS: 0.3,        // 毎朝、50へ戻す割合
+  DAY_DELTA_CAP: 30,   // 1日の活性変動幅の上限（±）
+  MITO_START: 1,       // 初期匹数
+  MITO_MAX: 5000,      // 匹数上限
+  MITO_FLOOR: 10,      // 減少時の下限（種火は消えない）
+  STEP_GOAL: 3000,     // 歩数目標のデフォルト
+  SLEEP_LACK: 6,       // 睡眠不足ラインのデフォルト
+};
+
+function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+
+// 毎朝の「50へ少し戻す」回帰
+function regress(act) { return Math.round(act + (CFG.ACT_START - act) * CFG.REGRESS); }
+
+// その項目がその日「達成」かどうか（自動判定含む）
+function isItemDone(item, rec) {
+  if (item.auto === 'steps') {
+    return Number(rec.steps || 0) >= (item.threshold ?? CFG.STEP_GOAL);
+  }
+  if (item.auto === 'sleepLack') {
+    const h = rec.sleepHours;
+    if (h === null || h === undefined || h === '') return false;
+    const n = Number(h);
+    return n > 0 && n < (item.threshold ?? CFG.SLEEP_LACK);
+  }
+  return (rec.checked || []).includes(item.id);
+}
+
+// 1日ぶんの集計：活性スコア合計・匹数増加合計・カレンダー表示pt
+function evalDay(rec, items) {
+  let actSum = 0, incSum = 0;
+  for (const it of items) {
+    if (isItemDone(it, rec)) {
+      actSum += Number(it.act) || 0;
+      incSum += Number(it.inc) || 0;
+    }
+  }
+  return { actSum, incSum, points: actSum };
+}
+
+// 匹数の1日更新：基礎増加＋運動増加、低活性の減少、メモリー倍増、下限・上限
+function mitoStep(mito, peak, act, incSum) {
+  const base = act >= 60 ? 2 : act >= 45 ? 1 : 0;
+  const dec  = act >= 45 ? 0 : act >= 30 ? -2 : act >= 15 ? -5 : -10;
+  let gain = base + incSum;
+  if (gain > 0 && mito <= peak / 2) gain *= 2;  // ミトコンドリアメモリー
+  let next = Math.min(CFG.MITO_MAX, mito + gain);
+  if (dec < 0) {
+    const floor = Math.min(next, CFG.MITO_FLOOR);  // 既に10未満なら現状維持
+    next = Math.max(floor, next + dec);
+  }
+  return Math.round(next * 10) / 10;
+}
+
+function fmtDate(t) {
+  const y = t.getFullYear(), m = String(t.getMonth() + 1).padStart(2, '0'),
+        d = String(t.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+function nextDate(dstr) {
+  const t = new Date(dstr + 'T12:00:00');
+  t.setDate(t.getDate() + 1);
+  return fmtDate(t);
+}
+
+// 記録ログ全体から現在の状態を再計算（チェックの取り消し・過去日の修正にも整合）
+function computeState(db, todayStr) {
+  const items = db.items || [];
+  const recDates = Object.keys(db.days || {}).filter(d => d <= todayStr).sort();
+  let first = db.startDate || recDates[0] || todayStr;
+  if (recDates[0] && recDates[0] < first) first = recDates[0];
+  if (first > todayStr) first = todayStr;
+
+  let act = CFG.ACT_START;
+  let mito = CFG.MITO_START, peak = CFG.MITO_START;
+  const perDay = {};
+  let guard = 0;
+  for (let d = first; d <= todayStr; d = nextDate(d)) {
+    if (++guard > 4000) break;  // データ破損時の暴走防止（約11年分）
+    if (d !== first) act = regress(act);
+    const rec = (db.days && db.days[d]) || {};
+    const ev = evalDay(rec, items);
+    act = clamp(act + clamp(ev.actSum, -CFG.DAY_DELTA_CAP, CFG.DAY_DELTA_CAP), 0, 100);
+    mito = mitoStep(mito, peak, act, ev.incSum);
+    peak = Math.max(peak, mito);
+    perDay[d] = { points: ev.points };
+  }
+  return { activation: act, mito, peak, perDay };
+}
+/* @logic-end */
+
+/* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
+const DEFAULT_ITEMS = [
+  { id:'juice',      cat:'食事',      name:'野菜ジュース',                            pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
+  { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計）',   timing:'—' },
+  { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       pri:'S', act:4,  inc:0.3, order:3,  inTodo:true,  method:'写真',                 timing:'夜寝る前' },
+  { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          pri:'S', act:3,  inc:0.3, order:3,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
+  { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
+  { id:'nosake',     cat:'食事',      name:'禁酒',                                    pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
+  { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              pri:'S', act:2,  inc:0,   order:6,  inTodo:true,  method:'自己申告（将来自動化）', timing:'夜' },
+  { id:'meditate',   cat:'睡眠・生活', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）',        pri:'A', act:2,  inc:0.1, order:6,  inTodo:true,  method:'瞑想タイマー',         timing:'終わってから', timer:true },
+  { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           pri:'',  act:-3, inc:0,   order:90, inTodo:true,  ng:true, method:'自己申告',    timing:'寝る前' },
+  { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
+];
+
+/* ============ ストレージ ============ */
+const STORE_KEY = 'mito-data';
+
+function todayStr() { return fmtDate(new Date()); }
+
+function freshDB() {
+  return { version:1, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{} };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return freshDB();
+    const d = JSON.parse(raw);
+    if (!d || typeof d !== 'object') return freshDB();
+    if (!Array.isArray(d.items) || !d.items.length) d.items = structuredClone(DEFAULT_ITEMS);
+    if (!d.days || typeof d.days !== 'object') d.days = {};
+    if (!d.startDate) d.startDate = Object.keys(d.days).sort()[0] || todayStr();
+    return d;
+  } catch { return freshDB(); }
+}
+function save() {
+  DB.snapshot = { mitoCount: computed.mito, peakCount: computed.peak,
+                  activation: computed.activation, updated: todayStr() };
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(DB));
+  } catch {
+    toast('保存できませんでした（容量不足）。古い写真を消してください');
+  }
+}
+
+/* ============ アプリ状態 ============ */
+let DB = load();
+let today = todayStr();
+let sel = today;          // 選択中の日付
+let weekOffset = 0;       // 週カレンダーの表示オフセット
+let filter = 'all';       // TODOカテゴリフィルタ
+let computed = computeState(DB, today);
+let photoSlot = null;     // 撮影対象スロット
+
+const $ = s => document.querySelector(s);
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function getRec(d, create) {
+  let r = DB.days[d];
+  if (!r && create) { r = { checked:[], steps:null, sleepHours:null, photos:{} }; DB.days[d] = r; }
+  return r || { checked:[], steps:null, sleepHours:null, photos:{} };
+}
+
+function recompute() { computed = computeState(DB, today); }
+function commit() { recompute(); save(); renderAll(); }
+
+/* ============ トースト ============ */
+let toastTimer = null;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ============ ① ヘッダー ============ */
+function renderHeader() {
+  $('#hdrCount').textContent = Math.floor(computed.mito).toLocaleString();
+  $('#hdrAct').textContent = computed.activation;
+  const g = $('#hdrGauge');
+  g.style.width = computed.activation + '%';
+  g.className = 'gauge-fill ' + (computed.activation < 45 ? 'g-low' : computed.activation < 70 ? 'g-mid' : 'g-high');
+}
+
+/* ============ ② 週カレンダー ============ */
+const DOW = ['月','火','水','木','金','土','日'];
+function weekDates(offset) {
+  const t = new Date(today + 'T12:00:00');
+  const dow = (t.getDay() + 6) % 7;  // 月曜=0
+  t.setDate(t.getDate() - dow + offset * 7);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(t); d.setDate(t.getDate() + i); return fmtDate(d);
+  });
+}
+function fmtJP(dstr) {
+  const t = new Date(dstr + 'T12:00:00');
+  return `${t.getMonth() + 1}月${t.getDate()}日(${'日月火水木金土'[t.getDay()]})`;
+}
+function renderCalendar() {
+  const dates = weekDates(weekOffset);
+  const mid = new Date(dates[3] + 'T12:00:00');  // 木曜の月を表示
+  $('#calTitle').textContent = `${mid.getFullYear()}年${mid.getMonth() + 1}月`;
+  const grid = $('#calGrid');
+  grid.innerHTML = '';
+  DOW.forEach(w => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow'; el.textContent = w;
+    grid.appendChild(el);
+  });
+  dates.forEach(d => {
+    const btn = document.createElement('button');
+    const future = d > today;
+    btn.className = 'cal-cell' + (d === today ? ' today' : '') + (d === sel ? ' selected' : '') + (future ? ' future' : '');
+    const day = Number(d.slice(8));
+    const pd = computed.perDay[d];
+    const hasRec = !!DB.days[d];
+    let ptHtml = '<span class="pt">・</span>';
+    if (!future && pd && hasRec) {
+      const p = pd.points;
+      ptHtml = `<span class="pt ${p > 0 ? 'plus' : p < 0 ? 'minus' : ''}">${p > 0 ? '+' : ''}${p}pt</span>`;
+    }
+    btn.innerHTML = `<span class="d">${day}</span>${ptHtml}`;
+    if (!future) btn.addEventListener('click', () => { sel = d; renderAll(); });
+    else btn.disabled = true;
+    grid.appendChild(btn);
+  });
+  const banner = $('#selBanner');
+  if (sel !== today) {
+    banner.style.display = 'flex';
+    $('#selBannerText').textContent = `${fmtJP(sel)} の記録を表示・編集中`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+/* ============ ③ ミトコンドリア表示（Canvas） ============ */
+const stage = {
+  canvas: null, ctx: null, orbs: [], plannedCount: -1, raf: 0, t0: 0,
+  reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+};
+function stageName(n) {
+  n = Math.floor(n);
+  if (n < 10) return '種火';
+  if (n < 100) return 'めばえ';
+  if (n < 500) return 'ぐんぐん';
+  if (n < 2000) return 'みなぎる';
+  return 'フルパワー';
+}
+function moodName(a) {
+  if (a >= 70) return 'キラキラ✨';
+  if (a >= 45) return '元気';
+  if (a >= 30) return '休みぎみ';
+  return 'おつかれ…';
+}
+function prand(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+// 匹数→表示する玉のサイズ配列（10匹=中玉、100匹=大玉…にまとめる）
+function planOrbs(count) {
+  const n = Math.max(1, Math.floor(count));
+  const sizes = [];
+  if (n <= 30) { for (let i = 0; i < n; i++) sizes.push(9); return sizes; }
+  let r = n;
+  const th = Math.floor(r / 1000); r %= 1000;
+  const hu = Math.floor(r / 100);  r %= 100;
+  const te = Math.floor(r / 10);
+  const on = r % 10;
+  for (let i = 0; i < th; i++) sizes.push(46);
+  for (let i = 0; i < hu; i++) sizes.push(30);
+  for (let i = 0; i < te; i++) sizes.push(18);
+  for (let i = 0; i < on; i++) sizes.push(9);
+  return sizes;
+}
+function buildOrbs() {
+  const w = stage.canvas.clientWidth, h = stage.canvas.clientHeight;
+  const sizes = planOrbs(computed.mito);
+  stage.orbs = sizes.map((r, i) => ({
+    r,
+    x: r + 8 + prand(i) * (w - 2 * (r + 8)),
+    y: r + 14 + prand(i + 57) * (h - 2 * r - 46),
+    phase: prand(i + 113) * Math.PI * 2,
+    speed: 0.6 + prand(i + 211) * 0.8,
+  }));
+  stage.plannedCount = Math.floor(computed.mito);
+}
+function mixc(c1, c2, t) {
+  return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
+}
+function drawStage(tms) {
+  const cv = stage.canvas, ctx = stage.ctx;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  if (stage.plannedCount !== Math.floor(computed.mito)) buildOrbs();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const act = computed.activation / 100;
+  const t = tms / 1000;
+  const lowSink = computed.activation < 30 ? 12 : 0;
+  const amp = stage.reduced ? 0 : (2 + act * 9);
+  for (const o of stage.orbs) {
+    const y = Math.min(h - o.r - 2, o.y + lowSink + Math.sin(t * o.speed * (0.5 + act) + o.phase) * amp);
+    const x = o.x + (stage.reduced ? 0 : Math.sin(t * o.speed * 0.4 + o.phase * 2) * amp * 0.4);
+    // 高活性なら金の後光
+    if (computed.activation >= 70) {
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(226,165,60,0.10)';
+      ctx.arc(x, y, o.r * 2.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const core = mixc([201,214,192], [234,247,200], act);
+    const mid  = mixc([148,170,140], [167,201,87],  act);
+    const edge = mixc([116,132,112], [106,153,78],  act);
+    const grad = ctx.createRadialGradient(x - o.r * .3, y - o.r * .35, o.r * .1, x, y, o.r);
+    grad.addColorStop(0, core); grad.addColorStop(.55, mid); grad.addColorStop(1, edge);
+    ctx.globalAlpha = 0.6 + 0.4 * act;
+    ctx.shadowColor = 'rgba(167,201,87,.8)';
+    ctx.shadowBlur = 4 + act * 22;
+    ctx.beginPath(); ctx.fillStyle = grad;
+    ctx.arc(x, y, o.r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    // ハイライト
+    ctx.globalAlpha = (0.25 + 0.45 * act);
+    ctx.beginPath(); ctx.fillStyle = '#fff';
+    ctx.arc(x - o.r * .32, y - o.r * .38, Math.max(1.5, o.r * .18), 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+function stageLoop(tms) {
+  drawStage(tms);
+  if (!stage.reduced && !document.hidden) stage.raf = requestAnimationFrame(stageLoop);
+}
+function startStage() {
+  cancelAnimationFrame(stage.raf);
+  if (stage.reduced) { drawStage(0); return; }
+  stage.raf = requestAnimationFrame(stageLoop);
+}
+function renderStageChips() {
+  $('#chipStage').textContent = `${Math.floor(computed.mito).toLocaleString()}匹 — ${stageName(computed.mito)}`;
+  $('#chipMood').textContent = moodName(computed.activation);
+}
+
+/* ============ ④ 食事の写真 ============ */
+const MEALS = [['breakfast','朝'],['lunch','昼'],['dinner','晩']];
+function renderPhotos() {
+  const rec = getRec(sel, false);
+  const grid = $('#photoGrid');
+  grid.innerHTML = '';
+  MEALS.forEach(([key, label]) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'photo-slot';
+    const data = rec.photos && rec.photos[key];
+    const btn = document.createElement('button');
+    btn.setAttribute('aria-label', `${label}の写真`);
+    if (data) {
+      btn.className = 'photo-btn filled';
+      const img = document.createElement('img');
+      img.src = data; img.alt = `${label}の食事`;
+      btn.appendChild(img);
+      const del = document.createElement('button');
+      del.className = 'photo-del';
+      del.setAttribute('aria-label', `${label}の写真を削除`);
+      del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+      del.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm(`${label}の写真を削除しますか？`)) {
+          delete getRec(sel, true).photos[key];
+          commit();
+        }
+      });
+      wrap.appendChild(btn); wrap.appendChild(del);
+    } else {
+      btn.className = 'photo-btn';
+      btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><span>${label}</span>`;
+      wrap.appendChild(btn);
+    }
+    btn.addEventListener('click', () => { photoSlot = key; $('#photoFile').click(); });
+    grid.appendChild(wrap);
+  });
+}
+async function resizeImage(file, max = 800) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i); i.onerror = rej; i.src = url;
+    });
+    const scale = Math.min(1, max / Math.max(img.width, img.height));
+    const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', 0.75);
+  } finally { URL.revokeObjectURL(url); }
+}
+$('#photoFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file || !photoSlot) return;
+  try {
+    const data = await resizeImage(file);
+    const rec = getRec(sel, true);
+    rec.photos = rec.photos || {};
+    rec.photos[photoSlot] = data;
+    // 写真アップで対応する食事TODOを自動チェック（例：朝の写真→野菜ジュース）
+    let autoMsg = '';
+    for (const it of DB.items) {
+      if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
+        rec.checked.push(it.id);
+        autoMsg = `「${it.name}」を自動チェックしました`;
+      }
+    }
+    commit();
+    toast(autoMsg || '写真を保存しました');
+  } catch {
+    toast('写真の読み込みに失敗しました');
+  }
+});
+
+/* ============ 記録（歩数・睡眠） ============ */
+function renderInputs() {
+  const rec = getRec(sel, false);
+  const stepEl = $('#stepInput'), sleepEl = $('#sleepInput');
+  if (document.activeElement !== stepEl)  stepEl.value  = rec.steps ?? '';
+  if (document.activeElement !== sleepEl) sleepEl.value = rec.sleepHours ?? '';
+  const walk = DB.items.find(i => i.auto === 'steps');
+  const lack = DB.items.find(i => i.auto === 'sleepLack');
+  const stepSt = $('#stepStatus');
+  if (walk) {
+    const goal = walk.threshold ?? CFG.STEP_GOAL;
+    const steps = Number(rec.steps || 0);
+    if (steps >= goal) {
+      stepSt.className = 'rec-status ok';
+      stepSt.textContent = `✓ ${walk.name} 達成（活+${walk.act}・+${walk.inc}匹）`;
+    } else {
+      stepSt.className = 'rec-status wait';
+      stepSt.textContent = `${goal.toLocaleString()}歩で達成（あと${(goal - steps).toLocaleString()}歩）`;
+    }
+  }
+  const sleepSt = $('#sleepStatus');
+  if (lack) {
+    const line = lack.threshold ?? CFG.SLEEP_LACK;
+    const h = rec.sleepHours;
+    if (h === null || h === undefined || h === '') {
+      sleepSt.className = 'rec-status wait';
+      sleepSt.textContent = `翌朝に入力（${line}時間未満は 活${lack.act}）`;
+    } else if (Number(h) > 0 && Number(h) < line) {
+      sleepSt.className = 'rec-status ng';
+      sleepSt.textContent = `△ 睡眠${line}時間未満（活${lack.act}）— 今夜はゆっくり休もう`;
+    } else {
+      sleepSt.className = 'rec-status ok';
+      sleepSt.textContent = '✓ しっかり眠れました';
+    }
+  }
+}
+$('#stepInput').addEventListener('change', e => {
+  const rec = getRec(sel, true);
+  rec.steps = e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value)));
+  commit();
+});
+$('#sleepInput').addEventListener('change', e => {
+  const rec = getRec(sel, true);
+  const v = e.target.value;
+  rec.sleepHours = v === '' ? null : clamp(Number(v), 0, 24);
+  commit();
+});
+
+/* ============ ⑤ TODO ============ */
+const FILTERS = [['all','すべて'],['運動','運動'],['食事','食事'],['睡眠・生活','睡眠・生活'],['NG行動','NG']];
+function renderFilterChips() {
+  const box = $('#filterChips');
+  box.innerHTML = '';
+  FILTERS.forEach(([key, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.className = filter === key ? 'on' : '';
+    b.addEventListener('click', () => { filter = key; renderAll(); });
+    box.appendChild(b);
+  });
+}
+function renderTodo() {
+  const rec = getRec(sel, false);
+  const pd = computed.perDay[sel];
+  const pts = pd ? pd.points : 0;
+  const ptEl = $('#dayPt');
+  ptEl.textContent = (pts > 0 ? '+' : '') + pts;
+  ptEl.className = 'num' + (pts < 0 ? ' minus' : '');
+
+  const list = $('#todoList');
+  list.innerHTML = '';
+  const items = DB.items
+    .filter(it => it.inTodo && (filter === 'all' || it.cat === filter))
+    .sort((a, b) => (a.order - b.order) || String(a.id).localeCompare(String(b.id)));
+  let ngDividerDone = false;
+  items.forEach(it => {
+    if (it.ng && !ngDividerDone && filter === 'all') {
+      const div = document.createElement('li');
+      div.className = 'ng-divider';
+      div.textContent = 'NG行動（あったら正直にチェック）';
+      list.appendChild(div);
+      ngDividerDone = true;
+    }
+    const done = rec.checked.includes(it.id);
+    const li = document.createElement('li');
+    const label = document.createElement('label');
+    label.className = 'todo' + (done ? ' done' : '') + (it.ng ? ' ng' : '');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = done;
+    cb.addEventListener('change', () => toggleCheck(it));
+    const body = document.createElement('span');
+    body.className = 'todo-body';
+    const scoreCls = it.act >= 0 ? 'plus' : 'minus';
+    const scoreTxt = `活${it.act > 0 ? '+' : ''}${it.act}` + (it.inc ? ` ・ +${it.inc}匹` : '');
+    body.innerHTML =
+      `<span class="todo-name">${esc(it.name)}</span>` +
+      `<span class="todo-meta">` +
+        (it.pri ? `<span class="pri">${esc(it.pri)}</span>` : '') +
+        `<span>${esc(it.cat)}</span>` +
+        `<span class="score ${scoreCls}">${scoreTxt}</span>` +
+        (it.timing && it.timing !== '—' ? `<span>${esc(it.timing)}</span>` : '') +
+      `</span>`;
+    label.appendChild(cb);
+    label.appendChild(body);
+    if (it.timer) {
+      const tb = document.createElement('button');
+      tb.className = 'timer-btn';
+      tb.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>タイマー';
+      tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
+      label.appendChild(tb);
+    }
+    li.appendChild(label);
+    list.appendChild(li);
+  });
+  if (!items.length) {
+    const li = document.createElement('li');
+    li.style.cssText = 'padding:16px 4px; font-size:13px; color:var(--color-text-muted)';
+    li.textContent = 'このカテゴリのTODOはありません';
+    list.appendChild(li);
+  }
+}
+function toggleCheck(item) {
+  const rec = getRec(sel, true);
+  const i = rec.checked.indexOf(item.id);
+  if (i >= 0) rec.checked.splice(i, 1);
+  else {
+    rec.checked.push(item.id);
+    if (item.act > 0) toast(`${item.name} ✓ 活+${item.act}${item.inc ? `・+${item.inc}匹` : ''}`);
+  }
+  commit();
+}
+
+/* ============ ⑥ フッター ============ */
+document.querySelectorAll('.footer button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const nav = btn.dataset.nav;
+    if (nav === 'settings') { openSettings(); return; }
+    filter = (filter === nav) ? 'all' : nav;
+    renderAll();
+    $('#todoCard').scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+function renderFooter() {
+  document.querySelectorAll('.footer button').forEach(btn => {
+    const nav = btn.dataset.nav;
+    btn.classList.toggle('on', nav !== 'settings' && filter === nav);
+  });
+}
+
+/* ============ 瞑想タイマー ============ */
+const MED = { inhale: 5000, exhale: 8000, cycles: 20 };
+let med = null;
+function openMeditation() {
+  $('#medModal').classList.add('open');
+  $('#medPhase').textContent = '準備はいい？';
+  $('#medCount').textContent = `5秒吸って、8秒吐く × ${MED.cycles}回（約4分半）`;
+  $('#medStartBtn').style.display = '';
+  const c = $('#medCircle');
+  c.style.transition = 'none'; c.style.transform = 'scale(1)';
+}
+function medPhaseRun() {
+  if (!med) return;
+  const c = $('#medCircle');
+  $('#medCount').textContent = `${med.cycle} / ${MED.cycles} 回`;
+  if (med.phase === 'inhale') {
+    $('#medPhase').textContent = '鼻から吸って（5秒）';
+    c.style.transition = `transform ${MED.inhale}ms ease-in-out`;
+    c.style.transform = 'scale(1.45)';
+    med.t = setTimeout(() => { med.phase = 'exhale'; medPhaseRun(); }, MED.inhale);
+  } else {
+    $('#medPhase').textContent = 'ゆっくり吐いて（8秒）';
+    c.style.transition = `transform ${MED.exhale}ms ease-in-out`;
+    c.style.transform = 'scale(0.72)';
+    med.t = setTimeout(() => {
+      if (med.cycle >= MED.cycles) { medFinish(); return; }
+      med.cycle++; med.phase = 'inhale'; medPhaseRun();
+    }, MED.exhale);
+  }
+}
+function medFinish() {
+  const item = DB.items.find(i => i.timer);
+  if (item) {
+    const rec = getRec(today, true);  // 瞑想は「今」やったので今日の記録に付ける
+    if (!rec.checked.includes(item.id)) rec.checked.push(item.id);
+    commit();
+    toast(`呼吸瞑想 完了！ 活+${item.act}・+${item.inc}匹 ✨`);
+  }
+  medStop();
+}
+function medStop() {
+  if (med) clearTimeout(med.t);
+  med = null;
+  $('#medModal').classList.remove('open');
+}
+$('#medStartBtn').addEventListener('click', () => {
+  med = { cycle: 1, phase: 'inhale', t: null };
+  $('#medStartBtn').style.display = 'none';
+  medPhaseRun();
+});
+$('#medStopBtn').addEventListener('click', medStop);
+
+/* ============ 設定 ============ */
+function openSettings() {
+  $('#setMito').textContent = computed.mito.toFixed(1);
+  $('#setPeak').textContent = computed.peak.toFixed(1);
+  $('#setAct').textContent = computed.activation;
+  const raw = localStorage.getItem(STORE_KEY) || '';
+  $('#setSize').textContent = Math.round(raw.length * 2 / 1024) + 'KB';
+  renderItemEditors();
+  $('#settingsModal').classList.add('open');
+}
+const CATS = ['運動','食事','睡眠・生活','NG行動'];
+function renderItemEditors() {
+  const box = $('#itemEditors');
+  box.innerHTML = '';
+  DB.items.forEach((it, idx) => {
+    const div = document.createElement('div');
+    div.className = 'item-editor';
+    div.innerHTML =
+      `<div class="row1"><input type="text" data-f="name" data-i="${idx}" value="${esc(it.name)}"></div>` +
+      `<div class="row2">` +
+        `<div class="fld"><span>カテゴリ</span><select data-f="cat" data-i="${idx}">` +
+          CATS.map(c => `<option${c === it.cat ? ' selected' : ''}>${c}</option>`).join('') +
+        `</select></div>` +
+        `<div class="fld"><span>活性</span><input type="number" step="1" data-f="act" data-i="${idx}" value="${Number(it.act) || 0}"></div>` +
+        `<div class="fld"><span>匹数</span><input type="number" step="0.1" data-f="inc" data-i="${idx}" value="${Number(it.inc) || 0}"></div>` +
+        `<div class="fld"><span>順番</span><input type="number" step="1" data-f="order" data-i="${idx}" value="${Number(it.order) || 0}"></div>` +
+        (it.auto ? `<div class="fld"><span>${it.auto === 'steps' ? '目標歩数' : '不足ライン(時間)'}</span><input type="number" data-f="threshold" data-i="${idx}" value="${it.threshold ?? ''}"></div>` : '') +
+      `</div>` +
+      `<div class="row3">` +
+        (it.auto
+          ? `<span class="auto-badge">自動判定</span>`
+          : `<label class="ck"><input type="checkbox" data-f="inTodo" data-i="${idx}"${it.inTodo ? ' checked' : ''}>TODOに出す</label>`) +
+        `<label class="ck"><input type="checkbox" data-f="ng" data-i="${idx}"${it.ng ? ' checked' : ''}>NG行動</label>` +
+        `<button class="item-del" data-del="${idx}">削除</button>` +
+      `</div>`;
+    box.appendChild(div);
+  });
+}
+$('#itemEditors').addEventListener('change', e => {
+  const f = e.target.dataset.f;
+  if (!f) return;
+  const it = DB.items[Number(e.target.dataset.i)];
+  if (!it) return;
+  if (f === 'inTodo' || f === 'ng') it[f] = e.target.checked;
+  else if (f === 'name' || f === 'cat') it[f] = e.target.value;
+  else {
+    const n = Number(e.target.value);
+    it[f] = Number.isFinite(n) ? n : 0;
+  }
+  recompute(); save(); renderAll();  // モーダルは開いたまま（フォーカス維持のためエディタは再構築しない）
+});
+$('#itemEditors').addEventListener('click', e => {
+  const del = e.target.closest('[data-del]');
+  if (!del) return;
+  const idx = Number(del.dataset.del);
+  const it = DB.items[idx];
+  if (it && confirm(`「${it.name}」を削除しますか？（過去のチェック履歴のポイントも消えます）`)) {
+    DB.items.splice(idx, 1);
+    recompute(); save(); renderAll(); renderItemEditors();
+  }
+});
+$('#btnAddItem').addEventListener('click', () => {
+  DB.items.push({ id: 'custom-' + Date.now(), cat: '食事', name: '新しい項目', pri: '',
+                  act: 1, inc: 0, order: 50, inTodo: true, method: '自己申告', timing: '' });
+  recompute(); save(); renderAll(); renderItemEditors();
+});
+$('#btnResetItems').addEventListener('click', () => {
+  if (!confirm('項目リストを初期値（仕様書の10項目）に戻しますか？\n追加した項目・変更した点数は消えます。記録（チェック・写真）は残ります。')) return;
+  DB.items = structuredClone(DEFAULT_ITEMS);
+  recompute(); save(); renderAll(); renderItemEditors();
+  toast('項目を初期値に戻しました');
+});
+$('#btnExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `mito-data-${todayStr()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast('JSONを書き出しました');
+});
+$('#btnImport').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'application/json,.json';
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const d = JSON.parse(reader.result);
+        if (!d || typeof d !== 'object' || !Array.isArray(d.items) || typeof d.days !== 'object') {
+          throw new Error('bad format');
+        }
+        if (!confirm('現在のデータをこのファイルの内容で置き換えますか？')) return;
+        DB = d;
+        if (!DB.startDate) DB.startDate = Object.keys(DB.days).sort()[0] || todayStr();
+        sel = today; weekOffset = 0;
+        commit();
+        openSettings();
+        toast('読み込みました');
+      } catch {
+        toast('読み込めませんでした（JSON形式を確認してください）');
+      }
+    };
+    reader.readAsText(file);
+  });
+  input.click();
+});
+$('#btnReset').addEventListener('click', () => {
+  if (!confirm('本当に全データを初期化しますか？\n匹数・活性・チェック履歴・写真がすべて消えます。')) return;
+  if (!confirm('最終確認：この操作は取り消せません。初期化しますか？（心配なら先に「書き出す」でバックアップ）')) return;
+  localStorage.removeItem(STORE_KEY);
+  DB = freshDB();
+  sel = today; weekOffset = 0; filter = 'all';
+  commit();
+  $('#settingsModal').classList.remove('open');
+  toast('初期化しました。今日からまた育てよう 🌱');
+});
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) {
+      if (m.id === 'medModal') medStop();
+      else m.classList.remove('open');
+    }
+  });
+});
+document.querySelectorAll('[data-close]').forEach(b => {
+  b.addEventListener('click', () => b.closest('.modal').classList.remove('open'));
+});
+
+/* ============ カレンダー操作 ============ */
+$('#calPrev').addEventListener('click', () => { weekOffset--; renderCalendar(); });
+$('#calNext').addEventListener('click', () => { weekOffset++; renderCalendar(); });
+$('#selBannerBack').addEventListener('click', () => { sel = today; weekOffset = 0; renderAll(); });
+
+/* ============ 全体描画・初期化 ============ */
+function renderAll() {
+  renderHeader();
+  renderCalendar();
+  renderStageChips();
+  renderPhotos();
+  renderInputs();
+  renderFilterChips();
+  renderTodo();
+  renderFooter();
+}
+
+// 日付が変わったら（開きっぱなし・翌日再訪）今日を取り直す
+function checkDayChange() {
+  const t = todayStr();
+  if (t !== today) {
+    if (sel === today) sel = t;
+    today = t;
+    weekOffset = 0;
+    recompute(); save(); renderAll();
+  }
+}
+setInterval(checkDayChange, 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { checkDayChange(); startStage(); }
+});
+window.addEventListener('resize', () => { stage.plannedCount = -1; if (stage.reduced) drawStage(0); });
+
+stage.canvas = $('#mitoCanvas');
+stage.ctx = stage.canvas.getContext('2d');
+recompute();
+save();
+renderAll();
+startStage();
+</script>
+</body>
+</html>

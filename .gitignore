@@ -1,0 +1,8 @@
+# 個人メモ・設計ドキュメントは公開リポジトリに含めない
+ミトコンドリア・ダイエット_アプリ仕様書.md
+Design.md
+CLAUDE.md
+.claude/
+docs/
+steering/
+.DS_Store
