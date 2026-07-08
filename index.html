@@ -316,6 +316,111 @@ nav.footer {
   max-width:calc(100% - 48px); text-align:center;
 }
 #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ============ v1.1: 体重グラフ ============ */
+.wt-head { display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3); margin-bottom:var(--space-3); flex-wrap:wrap; }
+.wt-current { font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:30px; font-weight:700; line-height:1; color:var(--primary-800); }
+.wt-current small { font-size:13px; color:var(--color-text-muted); font-weight:500; margin-left:2px; }
+.wt-delta { font-size:13px; font-family:var(--font-number); font-weight:600; display:inline-flex; align-items:center; gap:3px; }
+.wt-delta.down { color:var(--success-600); }
+.wt-delta.up { color:var(--neutral-600); }
+.wt-delta.flat { color:var(--color-text-muted); }
+#wtGraph { width:100%; height:150px; display:block; overflow:visible; }
+.wt-empty { font-size:13px; color:var(--color-text-muted); padding:16px 0; text-align:center; line-height:1.7; }
+.wt-legend { display:flex; gap:var(--space-4); margin-top:var(--space-2); font-size:11px; color:var(--color-text-muted); }
+.wt-legend span { display:inline-flex; align-items:center; gap:5px; }
+.wt-legend i { width:14px; height:0; border-top:2px solid var(--primary-500); display:inline-block; }
+.wt-legend i.goal { border-top:2px dashed var(--info-500); }
+
+/* ============ v1.1: 食事写真（複数枚） ============ */
+.photo-meal + .photo-meal { margin-top:var(--space-4); }
+.photo-meal-label { font-size:12px; font-weight:600; color:var(--neutral-600); margin-bottom:var(--space-2); display:flex; align-items:center; gap:6px; }
+.photo-meal-label .cnt { font-family:var(--font-number); color:var(--color-text-muted); font-weight:500; }
+.photo-thumbs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.photo-thumb { aspect-ratio:1; border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+.photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
+.photo-add {
+  aspect-ratio:1; border-radius:var(--radius-md); border:2px dashed var(--neutral-300);
+  background:var(--neutral-50); display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:2px; color:var(--color-text-muted); font-size:11px; transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.photo-add:hover { border-color:var(--primary-400); background:var(--primary-50); }
+.photo-add[disabled] { opacity:.4; cursor:not-allowed; }
+
+/* ライトボックス（写真拡大） */
+#lightbox.open { align-items:center; }
+.lb-card { position:relative; width:min(560px, calc(100% - 32px)); margin:var(--space-4); }
+.lb-card img { width:100%; max-height:80dvh; object-fit:contain; border-radius:var(--radius-md); box-shadow:var(--shadow-lg); background:#000; }
+.lb-btn {
+  position:absolute; top:10px; width:40px; height:40px; border-radius:var(--radius-full);
+  background:rgba(26,24,19,.6); color:#fff; display:grid; place-items:center;
+}
+.lb-close { right:10px; }
+.lb-del { left:10px; background:rgba(188,71,73,.85); }
+
+/* ============ v1.1: 演出（獲得数字・ポップ・バースト） ============ */
+.float-pt {
+  position:fixed; z-index:70; pointer-events:none; white-space:nowrap;
+  font-family:var(--font-number); font-variant-numeric:tabular-nums; font-weight:700; font-size:15px;
+  color:var(--primary-700); text-shadow:0 1px 4px rgba(251,248,240,.95), 0 0 2px rgba(251,248,240,.95);
+  transform:translate(-50%,0); animation:floatUp 1100ms var(--ease-standard) forwards;
+}
+.float-pt.minus { color:var(--warning-600); }
+@keyframes floatUp {
+  0%   { opacity:0; transform:translate(-50%,0) scale(.7); }
+  18%  { opacity:1; }
+  60%  { opacity:1; transform:translate(-50%,-40px) scale(1.06); }
+  100% { opacity:0; transform:translate(-50%,-66px) scale(1); }
+}
+@keyframes popNum { 0%{transform:scale(1);} 40%{transform:scale(1.32);} 100%{transform:scale(1);} }
+.hdr-count .mito-num.pop { animation:popNum 520ms var(--ease-standard); }
+.gauge-bar.flash { box-shadow:0 0 0 3px rgba(167,201,87,.55); transition:box-shadow var(--duration-slow); }
+
+/* ============ v1.1: ポイント内訳 ============ */
+.todo-summary { cursor:pointer; user-select:none; }
+.pt-toggle { display:inline-flex; align-items:center; gap:4px; }
+.pt-toggle svg { transition:transform var(--duration-fast); color:var(--color-text-muted); }
+.pt-toggle.open svg { transform:rotate(180deg); }
+.breakdown { display:none; background:var(--neutral-50); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); margin-bottom:var(--space-3); }
+.breakdown.open { display:block; }
+.bd-sec { font-size:11px; font-weight:700; color:var(--color-text-muted); margin:var(--space-3) 0 2px; }
+.bd-sec:first-child { margin-top:0; }
+.bd-row { display:flex; justify-content:space-between; gap:var(--space-3); font-size:12px; padding:3px 0; align-items:baseline; }
+.bd-row .g { color:var(--neutral-700); min-width:0; }
+.bd-row .v { font-family:var(--font-number); font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+.bd-row .v.plus  { color:var(--primary-700); }
+.bd-row .v.minus { color:var(--warning-600); }
+.bd-row .v.zero  { color:var(--color-text-muted); }
+.bd-total { border-top:1px solid var(--color-border); margin-top:var(--space-2); padding-top:var(--space-2); font-weight:700; }
+.bd-empty { font-size:12px; color:var(--color-text-muted); padding:6px 0; }
+
+/* ============ v1.1: ミト知識 ============ */
+.know-card { background:linear-gradient(135deg, var(--primary-50), var(--neutral-100)); }
+.know-text { font-size:14.5px; line-height:1.8; color:var(--neutral-700); }
+.know-foot { display:flex; align-items:center; justify-content:space-between; margin-top:var(--space-3); gap:var(--space-2); }
+.know-idx { font-size:11px; color:var(--color-text-muted); font-family:var(--font-number); }
+.know-next {
+  font-size:12px; font-weight:600; color:var(--primary-800); background:var(--primary-100);
+  border-radius:var(--radius-full); padding:7px 16px; display:inline-flex; align-items:center; gap:5px;
+}
+.know-next:hover { background:var(--primary-200); }
+
+/* ============ v1.1: TODO 情報ボタン ============ */
+.info-btn { flex:none; width:32px; height:32px; border-radius:var(--radius-full); display:grid; place-items:center; color:var(--info-500); }
+.info-btn:hover { background:var(--primary-50); }
+
+/* 解説シート */
+.info-score { display:inline-flex; gap:10px; font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:13px; font-weight:600; background:var(--primary-50); color:var(--primary-800); padding:7px 14px; border-radius:var(--radius-full); margin-bottom:var(--space-4); }
+.info-block { margin-bottom:var(--space-4); }
+.info-block .lbl { font-size:12px; font-weight:700; color:var(--primary-700); display:flex; align-items:center; gap:6px; margin-bottom:var(--space-1); }
+.info-block p { font-size:14px; line-height:1.8; color:var(--neutral-700); }
+.info-disclaimer { font-size:11px; color:var(--color-text-muted); border-top:1px solid var(--color-border); padding-top:var(--space-3); line-height:1.6; }
+
+/* 設定：目標体重フィールド */
+.set-field { display:flex; align-items:center; gap:var(--space-3); }
+.set-field label { flex:1; font-size:14px; font-weight:500; }
+.set-field input { width:120px; height:44px; padding:0 var(--space-3); text-align:right; border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff; font-family:var(--font-number); }
+.set-field input:focus { border-color:var(--primary-500); }
 </style>
 </head>
 <body>
@@ -361,16 +466,30 @@ nav.footer {
       </div>
     </section>
 
+    <!-- 今日のミト知識 -->
+    <section class="card know-card">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>今日のミト知識</h2>
+      <div class="know-text" id="knowText"></div>
+      <div class="know-foot">
+        <span class="know-idx" id="knowIdx"></span>
+        <button class="know-next" id="knowNext">別の豆知識 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button>
+      </div>
+    </section>
+
     <!-- ④ 食事の写真 -->
     <section class="card">
       <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
-      <div class="photo-grid" id="photoGrid"></div>
-      <div class="photo-note">タップで撮影・選択（長辺800pxに縮小して端末内に保存）</div>
+      <div id="photoGrid"></div>
+      <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）</div>
     </section>
 
-    <!-- 記録（自動判定：歩数・睡眠） -->
+    <!-- 記録（体重・歩数・睡眠） -->
     <section class="card">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>きょうの記録（自動判定）</h2>
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>きょうの記録</h2>
+      <div class="rec-row">
+        <div class="rec-label">体重<div class="rec-status" id="weightStatus"></div></div>
+        <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="weightInput" placeholder="例: 72.4"><span class="rec-unit">kg</span></div>
+      </div>
       <div class="rec-row">
         <div class="rec-label">歩数<div class="rec-status" id="stepStatus"></div></div>
         <div class="rec-input"><input type="number" inputmode="numeric" min="0" max="99999" id="stepInput" placeholder="0"><span class="rec-unit">歩</span></div>
@@ -381,10 +500,20 @@ nav.footer {
       </div>
     </section>
 
+    <!-- 体重のあゆみ -->
+    <section class="card" id="weightCard">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>体重のあゆみ</h2>
+      <div id="weightBody"></div>
+    </section>
+
     <!-- ⑤ 今日やること -->
     <section class="card" id="todoCard">
       <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
-      <div class="todo-summary"><span>獲得ポイント</span><span><b class="num" id="dayPt">+0</b> pt</span></div>
+      <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
+        <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+        <span><b class="num" id="dayPt">+0</b> pt</span>
+      </div>
+      <div class="breakdown" id="breakdown"></div>
       <div class="filter-chips" id="filterChips"></div>
       <ul class="todo-list" id="todoList"></ul>
     </section>
@@ -423,6 +552,14 @@ nav.footer {
         <div class="set-note">書き出しには写真データも含まれます。機種変更前のバックアップに使えます。</div>
       </div>
       <div class="set-section">
+        <h4>目標体重</h4>
+        <div class="set-field">
+          <label for="goalInput">目標体重（任意・kg）</label>
+          <input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="goalInput" placeholder="例: 65.0">
+        </div>
+        <div class="set-note">設定すると「体重のあゆみ」グラフに目標線（青の破線）が表示されます。空欄にすると非表示になります。</div>
+      </div>
+      <div class="set-section">
         <h4>項目の編集（変更は即保存されます）</h4>
         <div id="itemEditors"></div>
         <div class="btn-row" style="margin-top:12px">
@@ -430,7 +567,27 @@ nav.footer {
           <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
         </div>
       </div>
-      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.1 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+    </div>
+  </div>
+
+  <!-- 写真ライトボックス -->
+  <div class="modal" id="lightbox">
+    <div class="lb-card">
+      <button class="lb-btn lb-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      <button class="lb-btn lb-del" id="lbDel" aria-label="この写真を削除"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+      <img id="lbImg" alt="拡大した食事の写真">
+    </div>
+  </div>
+
+  <!-- ミト解説シート -->
+  <div class="modal" id="infoModal">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3 id="infoTitle">解説</h3>
+        <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div id="infoBody"></div>
     </div>
   </div>
 
@@ -565,13 +722,110 @@ const DEFAULT_ITEMS = [
   { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
 ];
 
+/* ============ ミト解説（TODO項目ごと・教育コンテンツ） ============ */
+// 一般的な健康情報。医療上の助言ではない（infoModalに注記を表示）
+const INFO = {
+  walk: {
+    why:'早歩きなどの有酸素運動をすると、筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これが PGC-1α（ミトコンドリアを新しく作る司令塔）のスイッチを押し、ミトコンドリアの“数”が増えていきます。朝に歩けば光で体内時計も整い、代謝リズムが安定します。',
+    tips:'ときどき早歩きを混ぜると刺激アップ。朝8時ごろの20分散歩は「光＋歩数」の一石二鳥です。'
+  },
+  bodyweight: {
+    why:'筋肉はミトコンドリアがぎっしり詰まった組織です。スクワットや腕立てで筋線維に負荷をかけると、ミトコンドリアの新生と質の向上が起きます。筋肉が増えると、じっとしていても消費するエネルギー（基礎代謝）の土台も大きくなります。',
+    tips:'太もも・お尻など大きい筋肉から。きつい日は回数を減らしても「やる」ことに意味があります。'
+  },
+  protein: {
+    why:'新しいミトコンドリアも筋肉も、材料はタンパク質です。いくら「増やす司令」が出ても、材料が足りないと作れません。体重×1.6gを目安に、こまめに補給しましょう。',
+    tips:'朝・昼・晩に分けてとると使われやすい。卵・魚・鶏肉・大豆・乳製品が手軽です。'
+  },
+  hara7: {
+    why:'軽い空腹（食べ過ぎない）は、AMPKやサーチュインを介して、古くなったミトコンドリアを掃除する「マイトファジー」を促すと考えられています。逆に食べ過ぎると、余ったエネルギーがミトコンドリアの負担になります。',
+    tips:'よく噛んでゆっくり。腹七分で箸を置く習慣を。'
+  },
+  juice: {
+    why:'ミトコンドリアはエネルギーを作るときに活性酸素（サビの原因）も出します。野菜のビタミンやポリフェノールは、その活性酸素の処理を助け、ミトコンドリアを守ってくれます。',
+    tips:'糖分の多い甘いジュースは逆効果。野菜中心・無糖のものを選びましょう。'
+  },
+  nosake: {
+    why:'アルコールの分解はミトコンドリアに負担をかけ、活性酸素も増やします。お酒を休む日は、ミトコンドリアが回復する時間になります。',
+    tips:'まずは週2日の休肝日から。飲む日も水を挟むと負担が減ります。'
+  },
+  darknight: {
+    why:'夜の強い光やスマホはメラトニン（睡眠ホルモン）を抑え、体内時計と睡眠の質を乱します。すると、夜に進むはずのミトコンドリアの修復も滞りがちに。',
+    tips:'就寝1時間前は画面を暗く・暖色に。部屋の照明も落としましょう。'
+  },
+  meditate: {
+    why:'ゆっくりした呼吸は自律神経を整え、ストレスホルモンを下げます。慢性的なストレスはミトコンドリアを消耗させるので、意識して“休ませる”時間が効いてきます。',
+    tips:'5秒吸って8秒吐くをゆったり。寝る前に行うと入眠もスムーズです。'
+  },
+  sugar: {
+    why:'砂糖や甘い飲料は血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。ミトを守るには、まず甘い飲み物から見直すのが近道です。',
+    tips:'甘い飲料を水・お茶・炭酸水に置き換えるだけでも大きく変わります。'
+  },
+  sleeplack: {
+    why:'睡眠中に、ミトコンドリアの修復や体内の掃除が進みます。6時間未満が続くと回復が追いつかず、日中のエネルギー効率も落ちてしまいます。',
+    tips:'まずは就寝時間を一定に。寝る前のスマホ・カフェインを控えめに。'
+  },
+};
+
+/* ============ 今日のミト知識（日替わりローテーション） ============ */
+const KNOWLEDGE = [
+  'ミトコンドリアは細胞の中の「発電所」。食べたものと酸素から、体を動かすエネルギー（ATP）を作っています。',
+  'ミトコンドリアの数は生活で変わります。運動でエネルギーを使うほど「増やそう」というスイッチが入ります。',
+  '筋肉や心臓など、よく働く細胞ほどミトコンドリアが多め。だから筋トレは“数”を増やすのに効きます。',
+  '有酸素運動で入る AMPK は、体の「エネルギー不足センサー」。これがミトコンドリア新生の合図になります。',
+  'PGC-1α は「ミトコンドリアを増やす司令塔」。運動・寒冷・軽い空腹などで活性化します。',
+  '古くて弱ったミトコンドリアを掃除することを「マイトファジー」と呼びます。食べ過ぎないことが後押しします。',
+  'ミトコンドリアはエネルギーを作るとき活性酸素も出します。野菜の抗酸化成分がその処理を助けます。',
+  'タンパク質はミトコンドリアや筋肉の“材料”。不足していると、増やそうとしても作れません。',
+  '朝の光は体内時計をリセットし、代謝のリズムを整えます。朝の散歩は光と歩数のダブル効果。',
+  '睡眠中はミトコンドリアの修復タイム。寝不足が続くと回復が追いつきません。',
+  '寒さもミトコンドリアを刺激します。適度に体を動かして熱を作るのも一つの手。',
+  'ミトコンドリアは分裂して増えたり、融合して助け合ったりと、常に形を変えています。',
+  'ミトコンドリアは母親から受け継がれる独自のDNAを持っています（母系遺伝）。',
+  '「代謝が良い」状態は、ミトコンドリアが元気にエネルギーを回せている状態とも言えます。',
+  '慢性的なストレスはミトコンドリアを消耗させます。深い呼吸でこまめに休ませましょう。',
+  'アルコールの分解はミトコンドリアの仕事。休肝日は回復のチャンスです。',
+  '急な血糖の乱高下はミトコンドリアの負担に。甘い飲料を控えるのが手軽な一歩です。',
+  '「腹七分目」はミトコンドリアの質を保つのに役立つと考えられています。',
+  'ミトコンドリアが元気だと、同じ活動でも疲れにくくなります。',
+  '一気に増やすより、毎日の小さな習慣の積み重ねがミトコンドリアを育てます。',
+];
+
 /* ============ ストレージ ============ */
 const STORE_KEY = 'mito-data';
 
 function todayStr() { return fmtDate(new Date()); }
 
 function freshDB() {
-  return { version:1, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{} };
+  return { version:2, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null };
+}
+// v1→v2 マイグレーション：写真を配列化、体重・目標体重フィールドを追加（既存の記録は保持）
+const MEAL_KEYS = ['breakfast','lunch','dinner'];
+function migratePhotos(rec) {
+  const p = (rec.photos && typeof rec.photos === 'object') ? rec.photos : {};
+  const out = {};
+  for (const k of MEAL_KEYS) {
+    const v = p[k];
+    if (Array.isArray(v)) out[k] = v.filter(x => typeof x === 'string' && x);
+    else if (typeof v === 'string' && v) out[k] = [v];
+    else out[k] = [];
+  }
+  rec.photos = out;
+}
+function migrate(d) {
+  if (!('goalWeight' in d)) d.goalWeight = null;
+  for (const k in d.days) {
+    const rec = d.days[k];
+    if (!rec || typeof rec !== 'object') {
+      d.days[k] = { checked:[], steps:null, sleepHours:null, weight:null, photos:{breakfast:[],lunch:[],dinner:[]} };
+      continue;
+    }
+    if (!Array.isArray(rec.checked)) rec.checked = [];
+    if (!('weight' in rec)) rec.weight = null;
+    migratePhotos(rec);
+  }
+  d.version = 2;
+  return d;
 }
 function load() {
   try {
@@ -582,7 +836,7 @@ function load() {
     if (!Array.isArray(d.items) || !d.items.length) d.items = structuredClone(DEFAULT_ITEMS);
     if (!d.days || typeof d.days !== 'object') d.days = {};
     if (!d.startDate) d.startDate = Object.keys(d.days).sort()[0] || todayStr();
-    return d;
+    return migrate(d);
   } catch { return freshDB(); }
 }
 function save() {
@@ -607,14 +861,48 @@ let photoSlot = null;     // 撮影対象スロット
 const $ = s => document.querySelector(s);
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+function emptyRec() {
+  return { checked:[], steps:null, sleepHours:null, weight:null, photos:{breakfast:[],lunch:[],dinner:[]} };
+}
 function getRec(d, create) {
   let r = DB.days[d];
-  if (!r && create) { r = { checked:[], steps:null, sleepHours:null, photos:{} }; DB.days[d] = r; }
-  return r || { checked:[], steps:null, sleepHours:null, photos:{} };
+  if (!r && create) { r = emptyRec(); DB.days[d] = r; }
+  return r || emptyRec();
 }
 
 function recompute() { computed = computeState(DB, today); }
-function commit() { recompute(); save(); renderAll(); }
+function commit() {
+  const before = { mito: computed.mito, act: computed.activation };
+  recompute();
+  save();
+  renderAll();
+  celebrate(before);
+}
+
+/* ============ v1.1: 演出（獲得数字・匹数ポップ・バースト） ============ */
+function floatText(x, y, text, minus) {
+  if (stage.reduced) return;
+  const el = document.createElement('div');
+  el.className = 'float-pt' + (minus ? ' minus' : '');
+  el.textContent = text;
+  el.style.left = Math.min(window.innerWidth - 20, Math.max(20, x)) + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+function celebrate(before) {
+  const nf = Math.floor(computed.mito), of = Math.floor(before.mito);
+  if (nf > of) {
+    spawnBurst(Math.min(70, 14 + (nf - of)));
+    const el = $('#hdrCount');
+    if (el) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  }
+  if (computed.activation > before.act) {
+    const g = $('.gauge-bar');
+    if (g) { g.classList.remove('flash'); void g.offsetWidth; g.classList.add('flash');
+      setTimeout(() => g.classList.remove('flash'), 420); }
+  }
+}
 
 /* ============ トースト ============ */
 let toastTimer = null;
@@ -688,9 +976,23 @@ function renderCalendar() {
 
 /* ============ ③ ミトコンドリア表示（Canvas） ============ */
 const stage = {
-  canvas: null, ctx: null, orbs: [], plannedCount: -1, raf: 0, t0: 0,
+  canvas: null, ctx: null, orbs: [], plannedCount: -1, raf: 0, t0: 0, particles: [],
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
 };
+// 匹数が増えたときのキラキラ・バースト
+function spawnBurst(n) {
+  if (stage.reduced || !stage.canvas) return;
+  const w = stage.canvas.clientWidth, h = stage.canvas.clientHeight;
+  const cx = w / 2, cy = h * 0.5;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 40 + Math.random() * 130;
+    stage.particles.push({
+      x: cx + (Math.random() - .5) * 50, y: cy + (Math.random() - .5) * 40,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30,
+      life: 1, r: 1.5 + Math.random() * 3,
+    });
+  }
+}
 function stageName(n) {
   n = Math.floor(n);
   if (n < 10) return '種火';
@@ -778,6 +1080,20 @@ function drawStage(tms) {
     ctx.arc(x - o.r * .32, y - o.r * .38, Math.max(1.5, o.r * .18), 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = 1;
   }
+  // 増加バーストのパーティクル
+  if (stage.particles.length) {
+    const dt = 1 / 60;
+    for (const p of stage.particles) {
+      p.vy += 90 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 0.85;
+      if (p.life <= 0) continue;
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+      ctx.fillStyle = p.life > 0.5 ? '#E2A53C' : '#A7C957';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    stage.particles = stage.particles.filter(p => p.life > 0);
+  }
 }
 function stageLoop(tms) {
   drawStage(tms);
@@ -793,44 +1109,63 @@ function renderStageChips() {
   $('#chipMood').textContent = moodName(computed.activation);
 }
 
-/* ============ ④ 食事の写真 ============ */
+/* ============ ④ 食事の写真（複数枚） ============ */
 const MEALS = [['breakfast','朝'],['lunch','昼'],['dinner','晩']];
+const MAX_PHOTOS = 4;
+let lightbox = { meal:null, index:null };
 function renderPhotos() {
   const rec = getRec(sel, false);
   const grid = $('#photoGrid');
   grid.innerHTML = '';
   MEALS.forEach(([key, label]) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'photo-slot';
-    const data = rec.photos && rec.photos[key];
-    const btn = document.createElement('button');
-    btn.setAttribute('aria-label', `${label}の写真`);
-    if (data) {
-      btn.className = 'photo-btn filled';
+    const arr = (rec.photos && Array.isArray(rec.photos[key])) ? rec.photos[key] : [];
+    const meal = document.createElement('div');
+    meal.className = 'photo-meal';
+    const lab = document.createElement('div');
+    lab.className = 'photo-meal-label';
+    lab.innerHTML = `${label}<span class="cnt">${arr.length}/${MAX_PHOTOS}</span>`;
+    const thumbs = document.createElement('div');
+    thumbs.className = 'photo-thumbs';
+    arr.forEach((data, idx) => {
+      const t = document.createElement('div');
+      t.className = 'photo-thumb';
       const img = document.createElement('img');
-      img.src = data; img.alt = `${label}の食事`;
-      btn.appendChild(img);
-      const del = document.createElement('button');
-      del.className = 'photo-del';
-      del.setAttribute('aria-label', `${label}の写真を削除`);
-      del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
-      del.addEventListener('click', e => {
-        e.stopPropagation();
-        if (confirm(`${label}の写真を削除しますか？`)) {
-          delete getRec(sel, true).photos[key];
-          commit();
-        }
-      });
-      wrap.appendChild(btn); wrap.appendChild(del);
-    } else {
-      btn.className = 'photo-btn';
-      btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><span>${label}</span>`;
-      wrap.appendChild(btn);
+      img.src = data; img.alt = `${label}の食事 ${idx + 1}`;
+      img.addEventListener('click', () => openLightbox(key, idx));
+      t.appendChild(img);
+      thumbs.appendChild(t);
+    });
+    if (arr.length < MAX_PHOTOS) {
+      const add = document.createElement('button');
+      add.className = 'photo-add';
+      add.setAttribute('aria-label', `${label}の写真を追加`);
+      add.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><span>追加</span>`;
+      add.addEventListener('click', () => { photoSlot = key; $('#photoFile').click(); });
+      thumbs.appendChild(add);
     }
-    btn.addEventListener('click', () => { photoSlot = key; $('#photoFile').click(); });
-    grid.appendChild(wrap);
+    meal.appendChild(lab); meal.appendChild(thumbs);
+    grid.appendChild(meal);
   });
 }
+function openLightbox(meal, idx) {
+  const rec = getRec(sel, false);
+  const arr = (rec.photos && rec.photos[meal]) || [];
+  if (!arr[idx]) return;
+  lightbox = { meal, index: idx };
+  $('#lbImg').src = arr[idx];
+  $('#lightbox').classList.add('open');
+}
+$('#lbDel').addEventListener('click', () => {
+  const { meal, index } = lightbox;
+  if (meal == null) return;
+  if (confirm('この写真を削除しますか？')) {
+    const rec = getRec(sel, true);
+    if (Array.isArray(rec.photos[meal])) rec.photos[meal].splice(index, 1);
+    $('#lightbox').classList.remove('open');
+    lightbox = { meal:null, index:null };
+    commit();
+  }
+});
 async function resizeImage(file, max = 800) {
   const url = URL.createObjectURL(file);
   try {
@@ -850,17 +1185,22 @@ $('#photoFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file || !photoSlot) return;
+  const rec = getRec(sel, true);
+  if (!rec.photos || typeof rec.photos !== 'object') rec.photos = { breakfast:[], lunch:[], dinner:[] };
+  if (!Array.isArray(rec.photos[photoSlot])) rec.photos[photoSlot] = [];
+  if (rec.photos[photoSlot].length >= MAX_PHOTOS) { toast(`この食事は最大${MAX_PHOTOS}枚までです`); return; }
   try {
     const data = await resizeImage(file);
-    const rec = getRec(sel, true);
-    rec.photos = rec.photos || {};
-    rec.photos[photoSlot] = data;
-    // 写真アップで対応する食事TODOを自動チェック（例：朝の写真→野菜ジュース）
+    const first = rec.photos[photoSlot].length === 0;
+    rec.photos[photoSlot].push(data);
+    // 最初の1枚アップで対応する食事TODOを自動チェック（例：朝の写真→野菜ジュース）
     let autoMsg = '';
-    for (const it of DB.items) {
-      if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
-        rec.checked.push(it.id);
-        autoMsg = `「${it.name}」を自動チェックしました`;
+    if (first) {
+      for (const it of DB.items) {
+        if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
+          rec.checked.push(it.id);
+          autoMsg = `「${it.name}」を自動チェックしました`;
+        }
       }
     }
     commit();
@@ -871,11 +1211,33 @@ $('#photoFile').addEventListener('change', async e => {
 });
 
 /* ============ 記録（歩数・睡眠） ============ */
+// 指定日以前で最も新しい体重（グラフ・タンパク質目安に使用）
+function latestWeight(uptoDate) {
+  const dates = Object.keys(DB.days)
+    .filter(d => d <= uptoDate && DB.days[d] && DB.days[d].weight != null && DB.days[d].weight !== '')
+    .sort();
+  if (!dates.length) return null;
+  const d = dates[dates.length - 1];
+  return { date: d, weight: Number(DB.days[d].weight) };
+}
 function renderInputs() {
   const rec = getRec(sel, false);
-  const stepEl = $('#stepInput'), sleepEl = $('#sleepInput');
-  if (document.activeElement !== stepEl)  stepEl.value  = rec.steps ?? '';
-  if (document.activeElement !== sleepEl) sleepEl.value = rec.sleepHours ?? '';
+  const stepEl = $('#stepInput'), sleepEl = $('#sleepInput'), weightEl = $('#weightInput');
+  if (document.activeElement !== stepEl)   stepEl.value   = rec.steps ?? '';
+  if (document.activeElement !== sleepEl)  sleepEl.value  = rec.sleepHours ?? '';
+  if (document.activeElement !== weightEl) weightEl.value = rec.weight ?? '';
+  // 体重ステータス：記録済みならタンパク質目安、未記録なら前回値
+  const wSt = $('#weightStatus');
+  const w = rec.weight;
+  if (w === null || w === undefined || w === '') {
+    const latest = latestWeight(sel);
+    wSt.className = 'rec-status wait';
+    wSt.textContent = latest ? `前回 ${latest.weight}kg（${fmtJP(latest.date)}）` : '朝イチに測って記録しよう';
+  } else {
+    const g = Math.round(Number(w) * 1.6);
+    wSt.className = 'rec-status ok';
+    wSt.textContent = `✓ タンパク質の目安 約${g}g/日（体重×1.6）`;
+  }
   const walk = DB.items.find(i => i.auto === 'steps');
   const lack = DB.items.find(i => i.auto === 'sleepLack');
   const stepSt = $('#stepStatus');
@@ -906,6 +1268,12 @@ function renderInputs() {
     }
   }
 }
+$('#weightInput').addEventListener('change', e => {
+  const rec = getRec(sel, true);
+  const v = e.target.value;
+  rec.weight = v === '' ? null : Math.round(clamp(Number(v), 0, 300) * 10) / 10;
+  commit();
+});
 $('#stepInput').addEventListener('change', e => {
   const rec = getRec(sel, true);
   rec.steps = e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value)));
@@ -917,6 +1285,75 @@ $('#sleepInput').addEventListener('change', e => {
   rec.sleepHours = v === '' ? null : clamp(Number(v), 0, 24);
   commit();
 });
+
+/* ============ 体重のあゆみ（SVGグラフ） ============ */
+function renderWeightGraph() {
+  const body = $('#weightBody');
+  const pts = Object.keys(DB.days)
+    .filter(d => DB.days[d] && DB.days[d].weight != null && DB.days[d].weight !== '')
+    .sort()
+    .map(d => ({ d, w: Number(DB.days[d].weight) }));
+  const recent = pts.slice(-30);
+  if (recent.length === 0) {
+    body.innerHTML = `<div class="wt-empty">まだ体重の記録がありません。<br>上の「体重」に入力すると、ここに推移グラフが表示されます。</div>`;
+    return;
+  }
+  const last = recent[recent.length - 1], first = recent[0];
+  const diff = last.w - first.w;
+  const dcls = diff < -0.05 ? 'down' : diff > 0.05 ? 'up' : 'flat';
+  const arrow = diff < -0.05 ? '↓' : diff > 0.05 ? '↑' : '→';
+  const dtxt = (diff > 0 ? '+' : '') + diff.toFixed(1) + 'kg';
+  const goal = (DB.goalWeight != null && DB.goalWeight !== '') ? Number(DB.goalWeight) : null;
+  const reached = goal != null && last.w <= goal;
+
+  const head = `<div class="wt-head">
+      <div><span class="wt-current">${last.w.toFixed(1)}<small>kg</small></span></div>
+      <div class="wt-delta ${dcls}">${
+        reached ? '🎉 目標達成！' :
+        recent.length > 1 ? `${arrow} ${dtxt}（${recent.length}日間）` : '記録を続けると変化が見えます'
+      }</div>
+    </div>`;
+
+  if (recent.length === 1) {
+    body.innerHTML = head + `<div class="wt-empty">2日以上記録するとグラフが描かれます。</div>`;
+    return;
+  }
+
+  const W = Math.max(240, Math.round(body.clientWidth || 300)), H = 150;
+  const padL = 36, padR = 12, padT = 12, padB = 22;
+  const xs = i => padL + (W - padL - padR) * (i / (recent.length - 1));
+  const values = recent.map(p => p.w).concat(goal != null ? [goal] : []);
+  let lo = Math.min(...values), hi = Math.max(...values);
+  if (hi - lo < 1) { const m = (hi + lo) / 2; lo = m - 0.5; hi = m + 0.5; }
+  const mgn = (hi - lo) * 0.15; lo -= mgn; hi += mgn;
+  const ys = v => padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo));
+
+  const grid = [hi, (hi + lo) / 2, lo].map(v =>
+    `<line x1="${padL}" y1="${ys(v).toFixed(1)}" x2="${W - padR}" y2="${ys(v).toFixed(1)}" stroke="#E7DBC0" stroke-width="1"/>` +
+    `<text x="${padL - 6}" y="${(ys(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#A89F8A">${v.toFixed(1)}</text>`
+  ).join('');
+
+  const line = recent.map((p, i) => `${xs(i).toFixed(1)},${ys(p.w).toFixed(1)}`).join(' ');
+  const area = `${padL},${H - padB} ${line} ${xs(recent.length - 1).toFixed(1)},${H - padB}`;
+  const dots = recent.map((p, i) =>
+    `<circle cx="${xs(i).toFixed(1)}" cy="${ys(p.w).toFixed(1)}" r="${i === recent.length - 1 ? 4 : 2.4}" fill="#6A994E"/>`
+  ).join('');
+  let goalLine = '';
+  if (goal != null && goal >= lo && goal <= hi) {
+    goalLine = `<line x1="${padL}" y1="${ys(goal).toFixed(1)}" x2="${W - padR}" y2="${ys(goal).toFixed(1)}" stroke="#4E8098" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  }
+  const svg = `<svg id="wtGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="体重推移グラフ">
+    ${grid}
+    <polygon points="${area}" fill="#D9E8C6" opacity="0.5"/>
+    ${goalLine}
+    <polyline points="${line}" fill="none" stroke="#6A994E" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+  </svg>`;
+  const legend = `<div class="wt-legend"><span><i></i>体重</span>${
+    goal != null ? `<span><i class="goal"></i>目標 ${Number(goal).toFixed(1)}kg</span>` : ''
+  }</div>`;
+  body.innerHTML = head + svg + legend;
+}
 
 /* ============ ⑤ TODO ============ */
 const FILTERS = [['all','すべて'],['運動','運動'],['食事','食事'],['睡眠・生活','睡眠・生活'],['NG行動','NG']];
@@ -959,11 +1396,16 @@ function renderTodo() {
     label.className = 'todo' + (done ? ' done' : '') + (it.ng ? ' ng' : '');
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.checked = done;
-    cb.addEventListener('change', () => toggleCheck(it));
+    cb.addEventListener('change', e => toggleCheck(it, e.target));
     const body = document.createElement('span');
     body.className = 'todo-body';
     const scoreCls = it.act >= 0 ? 'plus' : 'minus';
     const scoreTxt = `活${it.act > 0 ? '+' : ''}${it.act}` + (it.inc ? ` ・ +${it.inc}匹` : '');
+    let extraMeta = '';
+    if (it.id === 'protein') {
+      const lw = latestWeight(today);
+      if (lw) extraMeta = `<span>目安 約${Math.round(lw.weight * 1.6)}g</span>`;
+    }
     body.innerHTML =
       `<span class="todo-name">${esc(it.name)}</span>` +
       `<span class="todo-meta">` +
@@ -971,6 +1413,7 @@ function renderTodo() {
         `<span>${esc(it.cat)}</span>` +
         `<span class="score ${scoreCls}">${scoreTxt}</span>` +
         (it.timing && it.timing !== '—' ? `<span>${esc(it.timing)}</span>` : '') +
+        extraMeta +
       `</span>`;
     label.appendChild(cb);
     label.appendChild(body);
@@ -980,6 +1423,14 @@ function renderTodo() {
       tb.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>タイマー';
       tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
       label.appendChild(tb);
+    }
+    if (INFO[it.id]) {
+      const ib = document.createElement('button');
+      ib.className = 'info-btn';
+      ib.setAttribute('aria-label', `${it.name} がミトコンドリアに効く理由`);
+      ib.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+      ib.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openInfo(it); });
+      label.appendChild(ib);
     }
     li.appendChild(label);
     list.appendChild(li);
@@ -991,16 +1442,132 @@ function renderTodo() {
     list.appendChild(li);
   }
 }
-function toggleCheck(item) {
+function toggleCheck(item, srcEl) {
   const rec = getRec(sel, true);
   const i = rec.checked.indexOf(item.id);
   if (i >= 0) rec.checked.splice(i, 1);
   else {
     rec.checked.push(item.id);
+    // 何をしたらどんな効果か、を数字でその場に出す
+    if (srcEl && !stage.reduced) {
+      const r = srcEl.getBoundingClientRect();
+      const x = r.right + 44, y = r.top + r.height / 2 - 6;
+      if (item.act) floatText(x, y, `活${item.act > 0 ? '+' : ''}${item.act}`, item.act < 0);
+      if (item.inc) setTimeout(() => floatText(x + 10, y, `+${item.inc}匹`, false), 150);
+    }
     if (item.act > 0) toast(`${item.name} ✓ 活+${item.act}${item.inc ? `・+${item.inc}匹` : ''}`);
   }
   commit();
 }
+
+/* ============ ポイント内訳（何が効いたか） ============ */
+// 選択日の育成内訳を、純粋ロジック（regress/evalDay/mitoStep）を再生して取り出す
+function dayContributions(dateStr) {
+  const items = DB.items;
+  const recDates = Object.keys(DB.days).filter(d => d <= dateStr).sort();
+  let firstD = DB.startDate || recDates[0] || dateStr;
+  if (recDates[0] && recDates[0] < firstD) firstD = recDates[0];
+  if (firstD > dateStr) firstD = dateStr;
+
+  let act = CFG.ACT_START, mito = CFG.MITO_START, peak = CFG.MITO_START;
+  let guard = 0, result = null;
+  for (let d = firstD; d <= dateStr; d = nextDate(d)) {
+    if (++guard > 4000) break;
+    const actBefore = (d === firstD) ? act : regress(act);
+    const mitoBefore = mito, peakBefore = peak;
+    const rec = DB.days[d] || {};
+    const ev = evalDay(rec, items);
+    act = clamp(actBefore + clamp(ev.actSum, -CFG.DAY_DELTA_CAP, CFG.DAY_DELTA_CAP), 0, 100);
+    mito = mitoStep(mito, peak, act, ev.incSum);
+    peak = Math.max(peak, mito);
+    if (d === dateStr) {
+      // 匹数の内訳を再現（mitoStep と同じ計算）
+      const base = act >= 60 ? 2 : act >= 45 ? 1 : 0;
+      const dec  = act >= 45 ? 0 : act >= 30 ? -2 : act >= 15 ? -5 : -10;
+      const memory = (base + ev.incSum) > 0 && mitoBefore <= peakBefore / 2;
+      const actItems = [], mitoItems = [];
+      for (const it of items) {
+        if (isItemDone(it, rec)) {
+          if (Number(it.act)) actItems.push({ name:it.name, v:Number(it.act) });
+          if (Number(it.inc)) mitoItems.push({ name:it.name, v:Number(it.inc) });
+        }
+      }
+      result = {
+        actBefore, actAfter: act, regressed: d !== firstD,
+        actItems, base, dec, memory, mitoItems,
+        incSum: ev.incSum, mitoBefore, mitoAfter: mito,
+        deltaMito: Math.round((mito - mitoBefore) * 10) / 10,
+      };
+    }
+  }
+  return result;
+}
+function renderBreakdown() {
+  const box = $('#breakdown');
+  const b = dayContributions(sel);
+  if (!b) { box.innerHTML = `<div class="bd-empty">この日の記録はまだありません。</div>`; return; }
+  const row = (g, v, cls) => `<div class="bd-row"><span class="g">${esc(g)}</span><span class="v ${cls}">${v}</span></div>`;
+  let html = '<div class="bd-sec">活性ゲージ</div>';
+  html += row(b.regressed ? '前日から50へ回帰' : '開始値', b.actBefore, 'zero');
+  if (b.actItems.length) {
+    b.actItems.forEach(it => html += row(it.name, `${it.v > 0 ? '+' : ''}${it.v}`, it.v >= 0 ? 'plus' : 'minus'));
+  } else {
+    html += `<div class="bd-row"><span class="g">チェックした行動</span><span class="v zero">なし</span></div>`;
+  }
+  html += `<div class="bd-row bd-total"><span class="g">この日の活性</span><span class="v ${b.actAfter >= b.actBefore ? 'plus' : 'minus'}">${b.actAfter} / 100</span></div>`;
+
+  html += '<div class="bd-sec">ミトコンドリア（匹数）</div>';
+  if (b.base > 0) html += row(`活性${b.actAfter}による基礎増加`, `+${b.base}匹`, 'plus');
+  else html += row('基礎増加（活性45以上で発生）', '+0', 'zero');
+  b.mitoItems.forEach(it => html += row(it.name, `+${it.v}匹`, 'plus'));
+  if (b.memory) html += row('ミトコンドリアメモリー（×2）', '2倍ボーナス', 'plus');
+  if (b.dec < 0) html += row(`活性${b.actAfter}による減少`, `${b.dec}匹`, 'minus');
+  const dm = b.deltaMito;
+  html += `<div class="bd-row bd-total"><span class="g">この日の増減</span><span class="v ${dm > 0 ? 'plus' : dm < 0 ? 'minus' : 'zero'}">${dm > 0 ? '+' : ''}${dm}匹 → ${b.mitoAfter.toFixed(1)}匹</span></div>`;
+  box.innerHTML = html;
+}
+let breakdownOpen = false;
+function toggleBreakdown() {
+  breakdownOpen = !breakdownOpen;
+  $('#breakdown').classList.toggle('open', breakdownOpen);
+  $('#ptToggle').classList.toggle('open', breakdownOpen);
+  if (breakdownOpen) renderBreakdown();
+}
+$('#ptSummary').addEventListener('click', toggleBreakdown);
+$('#ptSummary').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleBreakdown(); }
+});
+
+/* ============ ミト解説シート ============ */
+function openInfo(item) {
+  const info = INFO[item.id];
+  if (!info) return;
+  $('#infoTitle').textContent = item.name;
+  const scoreTxt = `活${item.act > 0 ? '+' : ''}${item.act}` + (item.inc ? `　+${item.inc}匹` : '');
+  $('#infoBody').innerHTML =
+    `<div class="info-score">${esc(scoreTxt)}</div>` +
+    `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.34 6.34-.7-.7"/><path d="M2 12h4"/><circle cx="12" cy="14" r="4"/></svg>なぜミトコンドリアに効くの？</div><p>${esc(info.why)}</p></div>` +
+    `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a7 7 0 0 0-4-12Z"/></svg>実践のコツ</div><p>${esc(info.tips)}</p></div>` +
+    `<div class="info-disclaimer">※ 一般的な健康情報であり、医療上の助言ではありません。持病や治療中の方は主治医にご相談ください。</div>`;
+  $('#infoModal').classList.add('open');
+}
+
+/* ============ 今日のミト知識 ============ */
+let knowIdx = 0;
+function todayKnowledgeIndex() {
+  // 日付から決定的に選ぶ（日替わり）
+  const t = new Date(today + 'T12:00:00');
+  const epochDay = Math.floor(t.getTime() / 86400000);
+  return ((epochDay % KNOWLEDGE.length) + KNOWLEDGE.length) % KNOWLEDGE.length;
+}
+function renderKnowledge() {
+  $('#knowText').textContent = KNOWLEDGE[knowIdx];
+  $('#knowIdx').textContent = `${knowIdx + 1} / ${KNOWLEDGE.length}`;
+}
+$('#knowNext').addEventListener('click', () => {
+  knowIdx = (knowIdx + 1) % KNOWLEDGE.length;
+  renderKnowledge();
+});
 
 /* ============ ⑥ フッター ============ */
 document.querySelectorAll('.footer button').forEach(btn => {
@@ -1078,9 +1645,16 @@ function openSettings() {
   $('#setAct').textContent = computed.activation;
   const raw = localStorage.getItem(STORE_KEY) || '';
   $('#setSize').textContent = Math.round(raw.length * 2 / 1024) + 'KB';
+  $('#goalInput').value = (DB.goalWeight != null && DB.goalWeight !== '') ? DB.goalWeight : '';
   renderItemEditors();
   $('#settingsModal').classList.add('open');
 }
+$('#goalInput').addEventListener('change', e => {
+  const v = e.target.value;
+  DB.goalWeight = v === '' ? null : Math.round(clamp(Number(v), 0, 300) * 10) / 10;
+  save();
+  renderWeightGraph();
+});
 const CATS = ['運動','食事','睡眠・生活','NG行動'];
 function renderItemEditors() {
   const box = $('#itemEditors');
@@ -1168,6 +1742,7 @@ $('#btnImport').addEventListener('click', () => {
         if (!confirm('現在のデータをこのファイルの内容で置き換えますか？')) return;
         DB = d;
         if (!DB.startDate) DB.startDate = Object.keys(DB.days).sort()[0] || todayStr();
+        migrate(DB);
         sel = today; weekOffset = 0;
         commit();
         openSettings();
@@ -1214,9 +1789,12 @@ function renderAll() {
   renderStageChips();
   renderPhotos();
   renderInputs();
+  renderWeightGraph();
   renderFilterChips();
   renderTodo();
   renderFooter();
+  renderKnowledge();
+  if (breakdownOpen) renderBreakdown();
 }
 
 // 日付が変わったら（開きっぱなし・翌日再訪）今日を取り直す
@@ -1226,6 +1804,7 @@ function checkDayChange() {
     if (sel === today) sel = t;
     today = t;
     weekOffset = 0;
+    knowIdx = todayKnowledgeIndex();
     recompute(); save(); renderAll();
   }
 }
@@ -1233,10 +1812,17 @@ setInterval(checkDayChange, 60 * 1000);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) { checkDayChange(); startStage(); }
 });
-window.addEventListener('resize', () => { stage.plannedCount = -1; if (stage.reduced) drawStage(0); });
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  stage.plannedCount = -1;
+  if (stage.reduced) drawStage(0);
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderWeightGraph, 150);  // グラフのSVGを幅に追従
+});
 
 stage.canvas = $('#mitoCanvas');
 stage.ctx = stage.canvas.getContext('2d');
+knowIdx = todayKnowledgeIndex();
 recompute();
 save();
 renderAll();
