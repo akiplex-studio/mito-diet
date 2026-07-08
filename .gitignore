@@ -6,3 +6,9 @@ CLAUDE.md
 docs/
 steering/
 .DS_Store
+
+# バックエンド（server/）: 秘密情報・生成物・ログはコミットしない
+server/node_modules/
+server/dist/
+server/.env
+server/data/
