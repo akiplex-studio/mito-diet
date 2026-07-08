@@ -421,6 +421,36 @@ nav.footer {
 .set-field label { flex:1; font-size:14px; font-weight:500; }
 .set-field input { width:120px; height:44px; padding:0 var(--space-3); text-align:right; border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff; font-family:var(--font-number); }
 .set-field input:focus { border-color:var(--primary-500); }
+.set-field.col { flex-direction:column; align-items:stretch; gap:4px; }
+.set-field.col label { font-size:12px; color:var(--neutral-600); }
+.set-field.col input { width:100%; text-align:left; }
+
+/* ============ v1.2: 写真解析（AI） ============ */
+.photo-thumb { position:relative; }
+.ph-score {
+  position:absolute; bottom:3px; right:3px; pointer-events:none;
+  background:rgba(42,77,49,.88); color:#fff;
+  font-family:var(--font-number); font-variant-numeric:tabular-nums;
+  font-size:10px; font-weight:700; padding:1px 7px; border-radius:var(--radius-full);
+}
+.lb-card img { max-height:52dvh; }
+.lb-panel {
+  background:var(--color-surface); border-radius:var(--radius-md);
+  margin-top:var(--space-2); padding:var(--space-4);
+  max-height:34dvh; overflow-y:auto;
+}
+.lb-panel:empty { display:none; }
+.ana-btn { width:100%; }
+.ana-note { font-size:12px; color:var(--color-text-muted); text-align:center; margin-top:var(--space-2); line-height:1.6; }
+.ana-head { display:flex; align-items:baseline; gap:var(--space-2); margin-bottom:var(--space-2); }
+.ana-score { font-size:28px; font-weight:700; color:var(--primary-800); line-height:1; }
+.ana-slabel { font-size:12px; color:var(--color-text-muted); }
+.ana-conf { margin-left:auto; font-size:11px; color:var(--color-text-muted); }
+.ana-dishes { font-size:14px; font-weight:600; color:var(--neutral-800); }
+.ana-nut { font-size:12px; color:var(--neutral-600); margin:2px 0 var(--space-2); }
+.ana-goods { margin:0 0 var(--space-2) 18px; font-size:12.5px; color:var(--success-600); line-height:1.7; }
+.ana-advice { font-size:13px; line-height:1.7; color:var(--neutral-700); background:var(--primary-50); border-radius:var(--radius-sm); padding:var(--space-2) var(--space-3); }
+.ana-retry { display:block; margin:var(--space-2) auto 0; font-size:11px; color:var(--color-text-muted); text-decoration:underline; padding:4px 8px; }
 </style>
 </head>
 <body>
@@ -552,6 +582,18 @@ nav.footer {
         <div class="set-note">書き出しには写真データも含まれます。機種変更前のバックアップに使えます。</div>
       </div>
       <div class="set-section">
+        <h4>写真解析（AI）</h4>
+        <div class="set-field col">
+          <label for="anaUrl">バックエンドURL</label>
+          <input type="url" id="anaUrl" placeholder="https://mito-meal-analyzer.onrender.com">
+        </div>
+        <div class="set-field col">
+          <label for="anaSecret">シークレット（APP_SHARED_SECRET）</label>
+          <input type="password" id="anaSecret" placeholder="サーバー側と同じ値">
+        </div>
+        <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・ミトスコアを推定します。設定はこの端末内にのみ保存されます。</div>
+      </div>
+      <div class="set-section">
         <h4>目標体重</h4>
         <div class="set-field">
           <label for="goalInput">目標体重（任意・kg）</label>
@@ -567,7 +609,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
         </div>
       </div>
-      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.1 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.2 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
     </div>
   </div>
 
@@ -577,6 +619,7 @@ nav.footer {
       <button class="lb-btn lb-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       <button class="lb-btn lb-del" id="lbDel" aria-label="この写真を削除"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       <img id="lbImg" alt="拡大した食事の写真">
+      <div class="lb-panel" id="lbPanel"></div>
     </div>
   </div>
 
@@ -797,23 +840,32 @@ const STORE_KEY = 'mito-data';
 function todayStr() { return fmtDate(new Date()); }
 
 function freshDB() {
-  return { version:2, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null };
+  return { version:3, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
+           analyze:{ url:'', secret:'' } };
 }
-// v1→v2 マイグレーション：写真を配列化、体重・目標体重フィールドを追加（既存の記録は保持）
+// v1→v3 マイグレーション：写真を {data, analysis} オブジェクトの配列に統一（既存の記録は保持）
 const MEAL_KEYS = ['breakfast','lunch','dinner'];
+function normalizePhotoEntry(x) {
+  if (typeof x === 'string' && x) return { data: x, analysis: null };           // v1/v2形式
+  if (x && typeof x === 'object' && typeof x.data === 'string' && x.data) {     // v3形式
+    if (!('analysis' in x)) x.analysis = null;
+    return x;
+  }
+  return null;
+}
 function migratePhotos(rec) {
   const p = (rec.photos && typeof rec.photos === 'object') ? rec.photos : {};
   const out = {};
   for (const k of MEAL_KEYS) {
     const v = p[k];
-    if (Array.isArray(v)) out[k] = v.filter(x => typeof x === 'string' && x);
-    else if (typeof v === 'string' && v) out[k] = [v];
-    else out[k] = [];
+    const arr = Array.isArray(v) ? v : (typeof v === 'string' && v) ? [v] : [];
+    out[k] = arr.map(normalizePhotoEntry).filter(Boolean);
   }
   rec.photos = out;
 }
 function migrate(d) {
   if (!('goalWeight' in d)) d.goalWeight = null;
+  if (!d.analyze || typeof d.analyze !== 'object') d.analyze = { url:'', secret:'' };
   for (const k in d.days) {
     const rec = d.days[k];
     if (!rec || typeof rec !== 'object') {
@@ -824,7 +876,7 @@ function migrate(d) {
     if (!('weight' in rec)) rec.weight = null;
     migratePhotos(rec);
   }
-  d.version = 2;
+  d.version = 3;
   return d;
 }
 function load() {
@@ -1126,13 +1178,19 @@ function renderPhotos() {
     lab.innerHTML = `${label}<span class="cnt">${arr.length}/${MAX_PHOTOS}</span>`;
     const thumbs = document.createElement('div');
     thumbs.className = 'photo-thumbs';
-    arr.forEach((data, idx) => {
+    arr.forEach((entry, idx) => {
       const t = document.createElement('div');
       t.className = 'photo-thumb';
       const img = document.createElement('img');
-      img.src = data; img.alt = `${label}の食事 ${idx + 1}`;
+      img.src = entry.data; img.alt = `${label}の食事 ${idx + 1}`;
       img.addEventListener('click', () => openLightbox(key, idx));
       t.appendChild(img);
+      if (entry.analysis) {
+        const badge = document.createElement('span');
+        badge.className = 'ph-score';
+        badge.textContent = String(Number(entry.analysis.mito_score) || 0);
+        t.appendChild(badge);
+      }
       thumbs.appendChild(t);
     });
     if (arr.length < MAX_PHOTOS) {
@@ -1152,8 +1210,89 @@ function openLightbox(meal, idx) {
   const arr = (rec.photos && rec.photos[meal]) || [];
   if (!arr[idx]) return;
   lightbox = { meal, index: idx };
-  $('#lbImg').src = arr[idx];
+  $('#lbImg').src = arr[idx].data;
+  renderLbPanel();
   $('#lightbox').classList.add('open');
+}
+
+/* ============ 写真解析（AI）：ライトボックス内の解析ボタンと結果表示 ============ */
+function currentLbEntry(create) {
+  const { meal, index } = lightbox;
+  if (meal == null) return null;
+  const rec = getRec(sel, create);
+  return (rec.photos && rec.photos[meal] && rec.photos[meal][index]) || null;
+}
+function renderLbPanel() {
+  const panel = $('#lbPanel');
+  const entry = currentLbEntry(false);
+  if (!entry) { panel.innerHTML = ''; return; }
+  const a = entry.analysis;
+  if (!a) {
+    panel.innerHTML =
+      `<button class="btn btn-primary ana-btn" id="anaRun">🔍 この写真をAIで解析する</button>` +
+      `<div class="ana-note">料理・栄養・ミトスコアを推定します（1回 約1円）</div>`;
+    $('#anaRun').addEventListener('click', analyzePhoto);
+    return;
+  }
+  const confJp = ({ low: '低', medium: '中', high: '高' })[a.confidence] || '—';
+  const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
+    || '料理を特定できませんでした';
+  const n = a.nutrition || {};
+  panel.innerHTML =
+    `<div class="ana-head"><span class="ana-score num">${Number(a.mito_score) || 0}</span><span class="ana-slabel">ミトスコア</span><span class="ana-conf">確信度: ${confJp}</span></div>` +
+    `<div class="ana-dishes">${dishes}</div>` +
+    `<div class="ana-nut num">約${Number(n.calories_kcal) || 0}kcal ・ たんぱく質${Number(n.protein_g) || 0}g ・ 脂質${Number(n.fat_g) || 0}g ・ 炭水化物${Number(n.carbs_g) || 0}g</div>` +
+    ((a.good_points || []).length ? `<ul class="ana-goods">${a.good_points.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : '') +
+    (a.advice ? `<div class="ana-advice">${esc(a.advice)}</div>` : '') +
+    `<button class="ana-retry" id="anaRetry">再解析する</button>`;
+  $('#anaRetry').addEventListener('click', analyzePhoto);
+}
+let analyzing = false;
+async function analyzePhoto() {
+  if (analyzing) return;
+  const cfg = DB.analyze || {};
+  if (!cfg.url || !cfg.secret) {
+    toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
+    $('#lightbox').classList.remove('open');
+    openSettings();
+    return;
+  }
+  const entry = currentLbEntry(true);
+  if (!entry) return;
+  analyzing = true;
+  const panel = $('#lbPanel');
+  panel.innerHTML = `<div class="ana-note">🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）</div>`;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 90000);
+    const res = await fetch(cfg.url.replace(/\/+$/, '') + '/api/analyze-meal', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-app-secret': cfg.secret },
+      body: JSON.stringify({ image: entry.data }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    const json = await res.json().catch(() => null);
+    if (res.status === 401) throw new Error('シークレットが一致しません（設定を確認してください）');
+    if (res.status === 429) throw new Error('今日の解析回数の上限に達しました。また明日どうぞ');
+    if (!res.ok || !json || !json.ok || !json.analysis) throw new Error('サーバーでエラーが発生しました');
+    entry.analysis = json.analysis;
+    entry.analyzedAt = new Date().toISOString();
+    commit();          // 保存＋サムネイルのスコアバッジ反映
+    renderLbPanel();   // ライトボックスは開いたまま結果を表示
+    toast('解析完了 ✨');
+  } catch (err) {
+    let msg;
+    if (err && err.name === 'AbortError') msg = '時間切れです。少し待ってもう一度試してください';
+    else if (err instanceof TypeError) msg = '接続できませんでした（URLとサーバーの稼働を確認）';
+    else msg = (err && err.message) || 'エラーが発生しました';
+    panel.innerHTML =
+      `<div class="ana-note">⚠ ${esc(msg)}</div>` +
+      `<button class="btn btn-secondary ana-btn" id="anaRun">もう一度試す</button>`;
+    $('#anaRun').addEventListener('click', analyzePhoto);
+  } finally {
+    analyzing = false;
+  }
 }
 $('#lbDel').addEventListener('click', () => {
   const { meal, index } = lightbox;
@@ -1192,7 +1331,7 @@ $('#photoFile').addEventListener('change', async e => {
   try {
     const data = await resizeImage(file);
     const first = rec.photos[photoSlot].length === 0;
-    rec.photos[photoSlot].push(data);
+    rec.photos[photoSlot].push({ data, analysis: null });
     // 最初の1枚アップで対応する食事TODOを自動チェック（例：朝の写真→野菜ジュース）
     let autoMsg = '';
     if (first) {
@@ -1646,9 +1785,21 @@ function openSettings() {
   const raw = localStorage.getItem(STORE_KEY) || '';
   $('#setSize').textContent = Math.round(raw.length * 2 / 1024) + 'KB';
   $('#goalInput').value = (DB.goalWeight != null && DB.goalWeight !== '') ? DB.goalWeight : '';
+  $('#anaUrl').value = (DB.analyze && DB.analyze.url) || '';
+  $('#anaSecret').value = (DB.analyze && DB.analyze.secret) || '';
   renderItemEditors();
   $('#settingsModal').classList.add('open');
 }
+$('#anaUrl').addEventListener('change', e => {
+  DB.analyze = DB.analyze || { url:'', secret:'' };
+  DB.analyze.url = e.target.value.trim();
+  save();
+});
+$('#anaSecret').addEventListener('change', e => {
+  DB.analyze = DB.analyze || { url:'', secret:'' };
+  DB.analyze.secret = e.target.value.trim();
+  save();
+});
 $('#goalInput').addEventListener('change', e => {
   const v = e.target.value;
   DB.goalWeight = v === '' ? null : Math.round(clamp(Number(v), 0, 300) * 10) / 10;

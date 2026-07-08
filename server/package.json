@@ -4,10 +4,13 @@
   "private": true,
   "description": "ミトコンドリア・ダイエット 料理写真解析バックエンド（個人利用MVP）",
   "type": "module",
+  "engines": {
+    "node": ">=22.9"
+  },
   "scripts": {
     "dev": "node --env-file=.env --import tsx src/index.ts",
     "build": "tsc",
-    "start": "node --env-file=.env dist/index.js",
+    "start": "node --env-file-if-exists=.env dist/index.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

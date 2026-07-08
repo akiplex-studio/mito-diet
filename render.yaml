@@ -1,0 +1,20 @@
+# Render Blueprint — 写真解析バックエンドを無料枠にデプロイする定義
+# 使い方: Renderダッシュボード → New → Blueprint → このリポジトリを選択
+# ANTHROPIC_API_KEY と APP_SHARED_SECRET は作成時にダッシュボードで入力する（sync: false）
+services:
+  - type: web
+    name: mito-meal-analyzer
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: APP_SHARED_SECRET
+        sync: false
+      - key: DAILY_LIMIT
+        value: "50"
