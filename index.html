@@ -451,6 +451,29 @@ nav.footer {
 .ana-goods { margin:0 0 var(--space-2) 18px; font-size:12.5px; color:var(--success-600); line-height:1.7; }
 .ana-advice { font-size:13px; line-height:1.7; color:var(--neutral-700); background:var(--primary-50); border-radius:var(--radius-sm); padding:var(--space-2) var(--space-3); }
 .ana-retry { display:block; margin:var(--space-2) auto 0; font-size:11px; color:var(--color-text-muted); text-decoration:underline; padding:4px 8px; }
+
+.set-field select {
+  width:200px; height:44px; padding:0 var(--space-2);
+  border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff;
+  font-family:inherit; font-size:14px;
+}
+.set-field select:focus { border-color:var(--primary-500); }
+
+/* ============ v1.3: きょうの栄養 ============ */
+.nut-row { display:flex; align-items:center; gap:var(--space-3); padding:5px 0; }
+.nut-label { flex:none; width:74px; font-size:12.5px; font-weight:600; color:var(--neutral-700); }
+.nut-bar { flex:1; height:12px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden; }
+.nut-fill { height:100%; border-radius:var(--radius-full); background:var(--primary-500); transition:width var(--duration-slow) var(--ease-standard); }
+.nut-fill.over { background:var(--warning-500); }
+.nut-val { flex:none; min-width:96px; text-align:right; font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--neutral-600); }
+.nut-val b { font-size:13px; color:var(--neutral-800); }
+.nut-summary { font-size:13px; line-height:1.7; margin:var(--space-2) 0; padding:var(--space-2) var(--space-3); border-radius:var(--radius-sm); background:var(--primary-50); color:var(--primary-900); }
+.nut-summary.over { background:#FBF3E2; color:var(--warning-600); }
+.nut-meta { font-size:11px; color:var(--color-text-muted); margin-top:var(--space-1); line-height:1.6; }
+.nut-setup { font-size:13px; color:var(--color-text-muted); text-align:center; padding:var(--space-3) 0; line-height:1.8; }
+#kcalGraph { width:100%; height:130px; display:block; margin-top:var(--space-3); }
+.wt-legend i.tdee { border-top:2px dotted var(--neutral-400); }
+.wt-legend i.bar { width:10px; height:8px; border:none; background:var(--primary-500); border-radius:2px; }
 </style>
 </head>
 <body>
@@ -536,6 +559,12 @@ nav.footer {
       <div id="weightBody"></div>
     </section>
 
+    <!-- きょうの栄養（v1.3） -->
+    <section class="card" id="nutriCard">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M21.2 8A10 10 0 0 0 16 2.8V8h5.2Z"/></svg>きょうの栄養（AI解析から集計）</h2>
+      <div id="nutriBody"></div>
+    </section>
+
     <!-- ⑤ 今日やること -->
     <section class="card" id="todoCard">
       <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
@@ -594,6 +623,44 @@ nav.footer {
         <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・ミトスコアを推定します。設定はこの端末内にのみ保存されます。</div>
       </div>
       <div class="set-section">
+        <h4>からだのプロフィール（必要カロリー計算に使用）</h4>
+        <div class="set-field">
+          <label for="profHeight">身長（cm）</label>
+          <input type="number" inputmode="decimal" min="0" max="250" step="0.1" id="profHeight" placeholder="例: 172">
+        </div>
+        <div class="set-field">
+          <label for="profAge">年齢</label>
+          <input type="number" inputmode="numeric" min="0" max="120" step="1" id="profAge" placeholder="例: 45">
+        </div>
+        <div class="set-field">
+          <label for="profSex">性別</label>
+          <select id="profSex">
+            <option value="">未設定</option>
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+          </select>
+        </div>
+        <div class="set-field">
+          <label for="profActivity">活動レベル</label>
+          <select id="profActivity">
+            <option value="1.2">低い（デスクワーク中心）</option>
+            <option value="1.375">やや低い（軽い運動・散歩）</option>
+            <option value="1.55">ふつう（週数回の運動）</option>
+            <option value="1.725">高い（毎日しっかり運動）</option>
+          </select>
+        </div>
+        <div class="set-field">
+          <label for="profRatio">食事量の目標</label>
+          <select id="profRatio">
+            <option value="0.7">腹七分目（維持の70%）</option>
+            <option value="0.8">ゆるめ（80%）</option>
+            <option value="0.9">控えめ（90%）</option>
+            <option value="1.0">維持（100%）</option>
+          </select>
+        </div>
+        <div class="set-note">体重は「きょうの記録」の最新値を使います。維持カロリーはMifflin-St Jeor式で計算します。</div>
+      </div>
+      <div class="set-section">
         <h4>目標体重</h4>
         <div class="set-field">
           <label for="goalInput">目標体重（任意・kg）</label>
@@ -609,7 +676,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
         </div>
       </div>
-      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.2 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.3 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
     </div>
   </div>
 
@@ -749,6 +816,42 @@ function computeState(db, todayStr) {
   }
   return { activation: act, mito, peak, perDay };
 }
+
+/* ---- v1.3: 栄養計算（Mifflin-St Jeor式・七分目目標） ---- */
+function calcBMR(sex, weightKg, heightCm, age) {
+  const base = 10 * weightKg + 6.25 * heightCm - 5 * age;
+  return Math.round(sex === 'female' ? base - 161 : base + 5);
+}
+// profile: {heightCm, age, sex, activity, targetRatio} / weightKg: 最新体重
+function calcTargets(profile, weightKg) {
+  if (!profile || !profile.heightCm || !profile.age || !profile.sex || !weightKg) return null;
+  const bmr = calcBMR(profile.sex, weightKg, profile.heightCm, profile.age);
+  const tdee = Math.round(bmr * (profile.activity || 1.375));
+  const ratio = profile.targetRatio || 0.7;
+  const kcal = Math.round(tdee * ratio);
+  const proteinG = Math.round(weightKg * 1.6);            // アプリ既存のTODO基準と同じ
+  const fatG = Math.round((kcal * 0.25) / 9);             // 目標カロリーの25%
+  const carbsG = Math.max(0, Math.round((kcal - proteinG * 4 - fatG * 9) / 4));
+  return { bmr, tdee, ratio, kcal, proteinG, fatG, carbsG };
+}
+// 1日分の記録から、AI解析済み写真の栄養を合計する
+function recNutrition(rec) {
+  const sum = { kcal: 0, p: 0, f: 0, c: 0, analyzed: 0, total: 0 };
+  const photos = (rec && rec.photos) || {};
+  for (const meal of ['breakfast', 'lunch', 'dinner']) {
+    for (const entry of (Array.isArray(photos[meal]) ? photos[meal] : [])) {
+      sum.total++;
+      const n = entry && entry.analysis && entry.analysis.nutrition;
+      if (!n) continue;
+      sum.analyzed++;
+      sum.kcal += Number(n.calories_kcal) || 0;
+      sum.p += Number(n.protein_g) || 0;
+      sum.f += Number(n.fat_g) || 0;
+      sum.c += Number(n.carbs_g) || 0;
+    }
+  }
+  return sum;
+}
 /* @logic-end */
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
@@ -840,8 +943,9 @@ const STORE_KEY = 'mito-data';
 function todayStr() { return fmtDate(new Date()); }
 
 function freshDB() {
-  return { version:3, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
-           analyze:{ url:'', secret:'' } };
+  return { version:4, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
+           analyze:{ url:'', secret:'' },
+           profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 } };
 }
 // v1→v3 マイグレーション：写真を {data, analysis} オブジェクトの配列に統一（既存の記録は保持）
 const MEAL_KEYS = ['breakfast','lunch','dinner'];
@@ -866,6 +970,15 @@ function migratePhotos(rec) {
 function migrate(d) {
   if (!('goalWeight' in d)) d.goalWeight = null;
   if (!d.analyze || typeof d.analyze !== 'object') d.analyze = { url:'', secret:'' };
+  if (!d.profile || typeof d.profile !== 'object') {
+    d.profile = { heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 };
+  } else {
+    if (!('heightCm' in d.profile)) d.profile.heightCm = null;
+    if (!('age' in d.profile)) d.profile.age = null;
+    if (!('sex' in d.profile)) d.profile.sex = null;
+    if (!d.profile.activity) d.profile.activity = 1.375;
+    if (!d.profile.targetRatio) d.profile.targetRatio = 0.7;
+  }
   for (const k in d.days) {
     const rec = d.days[k];
     if (!rec || typeof rec !== 'object') {
@@ -876,7 +989,7 @@ function migrate(d) {
     if (!('weight' in rec)) rec.weight = null;
     migratePhotos(rec);
   }
-  d.version = 3;
+  d.version = 4;
   return d;
 }
 function load() {
@@ -1494,6 +1607,99 @@ function renderWeightGraph() {
   body.innerHTML = head + svg + legend;
 }
 
+/* ============ きょうの栄養（v1.3：AI解析の集計と七分目目標） ============ */
+function nutBarRow(label, value, target, unit) {
+  const pct = target > 0 ? Math.round((value / target) * 100) : 0;
+  const over = value > target;
+  return `<div class="nut-row">
+    <span class="nut-label">${label}</span>
+    <span class="nut-bar"><span class="nut-fill${over ? ' over' : ''}" style="width:${Math.min(100, pct)}%"></span></span>
+    <span class="nut-val"><b>${Math.round(value)}</b> / ${Math.round(target)}${unit}</span>
+  </div>`;
+}
+function renderNutrition() {
+  const body = $('#nutriBody');
+  const prof = DB.profile || {};
+  const lw = latestWeight(sel);
+
+  if (!prof.heightCm || !prof.age || !prof.sex) {
+    body.innerHTML = `<div class="nut-setup">身長・年齢・性別を設定すると、あなたの「腹七分目」目標カロリーと比較できます。</div>
+      <button class="btn btn-secondary ana-btn" id="nutSetup">プロフィールを設定する</button>`;
+    $('#nutSetup').addEventListener('click', openSettings);
+    return;
+  }
+  if (!lw) {
+    body.innerHTML = `<div class="nut-setup">「きょうの記録」に体重を入力すると、目標カロリーを計算できます。</div>`;
+    return;
+  }
+
+  const t = calcTargets(prof, lw.weight);
+  const sum = recNutrition(getRec(sel, false));
+
+  // カロリーの一言サマリー（煽らないトーンで事実を提示）
+  let summary, overCls = '';
+  const diff = Math.round(t.kcal - sum.kcal);
+  if (sum.analyzed === 0) {
+    summary = `目標は <b>${t.kcal.toLocaleString()}kcal</b>（維持 ${t.tdee.toLocaleString()}kcal の${Math.round(t.ratio * 100)}%）。写真を解析すると自動で集計されます。`;
+  } else if (diff >= 0) {
+    summary = `目標まであと <b>${diff.toLocaleString()}kcal</b>。七分目ペースで進んでいます 🌱`;
+  } else if (sum.kcal <= t.tdee) {
+    summary = `目標を ${Math.abs(diff).toLocaleString()}kcal 超えていますが、維持カロリー（${t.tdee.toLocaleString()}kcal）の範囲内です。`;
+    overCls = ' over';
+  } else {
+    summary = `維持カロリーを ${(sum.kcal - t.tdee).toLocaleString()}kcal 超えています。明日は軽めから始めてみましょう。`;
+    overCls = ' over';
+  }
+
+  body.innerHTML =
+    `<div class="nut-summary${overCls}">${summary}</div>` +
+    nutBarRow('カロリー', sum.kcal, t.kcal, 'kcal') +
+    nutBarRow('たんぱく質', sum.p, t.proteinG, 'g') +
+    nutBarRow('脂質', sum.f, t.fatG, 'g') +
+    nutBarRow('炭水化物', sum.c, t.carbsG, 'g') +
+    `<div class="nut-meta">解析済み ${sum.analyzed}/${sum.total}枚${sum.analyzed < sum.total ? '（未解析の写真は含まれません）' : ''} ・ BMR ${t.bmr.toLocaleString()}kcal ・ 維持 ${t.tdee.toLocaleString()}kcal<br>※数値はAIによる目安です。強い空腹や体調不良を感じたら無理せず調整してください。</div>` +
+    renderKcalGraph(t) +
+    `<div class="wt-legend"><span><i class="bar"></i>摂取kcal</span><span><i class="goal"></i>目標（${Math.round(t.ratio * 100)}%）</span><span><i class="tdee"></i>維持</span></div>`;
+}
+// 直近14日の摂取カロリー棒グラフ + 目標線・維持線（SVG文字列を返す）
+function renderKcalGraph(t) {
+  const days = [];
+  let d = sel;
+  for (let i = 0; i < 14; i++) { days.unshift(d); d = prevDate(d); }
+  const vals = days.map(dd => recNutrition(DB.days[dd] || {}).kcal);
+  const W = 320, H = 130, padL = 40, padR = 8, padT = 10, padB = 18;
+  const maxV = Math.max(t.tdee * 1.15, ...vals, 1);
+  const ys = v => padT + (H - padT - padB) * (1 - v / maxV);
+  const bw = (W - padL - padR) / 14;
+  let bars = '';
+  vals.forEach((v, i) => {
+    if (v <= 0) return;
+    const x = padL + i * bw + bw * 0.18;
+    const y = ys(v);
+    const color = v > t.kcal ? '#E2A53C' : '#6A994E';
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * 0.64).toFixed(1)}" height="${(H - padB - y).toFixed(1)}" rx="2" fill="${color}"/>`;
+  });
+  const gridLines = [t.tdee, Math.round(t.tdee / 2)].map(v =>
+    `<text x="${padL - 5}" y="${(ys(v) + 3).toFixed(1)}" text-anchor="end" font-size="8.5" fill="#A89F8A">${v.toLocaleString()}</text>`
+  ).join('');
+  const dayLabels = days.map((dd, i) => {
+    if (i % 3 !== 1) return '';
+    const x = padL + i * bw + bw / 2;
+    return `<text x="${x.toFixed(1)}" y="${H - 5}" text-anchor="middle" font-size="8.5" fill="#A89F8A">${Number(dd.slice(5, 7))}/${Number(dd.slice(8))}</text>`;
+  }).join('');
+  return `<svg id="kcalGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="摂取カロリーの推移">
+    <line x1="${padL}" y1="${ys(t.tdee).toFixed(1)}" x2="${W - padR}" y2="${ys(t.tdee).toFixed(1)}" stroke="#A89F8A" stroke-width="1" stroke-dasharray="2 3"/>
+    <line x1="${padL}" y1="${ys(t.kcal).toFixed(1)}" x2="${W - padR}" y2="${ys(t.kcal).toFixed(1)}" stroke="#4E8098" stroke-width="1.5" stroke-dasharray="5 4"/>
+    ${gridLines}${bars}${dayLabels}
+    <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#E7DBC0" stroke-width="1"/>
+  </svg>`;
+}
+function prevDate(dstr) {
+  const t = new Date(dstr + 'T12:00:00');
+  t.setDate(t.getDate() - 1);
+  return fmtDate(t);
+}
+
 /* ============ ⑤ TODO ============ */
 const FILTERS = [['all','すべて'],['運動','運動'],['食事','食事'],['睡眠・生活','睡眠・生活'],['NG行動','NG']];
 function renderFilterChips() {
@@ -1787,9 +1993,32 @@ function openSettings() {
   $('#goalInput').value = (DB.goalWeight != null && DB.goalWeight !== '') ? DB.goalWeight : '';
   $('#anaUrl').value = (DB.analyze && DB.analyze.url) || '';
   $('#anaSecret').value = (DB.analyze && DB.analyze.secret) || '';
+  const prof = DB.profile || {};
+  $('#profHeight').value = prof.heightCm ?? '';
+  $('#profAge').value = prof.age ?? '';
+  $('#profSex').value = prof.sex || '';
+  $('#profActivity').value = String(prof.activity || 1.375);
+  $('#profRatio').value = String(prof.targetRatio || 0.7);
   renderItemEditors();
   $('#settingsModal').classList.add('open');
 }
+function setProfile(field, value) {
+  DB.profile = DB.profile || { heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 };
+  DB.profile[field] = value;
+  save();
+  renderNutrition();
+}
+$('#profHeight').addEventListener('change', e => {
+  const v = e.target.value;
+  setProfile('heightCm', v === '' ? null : Math.round(clamp(Number(v), 0, 250) * 10) / 10);
+});
+$('#profAge').addEventListener('change', e => {
+  const v = e.target.value;
+  setProfile('age', v === '' ? null : Math.floor(clamp(Number(v), 0, 120)));
+});
+$('#profSex').addEventListener('change', e => setProfile('sex', e.target.value || null));
+$('#profActivity').addEventListener('change', e => setProfile('activity', Number(e.target.value) || 1.375));
+$('#profRatio').addEventListener('change', e => setProfile('targetRatio', Number(e.target.value) || 0.7));
 $('#anaUrl').addEventListener('change', e => {
   DB.analyze = DB.analyze || { url:'', secret:'' };
   DB.analyze.url = e.target.value.trim();
@@ -1941,6 +2170,7 @@ function renderAll() {
   renderPhotos();
   renderInputs();
   renderWeightGraph();
+  renderNutrition();
   renderFilterChips();
   renderTodo();
   renderFooter();
