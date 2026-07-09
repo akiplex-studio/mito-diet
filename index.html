@@ -452,6 +452,33 @@ nav.footer {
 .ana-advice { font-size:13px; line-height:1.7; color:var(--neutral-700); background:var(--primary-50); border-radius:var(--radius-sm); padding:var(--space-2) var(--space-3); }
 .ana-retry { display:block; margin:var(--space-2) auto 0; font-size:11px; color:var(--color-text-muted); text-decoration:underline; padding:4px 8px; }
 
+/* ============ v1.4: 食事単位のまとめ解析 ============ */
+.meal-ana-btn {
+  margin-left:auto; font-size:11px; font-weight:600;
+  color:var(--primary-800); background:var(--primary-100);
+  border-radius:var(--radius-full); padding:5px 12px;
+  font-family:var(--font-number); font-variant-numeric:tabular-nums;
+}
+.meal-ana-btn:hover { background:var(--primary-200); }
+.meal-ana-btn.done { background:var(--primary-800); color:#fff; }
+#mealModal.open { align-items:center; }
+.meal-strip { display:flex; gap:6px; margin:var(--space-3) 0; flex-wrap:wrap; }
+.meal-strip img { width:46px; height:46px; object-fit:cover; border-radius:var(--radius-sm); }
+.meal-textarea {
+  width:100%; min-height:72px; padding:var(--space-3); margin-top:var(--space-2);
+  border:1px solid var(--neutral-300); border-radius:var(--radius-sm);
+  font-family:inherit; font-size:14px; line-height:1.6; resize:vertical;
+}
+.meal-textarea:focus { outline:none; border-color:var(--primary-500); box-shadow:var(--shadow-focus); }
+.ful-label { font-size:12px; color:var(--color-text-muted); margin-top:var(--space-3); }
+.ful-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.ful-chips button {
+  font-size:12.5px; padding:7px 13px; border-radius:var(--radius-full);
+  background:var(--neutral-50); border:1px solid var(--color-border); color:var(--neutral-600);
+}
+.ful-chips button.on { background:var(--primary-100); border-color:var(--primary-300); color:var(--primary-800); font-weight:600; }
+.txt-title { font-size:16px; font-weight:700; color:var(--primary-900); }
+
 .set-field select {
   width:200px; height:44px; padding:0 var(--space-2);
   border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff;
@@ -676,7 +703,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
         </div>
       </div>
-      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.3.1 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.4 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
     </div>
   </div>
 
@@ -687,6 +714,14 @@ nav.footer {
       <button class="lb-btn lb-del" id="lbDel" aria-label="この写真を削除"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
       <img id="lbImg" alt="拡大した食事の写真">
       <div class="lb-panel" id="lbPanel"></div>
+    </div>
+  </div>
+
+  <!-- 食事解析モーダル（v1.4: 写真＋ことば＋満腹度をまとめて1回で解析） -->
+  <div class="modal" id="mealModal">
+    <div class="med-card" style="text-align:left">
+      <div class="txt-title" id="mealTitle">🍽 食事を解析</div>
+      <div id="mealBody"></div>
     </div>
   </div>
 
@@ -836,21 +871,41 @@ function calcTargets(profile, weightKg) {
   const carbsG = Math.max(0, Math.round((kcal - proteinG * 4 - fatG * 9) / 4));
   return { bmr, tdee, ratio, kcal, proteinG, fatG, carbsG };
 }
-// 1日分の記録から、AI解析済み写真の栄養を合計する
+// 1日分の記録から栄養を合計する。
+// 食事単位の解析（mealAnalysis）があればそれを優先し、無ければ旧形式（写真ごとの解析）を合算する
 function recNutrition(rec) {
-  const sum = { kcal: 0, p: 0, f: 0, c: 0, analyzed: 0, total: 0 };
+  const sum = { kcal: 0, p: 0, f: 0, c: 0, analyzedMeals: 0, meals: {} };
   const photos = (rec && rec.photos) || {};
+  const mas = (rec && rec.mealAnalysis) || {};
+  const add = (n) => {
+    sum.kcal += Number(n.calories_kcal) || 0;
+    sum.p += Number(n.protein_g) || 0;
+    sum.f += Number(n.fat_g) || 0;
+    sum.c += Number(n.carbs_g) || 0;
+  };
   for (const meal of ['breakfast', 'lunch', 'dinner']) {
-    for (const entry of (Array.isArray(photos[meal]) ? photos[meal] : [])) {
-      sum.total++;
-      const n = entry && entry.analysis && entry.analysis.nutrition;
-      if (!n) continue;
-      sum.analyzed++;
-      sum.kcal += Number(n.calories_kcal) || 0;
-      sum.p += Number(n.protein_g) || 0;
-      sum.f += Number(n.fat_g) || 0;
-      sum.c += Number(n.carbs_g) || 0;
+    const arr = Array.isArray(photos[meal]) ? photos[meal] : [];
+    const ma = mas[meal];
+    let state = 'none';
+    if (ma && ma.analysis && ma.analysis.nutrition) {
+      add(ma.analysis.nutrition);
+      state = 'meal';
+      sum.analyzedMeals++;
+    } else {
+      let legacy = 0;
+      for (const entry of arr) {
+        const n = entry && entry.analysis && entry.analysis.nutrition;
+        if (!n) continue;
+        legacy++;
+        add(n);
+      }
+      if (legacy > 0) state = 'photos';
     }
+    sum.meals[meal] = {
+      state,
+      photoCount: arr.length,
+      stale: !!(ma && ma.analysis && ma.photoCount != null && ma.photoCount !== arr.length),
+    };
   }
   return sum;
 }
@@ -945,7 +1000,7 @@ const STORE_KEY = 'mito-data';
 function todayStr() { return fmtDate(new Date()); }
 
 function freshDB() {
-  return { version:4, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
+  return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
            analyze:{ url:'', secret:'' },
            profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 } };
 }
@@ -984,14 +1039,17 @@ function migrate(d) {
   for (const k in d.days) {
     const rec = d.days[k];
     if (!rec || typeof rec !== 'object') {
-      d.days[k] = { checked:[], steps:null, sleepHours:null, weight:null, photos:{breakfast:[],lunch:[],dinner:[]} };
+      d.days[k] = emptyRec();
       continue;
     }
     if (!Array.isArray(rec.checked)) rec.checked = [];
     if (!('weight' in rec)) rec.weight = null;
     migratePhotos(rec);
+    if (!rec.mealAnalysis || typeof rec.mealAnalysis !== 'object') {
+      rec.mealAnalysis = { breakfast:null, lunch:null, dinner:null };
+    }
   }
-  d.version = 4;
+  d.version = 5;
   return d;
 }
 function load() {
@@ -1029,7 +1087,9 @@ const $ = s => document.querySelector(s);
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function emptyRec() {
-  return { checked:[], steps:null, sleepHours:null, weight:null, photos:{breakfast:[],lunch:[],dinner:[]} };
+  return { checked:[], steps:null, sleepHours:null, weight:null,
+           photos:{breakfast:[],lunch:[],dinner:[]},
+           mealAnalysis:{breakfast:null,lunch:null,dinner:null} };
 }
 function getRec(d, create) {
   let r = DB.days[d];
@@ -1291,6 +1351,19 @@ function renderPhotos() {
     const lab = document.createElement('div');
     lab.className = 'photo-meal-label';
     lab.innerHTML = `${label}<span class="cnt">${arr.length}/${MAX_PHOTOS}</span>`;
+    // 食事単位の解析ボタン（写真全部＋ことば補足＋満腹度を1回で解析）
+    const ma = (rec.mealAnalysis || {})[key];
+    const ab = document.createElement('button');
+    if (ma && ma.analysis) {
+      const stale = ma.photoCount != null && ma.photoCount !== arr.length;
+      ab.className = 'meal-ana-btn done';
+      ab.textContent = `ミトスコア ${Number(ma.analysis.mito_score) || 0}${stale ? ' ⟳' : ''}`;
+    } else {
+      ab.className = 'meal-ana-btn';
+      ab.textContent = '🔍 解析';
+    }
+    ab.addEventListener('click', () => openMealModal(key));
+    lab.appendChild(ab);
     const thumbs = document.createElement('div');
     thumbs.className = 'photo-thumbs';
     arr.forEach((entry, idx) => {
@@ -1336,83 +1409,179 @@ function openLightbox(meal, idx) {
   $('#lightbox').classList.add('open');
 }
 
-/* ============ 写真解析（AI）：ライトボックス内の解析ボタンと結果表示 ============ */
+/* ============ 写真解析（AI）v1.4：食事単位のまとめ解析 ============ */
 function currentLbEntry(create) {
   const { meal, index } = lightbox;
   if (meal == null) return null;
   const rec = getRec(sel, create);
   return (rec.photos && rec.photos[meal] && rec.photos[meal][index]) || null;
 }
-function renderLbPanel() {
-  const panel = $('#lbPanel');
-  const entry = currentLbEntry(false);
-  if (!entry) { panel.innerHTML = ''; return; }
-  const a = entry.analysis;
-  if (!a) {
-    panel.innerHTML =
-      `<button class="btn btn-primary ana-btn" id="anaRun">🔍 この写真をAIで解析する</button>` +
-      `<div class="ana-note">料理・栄養・ミトスコアを推定します（1回 約1円）</div>`;
-    $('#anaRun').addEventListener('click', analyzePhoto);
-    return;
-  }
+// 解析結果の共通表示（食事モーダル・旧形式の写真結果で共用）
+function analysisHTML(a) {
   const confJp = ({ low: '低', medium: '中', high: '高' })[a.confidence] || '—';
   const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
     || '料理を特定できませんでした';
   const n = a.nutrition || {};
-  panel.innerHTML =
-    `<div class="ana-head"><span class="ana-score num">${Number(a.mito_score) || 0}</span><span class="ana-slabel">ミトスコア</span><span class="ana-conf">確信度: ${confJp}</span></div>` +
+  return `<div class="ana-head"><span class="ana-score num">${Number(a.mito_score) || 0}</span><span class="ana-slabel">ミトスコア</span><span class="ana-conf">確信度: ${confJp}</span></div>` +
     `<div class="ana-dishes">${dishes}</div>` +
     `<div class="ana-nut num">約${Number(n.calories_kcal) || 0}kcal ・ たんぱく質${Number(n.protein_g) || 0}g ・ 脂質${Number(n.fat_g) || 0}g ・ 炭水化物${Number(n.carbs_g) || 0}g</div>` +
     ((a.good_points || []).length ? `<ul class="ana-goods">${a.good_points.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : '') +
-    (a.advice ? `<div class="ana-advice">${esc(a.advice)}</div>` : '') +
-    `<button class="ana-retry" id="anaRetry">再解析する</button>`;
-  $('#anaRetry').addEventListener('click', analyzePhoto);
+    (a.advice ? `<div class="ana-advice">${esc(a.advice)}</div>` : '');
 }
-let analyzing = false;
-async function analyzePhoto() {
-  if (analyzing) return;
-  const cfg = DB.analyze || {};
-  if (!cfg.url || !cfg.secret) {
-    toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
-    $('#lightbox').classList.remove('open');
-    openSettings();
+function renderLbPanel() {
+  const panel = $('#lbPanel');
+  const entry = currentLbEntry(false);
+  if (!entry) { panel.innerHTML = ''; return; }
+  if (entry.analysis) {
+    // 旧形式（写真単位）の解析結果は読み取り専用で表示
+    panel.innerHTML = analysisHTML(entry.analysis) +
+      `<div class="ana-note">旧形式（写真ごと）の解析結果です。今後は写真一覧の「🔍 解析」で食事ごとにまとめて解析されます</div>`;
     return;
   }
-  const entry = currentLbEntry(true);
-  if (!entry) return;
-  analyzing = true;
-  const panel = $('#lbPanel');
-  panel.innerHTML = `<div class="ana-note">🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）</div>`;
+  panel.innerHTML = `<div class="ana-note">栄養の解析は食事ごとにまとめて行います。写真一覧の「🔍 解析」ボタンからどうぞ</div>`;
+}
+
+/* ---- API呼び出し（共通） ---- */
+async function callAnalyzeAPI(bodyReq) {
+  const cfg = DB.analyze || {};
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 120000);
   try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 90000);
     const res = await fetch(cfg.url.replace(/\/+$/, '') + '/api/analyze-meal', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-app-secret': cfg.secret },
-      body: JSON.stringify({ image: entry.data }),
+      body: JSON.stringify(bodyReq),
       signal: ctrl.signal,
     });
-    clearTimeout(timer);
     const json = await res.json().catch(() => null);
     if (res.status === 401) throw new Error('シークレットが一致しません（設定を確認してください）');
     if (res.status === 429) throw new Error('今日の解析回数の上限に達しました。また明日どうぞ');
     if (!res.ok || !json || !json.ok || !json.analysis) throw new Error('サーバーでエラーが発生しました');
-    entry.analysis = json.analysis;
-    entry.analyzedAt = new Date().toISOString();
-    commit();          // 保存＋サムネイルのスコアバッジ反映
-    renderLbPanel();   // ライトボックスは開いたまま結果を表示
+    return json.analysis;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function analyzeErrMsg(err) {
+  if (err && err.name === 'AbortError') return '時間切れです。少し待ってもう一度試してください';
+  if (err instanceof TypeError) return '接続できませんでした（URLとサーバーの稼働を確認）';
+  return (err && err.message) || 'エラーが発生しました';
+}
+
+/* ---- 食事解析モーダル ---- */
+const MEAL_JP = { breakfast: '朝', lunch: '昼', dinner: '晩' };
+const FULLNESS_OPTS = ['軽め', '腹七分目くらい', '満腹', '食べ過ぎ'];
+let mealModalKey = null, mealFulSel = null, mealBusy = false;
+
+function openMealModal(meal) {
+  mealModalKey = meal;
+  const rec = getRec(sel, false);
+  const ma = (rec.mealAnalysis || {})[meal];
+  mealFulSel = (ma && ma.fullness) || null;
+  $('#mealTitle').textContent = `🍽 ${MEAL_JP[meal]}の食事を解析`;
+  if (ma && ma.analysis) renderMealResult();
+  else renderMealForm();
+  $('#mealModal').classList.add('open');
+}
+function renderMealFul() {
+  const box = $('#mealFul');
+  if (!box) return;
+  box.innerHTML = '';
+  FULLNESS_OPTS.forEach(o => {
+    const b = document.createElement('button');
+    b.textContent = o;
+    if (mealFulSel === o) b.className = 'on';
+    b.addEventListener('click', () => { mealFulSel = mealFulSel === o ? null : o; renderMealFul(); });
+    box.appendChild(b);
+  });
+}
+function renderMealForm() {
+  const body = $('#mealBody');
+  const rec = getRec(sel, false);
+  const arr = (rec.photos && rec.photos[mealModalKey]) || [];
+  const ma = (rec.mealAnalysis || {})[mealModalKey];
+  const strip = arr.length
+    ? `<div class="meal-strip">${arr.map(e => `<img src="${e.data}" alt="">`).join('')}</div>` +
+      `<div class="ana-note" style="text-align:left">写真${arr.length}枚を1つの食事としてまとめて解析します</div>`
+    : `<div class="ana-note" style="text-align:left">写真はありません。食べたものを言葉で入力してください</div>`;
+  body.innerHTML =
+    strip +
+    `<textarea id="mealNote" class="meal-textarea" placeholder="${arr.length ? 'ことばで補足（任意）例：ご飯は大盛り、味噌汁も飲んだ' : '例：すき家でご飯大盛りの牛丼と肉皿'}">${esc((ma && ma.note) || '')}</textarea>` +
+    `<div class="ful-label">食べた量の感覚（任意・量の推定に使います）</div>` +
+    `<div class="ful-chips" id="mealFul"></div>` +
+    `<div class="btn-row" style="margin-top:14px">` +
+      `<button class="btn btn-primary" id="mealRun">解析する</button>` +
+      `<button class="btn btn-secondary" data-close>やめる</button>` +
+    `</div>` +
+    `<div class="ana-note" id="mealMsg" style="text-align:left; min-height:1.4em"></div>`;
+  renderMealFul();
+  $('#mealRun').addEventListener('click', runMealAnalysis);
+}
+function renderMealResult() {
+  const body = $('#mealBody');
+  const rec = getRec(sel, false);
+  const arr = (rec.photos && rec.photos[mealModalKey]) || [];
+  const ma = (rec.mealAnalysis || {})[mealModalKey];
+  if (!ma || !ma.analysis) { renderMealForm(); return; }
+  const stale = ma.photoCount != null && ma.photoCount !== arr.length;
+  const metaBits = [
+    ma.fullness ? `満腹度: ${esc(ma.fullness)}` : '',
+    ma.note ? `補足: ${esc(ma.note)}` : '',
+  ].filter(Boolean).join(' ・ ');
+  body.innerHTML =
+    analysisHTML(ma.analysis) +
+    (metaBits ? `<div class="nut-meta">${metaBits}</div>` : '') +
+    (stale ? `<div class="ana-note" style="text-align:left">⟳ 解析後に写真の枚数が変わっています。再解析すると正確になります</div>` : '') +
+    `<div class="btn-row" style="margin-top:14px">` +
+      `<button class="btn btn-secondary" id="mealRedo">再解析する</button>` +
+      `<button class="btn btn-primary" data-close>閉じる</button>` +
+    `</div>`;
+  $('#mealRedo').addEventListener('click', renderMealForm);
+}
+async function runMealAnalysis() {
+  if (mealBusy) return;
+  const cfg = DB.analyze || {};
+  if (!cfg.url || !cfg.secret) {
+    toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
+    $('#mealModal').classList.remove('open');
+    openSettings();
+    return;
+  }
+  const rec = getRec(sel, true);
+  const arr = (rec.photos && rec.photos[mealModalKey]) || [];
+  const note = ($('#mealNote') ? $('#mealNote').value.trim() : '');
+  if (!arr.length && note.length < 2) {
+    $('#mealMsg').textContent = '写真が無い場合は、食べたものを入力してください';
+    return;
+  }
+  mealBusy = true;
+  const btn = $('#mealRun');
+  if (btn) { btn.disabled = true; btn.textContent = '解析中…'; }
+  $('#mealMsg').textContent = '🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）';
+  try {
+    const bodyReq = {};
+    if (arr.length) bodyReq.images = arr.map(e => e.data);
+    if (note) bodyReq.text = note;
+    if (mealFulSel) bodyReq.fullness = mealFulSel;
+    const analysis = await callAnalyzeAPI(bodyReq);
+    if (!rec.mealAnalysis || typeof rec.mealAnalysis !== 'object') {
+      rec.mealAnalysis = { breakfast: null, lunch: null, dinner: null };
+    }
+    rec.mealAnalysis[mealModalKey] = {
+      analysis,
+      note: note || null,
+      fullness: mealFulSel || null,
+      analyzedAt: new Date().toISOString(),
+      photoCount: arr.length,
+    };
+    commit();          // 保存＋スコアボタン・栄養カード反映
+    renderMealResult();
     toast('解析完了 ✨');
   } catch (err) {
-    let msg;
-    if (err && err.name === 'AbortError') msg = '時間切れです。少し待ってもう一度試してください';
-    else if (err instanceof TypeError) msg = '接続できませんでした（URLとサーバーの稼働を確認）';
-    else msg = (err && err.message) || 'エラーが発生しました';
-    panel.innerHTML =
-      `<div class="ana-note">⚠ ${esc(msg)}</div>` +
-      `<button class="btn btn-secondary ana-btn" id="anaRun">もう一度試す</button>`;
-    $('#anaRun').addEventListener('click', analyzePhoto);
+    $('#mealMsg').textContent = '⚠ ' + analyzeErrMsg(err);
+    if (btn) { btn.disabled = false; btn.textContent = '解析する'; }
   } finally {
-    analyzing = false;
+    mealBusy = false;
   }
 }
 $('#lbDel').addEventListener('click', () => {
@@ -1652,8 +1821,8 @@ function renderNutrition() {
   // カロリーの一言サマリー（煽らないトーンで事実を提示）
   let summary, overCls = '';
   const diff = Math.round(t.kcal - sum.kcal);
-  if (sum.analyzed === 0) {
-    summary = `目標は <b>${t.kcal.toLocaleString()}kcal</b>（維持 ${t.tdee.toLocaleString()}kcal の${Math.round(t.ratio * 100)}%）。写真を解析すると自動で集計されます。`;
+  if (sum.kcal <= 0) {
+    summary = `目標は <b>${t.kcal.toLocaleString()}kcal</b>（維持 ${t.tdee.toLocaleString()}kcal の${Math.round(t.ratio * 100)}%）。食事を解析すると自動で集計されます。`;
   } else if (diff >= 0) {
     summary = `目標まであと <b>${diff.toLocaleString()}kcal</b>。七分目ペースで進んでいます 🌱`;
   } else if (sum.kcal <= t.tdee) {
@@ -1670,7 +1839,16 @@ function renderNutrition() {
     nutBarRow('たんぱく質', sum.p, t.proteinG, 'g') +
     nutBarRow('脂質', sum.f, t.fatG, 'g') +
     nutBarRow('炭水化物', sum.c, t.carbsG, 'g') +
-    `<div class="nut-meta">解析済み ${sum.analyzed}/${sum.total}枚${sum.analyzed < sum.total ? '（未解析の写真は含まれません）' : ''} ・ BMR ${t.bmr.toLocaleString()}kcal ・ 維持 ${t.tdee.toLocaleString()}kcal<br>※数値はAIによる目安です。強い空腹や体調不良を感じたら無理せず調整してください。</div>` +
+    (() => {
+      const icon = s => s.state === 'meal' ? '✓' : s.state === 'photos' ? '△' : '—';
+      const st = sum.meals;
+      const staleAny = ['breakfast','lunch','dinner'].some(m => st[m] && st[m].stale);
+      const legacyAny = ['breakfast','lunch','dinner'].some(m => st[m] && st[m].state === 'photos');
+      return `<div class="nut-meta">解析: 朝${icon(st.breakfast)} ・ 昼${icon(st.lunch)} ・ 晩${icon(st.dinner)}` +
+        `${legacyAny ? '（△=旧形式: 写真ごとの合算）' : ''} ・ BMR ${t.bmr.toLocaleString()}kcal ・ 維持 ${t.tdee.toLocaleString()}kcal` +
+        `${staleAny ? '<br>⟳ 解析後に写真が変わった食事があります。再解析すると正確になります。' : ''}` +
+        `<br>※数値はAIによる目安です。強い空腹や体調不良を感じたら無理せず調整してください。</div>`;
+    })() +
     renderKcalGraph(t) +
     `<div class="wt-legend"><span><i class="bar"></i>摂取kcal</span><span><i class="goal"></i>目標（${Math.round(t.ratio * 100)}%）</span><span><i class="tdee"></i>維持</span></div>`;
 }

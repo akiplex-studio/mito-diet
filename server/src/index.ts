@@ -47,12 +47,24 @@ app.post("/api/analyze-meal", async (req, res) => {
     return;
   }
 
-  // 2. 入力チェック
-  const image = req.body?.image;
-  if (typeof image !== "string" || image.length < 100) {
-    res.status(400).json({ error: "bad_request", message: "image に base64 か dataURL を入れてください" });
+  // 2. 入力チェック（images（複数）/ image（単枚・旧互換）/ text のいずれか必須）
+  const rawImages = req.body?.images;
+  const rawImage = req.body?.image;
+  const rawText = req.body?.text;
+  const rawFullness = req.body?.fullness;
+  const images = (Array.isArray(rawImages) ? rawImages : typeof rawImage === "string" ? [rawImage] : [])
+    .filter((x): x is string => typeof x === "string" && x.length >= 100)
+    .slice(0, 4);
+  const hasText = typeof rawText === "string" && rawText.trim().length >= 2;
+  if (!images.length && !hasText) {
+    res.status(400).json({ error: "bad_request", message: "images（base64/dataURLの配列）か text（食事の説明）が必要です" });
     return;
   }
+  const input = {
+    images,
+    text: hasText ? String(rawText).trim().slice(0, 500) : undefined,
+    fullness: typeof rawFullness === "string" && rawFullness.trim() ? rawFullness.trim().slice(0, 30) : undefined,
+  };
 
   // 3. 日次上限（暴走防止）
   const quota = checkAndCountDaily(DAILY_LIMIT);
@@ -64,7 +76,7 @@ app.post("/api/analyze-meal", async (req, res) => {
   // 4. 解析
   const t0 = Date.now();
   try {
-    const { analysis, usage, model } = await analyzeMeal(image);
+    const { analysis, usage, model } = await analyzeMeal(input);
     const cost = estimateCostUSD(usage);
     logUsage({
       ts: new Date().toISOString(),
