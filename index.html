@@ -533,7 +533,7 @@ nav.footer {
     <section class="card">
       <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
       <div id="photoGrid"></div>
-      <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）</div>
+      <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）。写真が選べないときは「追加」を長押しするとファイルから選べます</div>
     </section>
 
     <!-- 記録（体重・歩数・睡眠） -->
@@ -676,7 +676,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
         </div>
       </div>
-      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.3 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.3.1 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
     </div>
   </div>
 
@@ -717,6 +717,8 @@ nav.footer {
 
   <div id="toast" role="status"></div>
   <input type="file" accept="image/*" id="photoFile" hidden>
+  <!-- accept無し: Androidのフォトピッカーではなくファイルマネージャが開く（ピッカー不具合時の迂回路） -->
+  <input type="file" id="photoFileAlt" hidden>
 </div>
 
 <script>
@@ -1312,6 +1314,12 @@ function renderPhotos() {
       add.setAttribute('aria-label', `${label}の写真を追加`);
       add.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><span>追加</span>`;
       add.addEventListener('click', () => { photoSlot = key; $('#photoFile').click(); });
+      // 長押し（contextmenu）でフォトピッカーを迂回し、ファイルマネージャから選ぶ
+      add.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        photoSlot = key;
+        $('#photoFileAlt').click();
+      });
       thumbs.appendChild(add);
     }
     meal.appendChild(lab); meal.appendChild(thumbs);
@@ -1433,9 +1441,7 @@ async function resizeImage(file, max = 800) {
     return c.toDataURL('image/jpeg', 0.75);
   } finally { URL.revokeObjectURL(url); }
 }
-$('#photoFile').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  e.target.value = '';
+async function addPhotoFile(file) {
   if (!file || !photoSlot) return;
   const rec = getRec(sel, true);
   if (!rec.photos || typeof rec.photos !== 'object') rec.photos = { breakfast:[], lunch:[], dinner:[] };
@@ -1460,7 +1466,14 @@ $('#photoFile').addEventListener('change', async e => {
   } catch {
     toast('写真の読み込みに失敗しました');
   }
-});
+}
+function onPhotoInputChange(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  addPhotoFile(file);
+}
+$('#photoFile').addEventListener('change', onPhotoInputChange);
+$('#photoFileAlt').addEventListener('change', onPhotoInputChange);
 
 /* ============ 記録（歩数・睡眠） ============ */
 // 指定日以前で最も新しい体重（グラフ・タンパク質目安に使用）
