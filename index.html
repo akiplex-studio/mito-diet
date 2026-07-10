@@ -236,6 +236,12 @@ header {
   padding:var(--space-3) var(--space-1) var(--space-1);
   border-bottom:1px solid var(--color-border);
 }
+/* v1.6: チェック済みブロックの仕切り（NGと区別して緑系） */
+.done-divider {
+  font-size:11px; color:var(--primary-600); font-weight:600;
+  padding:var(--space-3) var(--space-1) var(--space-1);
+  border-bottom:1px solid var(--color-border);
+}
 .timer-btn {
   flex:none; display:flex; align-items:center; gap:4px;
   font-size:12px; font-weight:600; color:var(--primary-800);
@@ -296,21 +302,6 @@ nav.footer {
 .btn-row { display:flex; gap:var(--space-2); flex-wrap:wrap; }
 .set-note { font-size:11px; color:var(--color-text-muted); margin-top:var(--space-2); }
 
-/* 項目エディタ */
-.item-editor { border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-2); background:var(--neutral-50); }
-.item-editor .row1 { display:flex; gap:var(--space-2); margin-bottom:var(--space-2); }
-.item-editor input[type=text] { flex:1; height:40px; padding:0 var(--space-3); border:1px solid var(--neutral-300); border-radius:var(--radius-sm); }
-.item-editor .row2 { display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center; font-size:12px; color:var(--color-text-muted); }
-.item-editor .fld { display:flex; flex-direction:column; gap:1px; }
-.item-editor .fld span { font-size:10px; }
-.item-editor input[type=number] { width:68px; height:36px; padding:0 var(--space-2); border:1px solid var(--neutral-300); border-radius:var(--radius-sm); text-align:right; }
-.item-editor select { height:36px; border:1px solid var(--neutral-300); border-radius:var(--radius-sm); background:#fff; padding:0 var(--space-1); }
-.item-editor .row3 { display:flex; gap:var(--space-4); align-items:center; margin-top:var(--space-2); font-size:12px; }
-.item-editor label.ck { display:flex; align-items:center; gap:6px; cursor:pointer; }
-.item-editor .auto-badge { font-size:10px; background:var(--info-500); color:#fff; padding:1px 8px; border-radius:var(--radius-full); }
-.item-del { color:var(--danger-600); font-size:12px; font-weight:600; margin-left:auto; padding:6px 10px; border-radius:var(--radius-sm); }
-.item-del:hover { background:var(--danger-50); }
-
 /* 瞑想モーダル */
 #medModal.open { align-items:center; }
 .med-card {
@@ -368,6 +359,13 @@ nav.footer {
 }
 .photo-add:hover { border-color:var(--primary-400); background:var(--primary-50); }
 .photo-add[disabled] { opacity:.4; cursor:not-allowed; }
+/* v1.6: 写真なしでもことばで記録できる入口タイル（「＋追加」と同サイズ） */
+.photo-text {
+  aspect-ratio:1; border-radius:var(--radius-md); border:2px dashed var(--primary-200);
+  background:var(--primary-50); display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:2px; color:var(--primary-700); font-size:11px; transition:border-color var(--duration-fast), background var(--duration-fast);
+}
+.photo-text:hover { border-color:var(--primary-400); background:var(--primary-100); }
 
 /* ライトボックス（写真拡大） */
 #lightbox.open { align-items:center; }
@@ -483,6 +481,16 @@ nav.footer {
 }
 .meal-ana-btn:hover { background:var(--primary-200); }
 .meal-ana-btn.done { background:var(--primary-800); color:#fff; }
+/* v1.6: 解析の非同期化 — 解析中/失敗の状態表示 */
+.meal-ana-btn.pending { display:inline-flex; align-items:center; gap:5px; background:var(--neutral-100); color:var(--color-text-muted); cursor:not-allowed; }
+.meal-ana-btn.error { background:var(--danger-50); color:var(--danger-600); }
+.meal-ana-btn.error:hover { background:var(--danger-100); }
+.meal-spin {
+  width:10px; height:10px; flex:none; border-radius:50%;
+  border:2px solid var(--neutral-300); border-top-color:var(--primary-600);
+  animation:meal-spin 700ms linear infinite;
+}
+@keyframes meal-spin { to { transform:rotate(360deg); } }
 #mealModal.open { align-items:center; }
 .meal-strip { display:flex; gap:6px; margin:var(--space-3) 0; flex-wrap:wrap; }
 .meal-strip img { width:46px; height:46px; object-fit:cover; border-radius:var(--radius-sm); }
@@ -512,7 +520,7 @@ nav.footer {
 .nut-row { display:flex; align-items:center; gap:var(--space-3); padding:5px 0; }
 .nut-label { flex:none; width:74px; font-size:12.5px; font-weight:600; color:var(--neutral-700); }
 .nut-bar { flex:1; height:12px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden; }
-.nut-fill { height:100%; border-radius:var(--radius-full); background:var(--primary-500); transition:width var(--duration-slow) var(--ease-standard); }
+.nut-fill { display:block; height:100%; border-radius:var(--radius-full); background:var(--primary-500); transition:width var(--duration-slow) var(--ease-standard); }
 .nut-fill.over { background:var(--warning-500); }
 .nut-val { flex:none; min-width:96px; text-align:right; font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--neutral-600); }
 .nut-val b { font-size:13px; color:var(--neutral-800); }
@@ -569,14 +577,16 @@ nav.footer {
       <div id="mitoBubble" class="mito-bubble" role="status" aria-live="polite" hidden></div>
     </section>
 
-    <!-- 今日のミト知識 -->
-    <section class="card know-card">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>今日のミト知識</h2>
-      <div class="know-text" id="knowText"></div>
-      <div class="know-foot">
-        <span class="know-idx" id="knowIdx"></span>
-        <button class="know-next" id="knowNext">別の豆知識 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button>
+    <!-- ⑤ 今日やること -->
+    <section class="card" id="todoCard">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
+      <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
+        <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+        <span><b class="num" id="dayPt">+0</b> pt</span>
       </div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="filter-chips" id="filterChips"></div>
+      <ul class="todo-list" id="todoList"></ul>
     </section>
 
     <!-- ④ 食事の写真 -->
@@ -584,6 +594,12 @@ nav.footer {
       <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
       <div id="photoGrid"></div>
       <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）。写真が選べないときは「追加」を長押しするとファイルから選べます</div>
+    </section>
+
+    <!-- きょうの栄養（v1.3） -->
+    <section class="card" id="nutriCard">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M21.2 8A10 10 0 0 0 16 2.8V8h5.2Z"/></svg>きょうの栄養（AI解析から集計）</h2>
+      <div id="nutriBody"></div>
     </section>
 
     <!-- 記録（体重・歩数・睡眠） -->
@@ -609,22 +625,14 @@ nav.footer {
       <div id="weightBody"></div>
     </section>
 
-    <!-- きょうの栄養（v1.3） -->
-    <section class="card" id="nutriCard">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M21.2 8A10 10 0 0 0 16 2.8V8h5.2Z"/></svg>きょうの栄養（AI解析から集計）</h2>
-      <div id="nutriBody"></div>
-    </section>
-
-    <!-- ⑤ 今日やること -->
-    <section class="card" id="todoCard">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
-      <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
-        <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
-        <span><b class="num" id="dayPt">+0</b> pt</span>
+    <!-- 今日のミト知識 -->
+    <section class="card know-card">
+      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>今日のミト知識</h2>
+      <div class="know-text" id="knowText"></div>
+      <div class="know-foot">
+        <span class="know-idx" id="knowIdx"></span>
+        <button class="know-next" id="knowNext">別の豆知識 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button>
       </div>
-      <div class="breakdown" id="breakdown"></div>
-      <div class="filter-chips" id="filterChips"></div>
-      <ul class="todo-list" id="todoList"></ul>
     </section>
   </main>
 
@@ -717,14 +725,6 @@ nav.footer {
           <input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="goalInput" placeholder="例: 65.0">
         </div>
         <div class="set-note">設定すると「体重のあゆみ」グラフに目標線（青の破線）が表示されます。空欄にすると非表示になります。</div>
-      </div>
-      <div class="set-section">
-        <h4>項目の編集（変更は即保存されます）</h4>
-        <div id="itemEditors"></div>
-        <div class="btn-row" style="margin-top:12px">
-          <button class="btn btn-secondary" id="btnAddItem">＋ 項目を追加</button>
-          <button class="btn btn-secondary" id="btnResetItems">項目を初期値に戻す</button>
-        </div>
       </div>
       <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.4 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
     </div>
@@ -1035,6 +1035,14 @@ function pickSpeechIndex(len, lastIndex, rand) {
   let i = Math.min(len - 1, Math.floor(rand * len));
   if (i === lastIndex) i = (i + 1) % len;
   return i;
+}
+// TODOの表示順: 未チェックを order 順で上に、チェック済みは下のブロックへ（各ブロック内は order 順）
+function sortTodoItems(items, checkedIds) {
+  // 3ブロック順: ①未チェックの通常項目 → ②未チェックのNG行動 → ③チェック済み（NG含む）。各ブロック内は order 順。
+  // NGを別ブロックにするのは、チェック済みが「NG行動」仕切りの下に混ざって誤読されるのを防ぐため
+  const done = new Set(checkedIds || []);
+  const rank = (it) => done.has(it.id) ? 2 : it.ng ? 1 : 0;
+  return items.slice().sort((a, b) => rank(a) - rank(b) || a.order - b.order);
 }
 /* @logic-end */
 
@@ -1584,9 +1592,17 @@ function renderPhotos() {
     lab.className = 'photo-meal-label';
     lab.innerHTML = `${label}<span class="cnt">${arr.length}/${MAX_PHOTOS}</span>`;
     // 食事単位の解析ボタン（写真全部＋ことば補足＋満腹度を1回で解析）
+    // v1.6: 解析中/失敗の状態を反映（グローバルmealBusyから食事別mealPending/mealErrorへ）
     const ma = (rec.mealAnalysis || {})[key];
     const ab = document.createElement('button');
-    if (ma && ma.analysis) {
+    if (mealPending[mealStateKey(sel, key)]) {
+      ab.className = 'meal-ana-btn pending';
+      ab.innerHTML = '<span class="meal-spin" aria-hidden="true"></span>解析中…';
+      ab.disabled = true;
+    } else if (mealError[mealStateKey(sel, key)]) {
+      ab.className = 'meal-ana-btn error';
+      ab.textContent = '⚠ 再試行';
+    } else if (ma && ma.analysis) {
       const stale = ma.photoCount != null && ma.photoCount !== arr.length;
       ab.className = 'meal-ana-btn done';
       ab.textContent = `ミトスコア ${Number(ma.analysis.mito_score) || 0}${stale ? ' ⟳' : ''}`;
@@ -1594,7 +1610,7 @@ function renderPhotos() {
       ab.className = 'meal-ana-btn';
       ab.textContent = '🔍 解析';
     }
-    ab.addEventListener('click', () => openMealModal(key));
+    if (!mealPending[mealStateKey(sel, key)]) ab.addEventListener('click', () => openMealModal(key));
     lab.appendChild(ab);
     const thumbs = document.createElement('div');
     thumbs.className = 'photo-thumbs';
@@ -1627,6 +1643,13 @@ function renderPhotos() {
       });
       thumbs.appendChild(add);
     }
+    // v1.6: 写真なしでもことばで記録を始められる入口（「＋追加」タイルの隣）
+    const textBtn = document.createElement('button');
+    textBtn.className = 'photo-text';
+    textBtn.setAttribute('aria-label', `${label}をことばで記録`);
+    textBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>ことば</span>';
+    textBtn.addEventListener('click', () => openMealModal(key));
+    thumbs.appendChild(textBtn);
     meal.appendChild(lab); meal.appendChild(thumbs);
     grid.appendChild(meal);
   });
@@ -1688,7 +1711,10 @@ async function callAnalyzeAPI(bodyReq) {
     const json = await res.json().catch(() => null);
     if (res.status === 401) throw new Error('シークレットが一致しません（設定を確認してください）');
     if (res.status === 429) throw new Error('今日の解析回数の上限に達しました。また明日どうぞ');
-    if (!res.ok || !json || !json.ok || !json.analysis) throw new Error('サーバーでエラーが発生しました');
+    // v1.6: サーバーが返す message フィールドがあれば、それをそのままエラー文言に使う
+    if (!res.ok || !json || !json.ok || !json.analysis) {
+      throw new Error((json && json.message) || 'サーバーでエラーが発生しました');
+    }
     return json.analysis;
   } finally {
     clearTimeout(timer);
@@ -1703,7 +1729,12 @@ function analyzeErrMsg(err) {
 /* ---- 食事解析モーダル ---- */
 const MEAL_JP = { breakfast: '朝', lunch: '昼', dinner: '晩' };
 const FULLNESS_OPTS = ['軽め', '腹七分目くらい', '満腹', '食べ過ぎ'];
-let mealModalKey = null, mealFulSel = null, mealBusy = false;
+let mealModalKey = null, mealFulSel = null;
+// v1.6: 解析の非同期化 — グローバルmealBusyの代わりに「日付|食事」別に持つ（メモリのみ・保存しない）
+// 日付をキーに含めるのは、解析中に過去日へ表示を切り替えたとき別日の同じ食事に「解析中」が出ないようにするため
+const mealPending = {};
+const mealError = {};
+function mealStateKey(date, meal) { return date + '|' + meal; }
 
 function openMealModal(meal) {
   mealModalKey = meal;
@@ -1711,7 +1742,9 @@ function openMealModal(meal) {
   const ma = (rec.mealAnalysis || {})[meal];
   mealFulSel = (ma && ma.fullness) || null;
   $('#mealTitle').textContent = `🍽 ${MEAL_JP[meal]}の食事を解析`;
-  if (ma && ma.analysis) renderMealResult();
+  // 解析中／直前に失敗した場合は常にフォーム（pending表示 or エラー表示）。それ以外は解析済みなら結果、無ければフォーム
+  if (mealPending[mealStateKey(sel, meal)] || mealError[mealStateKey(sel, meal)]) renderMealForm();
+  else if (ma && ma.analysis) renderMealResult();
   else renderMealForm();
   $('#mealModal').classList.add('open');
 }
@@ -1732,22 +1765,29 @@ function renderMealForm() {
   const rec = getRec(sel, false);
   const arr = (rec.photos && rec.photos[mealModalKey]) || [];
   const ma = (rec.mealAnalysis || {})[mealModalKey];
+  const pending = mealPending[mealStateKey(sel, mealModalKey)];
   const strip = arr.length
     ? `<div class="meal-strip">${arr.map(e => `<img src="${e.data}" alt="">`).join('')}</div>` +
       `<div class="ana-note" style="text-align:left">写真${arr.length}枚を1つの食事としてまとめて解析します</div>`
     : `<div class="ana-note" style="text-align:left">写真はありません。食べたものを言葉で入力してください</div>`;
   body.innerHTML =
     strip +
-    `<textarea id="mealNote" class="meal-textarea" placeholder="${arr.length ? 'ことばで補足（任意）例：ご飯は大盛り、味噌汁も飲んだ' : '例：すき家でご飯大盛りの牛丼と肉皿'}">${esc((ma && ma.note) || '')}</textarea>` +
+    `<textarea id="mealNote" class="meal-textarea" placeholder="${arr.length ? 'ことばで補足（任意）例：ご飯は大盛り、味噌汁も飲んだ' : '例：すき家でご飯大盛りの牛丼と肉皿'}"${pending ? ' disabled' : ''}>${esc((ma && ma.note) || '')}</textarea>` +
     `<div class="ful-label">食べた量の感覚（任意・量の推定に使います）</div>` +
     `<div class="ful-chips" id="mealFul"></div>` +
     `<div class="btn-row" style="margin-top:14px">` +
-      `<button class="btn btn-primary" id="mealRun">解析する</button>` +
+      `<button class="btn btn-primary" id="mealRun"${pending ? ' disabled' : ''}>${pending ? '解析中…' : '解析する'}</button>` +
       `<button class="btn btn-secondary" data-close>やめる</button>` +
     `</div>` +
     `<div class="ana-note" id="mealMsg" style="text-align:left; min-height:1.4em"></div>`;
   renderMealFul();
   $('#mealRun').addEventListener('click', runMealAnalysis);
+  // v1.6: 解析中/直前のエラーをモーダル内メッセージに反映
+  if (pending) {
+    $('#mealMsg').textContent = '🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）';
+  } else if (mealError[mealStateKey(sel, mealModalKey)]) {
+    $('#mealMsg').textContent = '⚠ ' + mealError[mealStateKey(sel, mealModalKey)];
+  }
 }
 function renderMealResult() {
   const body = $('#mealBody');
@@ -1770,8 +1810,13 @@ function renderMealResult() {
     `</div>`;
   $('#mealRedo').addEventListener('click', renderMealForm);
 }
+// v1.6: 解析の非同期化。「解析する」を押したら即モーダルを閉じ、通信はバックグラウンドで継続する。
+// sel（表示中の日付）は解析中に変わりうるため、開始時点の日付とmeal keyをここで閉じ込め、
+// 完了時はその日付のrecへ書き込む（開いている画面が別日でも整合を保つ）。
 async function runMealAnalysis() {
-  if (mealBusy) return;
+  const meal = mealModalKey;
+  const sk = mealStateKey(sel, meal);                     // 状態キー（開始時の日付|食事）
+  if (mealPending[sk]) return;
   const cfg = DB.analyze || {};
   if (!cfg.url || !cfg.secret) {
     toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
@@ -1780,45 +1825,52 @@ async function runMealAnalysis() {
     openSettings();
     return;
   }
-  const rec = getRec(sel, true);
-  const arr = (rec.photos && rec.photos[mealModalKey]) || [];
+  const startSel = sel;                                  // 開始時の日付を閉じ込める
+  const rec = getRec(startSel, true);
+  const arr = (rec.photos && rec.photos[meal]) || [];
   const note = ($('#mealNote') ? $('#mealNote').value.trim() : '');
   if (!arr.length && note.length < 2) {
     $('#mealMsg').textContent = '写真が無い場合は、食べたものを入力してください';
     return;
   }
-  mealBusy = true;
-  const btn = $('#mealRun');
-  if (btn) { btn.disabled = true; btn.textContent = '解析中…'; }
-  $('#mealMsg').textContent = '🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）';
+  const fullness = mealFulSel;
+  mealPending[sk] = true;
+  delete mealError[sk];
+  $('#mealModal').classList.remove('open');               // 即クローズ。通信は裏で継続
+  flushPendingSpeech();
+  renderPhotos();                                          // 解析中バッジを即反映
   try {
     const bodyReq = {};
     if (arr.length) bodyReq.images = arr.map(e => e.data);
     if (note) bodyReq.text = note;
-    if (mealFulSel) bodyReq.fullness = mealFulSel;
+    if (fullness) bodyReq.fullness = fullness;
     const analysis = await callAnalyzeAPI(bodyReq);
-    if (!rec.mealAnalysis || typeof rec.mealAnalysis !== 'object') {
-      rec.mealAnalysis = { breakfast: null, lunch: null, dinner: null };
+    const rec2 = getRec(startSel, true);                   // 開始時の日付のrecに書き込む
+    if (!rec2.mealAnalysis || typeof rec2.mealAnalysis !== 'object') {
+      rec2.mealAnalysis = { breakfast: null, lunch: null, dinner: null };
     }
-    rec.mealAnalysis[mealModalKey] = {
+    rec2.mealAnalysis[meal] = {
       analysis,
       note: note || null,
-      fullness: mealFulSel || null,
+      fullness: fullness || null,
       analyzedAt: new Date().toISOString(),
       photoCount: arr.length,
     };
-    commit();          // 保存＋スコアボタン・栄養カード反映
-    const k = speechKeyForMeal(analysis.mito_score, mealFulSel);
+    mealPending[sk] = false;
+    commit();          // 保存＋スコアボタン・栄養カード反映（renderPhotosも再描画される）
+    const k = speechKeyForMeal(analysis.mito_score, fullness);
     if (k) mitoSpeak(k);
     // 浄化パルスはモーダルの裏では見えないため、開いている間は閉じたとき（flush側）に再生する
     if (k === 'mealGood' && !mealModalIsOpen()) mitoEffect('clean');
-    renderMealResult();
+    // 解析中に別途モーダルを開き直していた場合（「ことば」タイル等）は、その中身も更新する
+    if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
     toast('解析完了 ✨');
   } catch (err) {
-    $('#mealMsg').textContent = '⚠ ' + analyzeErrMsg(err);
-    if (btn) { btn.disabled = false; btn.textContent = '解析する'; }
-  } finally {
-    mealBusy = false;
+    mealPending[sk] = false;
+    mealError[sk] = analyzeErrMsg(err);
+    renderPhotos();
+    if (mealModalIsOpen() && mealModalKey === meal) renderMealForm();
+    toast('解析に失敗しました');
   }
 }
 $('#lbDel').addEventListener('click', () => {
@@ -2160,21 +2212,37 @@ function renderTodo() {
   ptEl.className = 'num' + (pts < 0 ? ' minus' : '');
 
   const list = $('#todoList');
+  // v1.6: 並び替えのスライド演出（FLIP方式）— 再描画前の各行の位置を id 別に記録しておく
+  const prevRects = {};
+  list.querySelectorAll('li[data-id]').forEach(li => {
+    prevRects[li.dataset.id] = li.getBoundingClientRect().top;
+  });
   list.innerHTML = '';
-  const items = DB.items
-    .filter(it => it.inTodo && (filter === 'all' || it.cat === filter))
-    .sort((a, b) => (a.order - b.order) || String(a.id).localeCompare(String(b.id)));
-  let ngDividerDone = false;
+  // v1.6: 未チェックを order 順で上に、チェック済みは下のブロックへ
+  const items = sortTodoItems(
+    DB.items.filter(it => it.inTodo && (filter === 'all' || it.cat === filter)),
+    rec.checked
+  );
+  let ngDividerDone = false, doneDividerDone = false;
   items.forEach(it => {
-    if (it.ng && !ngDividerDone && filter === 'all') {
+    const done = rec.checked.includes(it.id);
+    if (!done && it.ng && !ngDividerDone && filter === 'all') {
       const div = document.createElement('li');
       div.className = 'ng-divider';
       div.textContent = 'NG行動（あったら正直にチェック）';
       list.appendChild(div);
       ngDividerDone = true;
     }
-    const done = rec.checked.includes(it.id);
+    // v1.6: チェック済みブロックの頭に仕切りを入れる（NG行動と誤読されないように）
+    if (done && !doneDividerDone) {
+      const div = document.createElement('li');
+      div.className = 'done-divider';
+      div.textContent = '✓ きょうできたこと';
+      list.appendChild(div);
+      doneDividerDone = true;
+    }
     const li = document.createElement('li');
+    li.dataset.id = it.id;
     const label = document.createElement('label');
     label.className = 'todo' + (done ? ' done' : '') + (it.ng ? ' ng' : '');
     const cb = document.createElement('input');
@@ -2223,6 +2291,28 @@ function renderTodo() {
     li.style.cssText = 'padding:16px 4px; font-size:13px; color:var(--color-text-muted)';
     li.textContent = 'このカテゴリのTODOはありません';
     list.appendChild(li);
+  }
+  // v1.6: 位置が変わった行だけ、逆補正 → 次フレームで transition 付きで 0 へ戻す
+  if (!stage.reduced) {
+    const toFlip = [];
+    list.querySelectorAll('li[data-id]').forEach(li => {
+      const prevTop = prevRects[li.dataset.id];
+      if (prevTop == null) return;
+      const diff = prevTop - li.getBoundingClientRect().top;
+      if (!diff) return;
+      li.style.transition = 'none';
+      li.style.transform = `translateY(${diff}px)`;
+      toFlip.push(li);
+    });
+    if (toFlip.length) {
+      void list.offsetHeight; // 強制リフローで「移動前」の位置を確定させる
+      requestAnimationFrame(() => {
+        toFlip.forEach(li => {
+          li.style.transition = `transform var(--duration-slow) var(--ease-standard)`;
+          li.style.transform = '';
+        });
+      });
+    }
   }
 }
 function toggleCheck(item, srcEl) {
@@ -2441,7 +2531,6 @@ function openSettings() {
   $('#profSex').value = prof.sex || '';
   $('#profActivity').value = String(prof.activity || 1.375);
   $('#profRatio').value = String(prof.targetRatio || 0.7);
-  renderItemEditors();
   $('#settingsModal').classList.add('open');
 }
 function setProfile(field, value) {
@@ -2476,68 +2565,6 @@ $('#goalInput').addEventListener('change', e => {
   DB.goalWeight = v === '' ? null : Math.round(clamp(Number(v), 0, 300) * 10) / 10;
   save();
   renderWeightGraph();
-});
-const CATS = ['運動','食事','睡眠・生活','NG行動'];
-function renderItemEditors() {
-  const box = $('#itemEditors');
-  box.innerHTML = '';
-  DB.items.forEach((it, idx) => {
-    const div = document.createElement('div');
-    div.className = 'item-editor';
-    div.innerHTML =
-      `<div class="row1"><input type="text" data-f="name" data-i="${idx}" value="${esc(it.name)}"></div>` +
-      `<div class="row2">` +
-        `<div class="fld"><span>カテゴリ</span><select data-f="cat" data-i="${idx}">` +
-          CATS.map(c => `<option${c === it.cat ? ' selected' : ''}>${c}</option>`).join('') +
-        `</select></div>` +
-        `<div class="fld"><span>活性</span><input type="number" step="1" data-f="act" data-i="${idx}" value="${Number(it.act) || 0}"></div>` +
-        `<div class="fld"><span>匹数</span><input type="number" step="0.1" data-f="inc" data-i="${idx}" value="${Number(it.inc) || 0}"></div>` +
-        `<div class="fld"><span>順番</span><input type="number" step="1" data-f="order" data-i="${idx}" value="${Number(it.order) || 0}"></div>` +
-        (it.auto ? `<div class="fld"><span>${it.auto === 'steps' ? '目標歩数' : '不足ライン(時間)'}</span><input type="number" data-f="threshold" data-i="${idx}" value="${it.threshold ?? ''}"></div>` : '') +
-      `</div>` +
-      `<div class="row3">` +
-        (it.auto
-          ? `<span class="auto-badge">自動判定</span>`
-          : `<label class="ck"><input type="checkbox" data-f="inTodo" data-i="${idx}"${it.inTodo ? ' checked' : ''}>TODOに出す</label>`) +
-        `<label class="ck"><input type="checkbox" data-f="ng" data-i="${idx}"${it.ng ? ' checked' : ''}>NG行動</label>` +
-        `<button class="item-del" data-del="${idx}">削除</button>` +
-      `</div>`;
-    box.appendChild(div);
-  });
-}
-$('#itemEditors').addEventListener('change', e => {
-  const f = e.target.dataset.f;
-  if (!f) return;
-  const it = DB.items[Number(e.target.dataset.i)];
-  if (!it) return;
-  if (f === 'inTodo' || f === 'ng') it[f] = e.target.checked;
-  else if (f === 'name' || f === 'cat') it[f] = e.target.value;
-  else {
-    const n = Number(e.target.value);
-    it[f] = Number.isFinite(n) ? n : 0;
-  }
-  recompute(); save(); renderAll();  // モーダルは開いたまま（フォーカス維持のためエディタは再構築しない）
-});
-$('#itemEditors').addEventListener('click', e => {
-  const del = e.target.closest('[data-del]');
-  if (!del) return;
-  const idx = Number(del.dataset.del);
-  const it = DB.items[idx];
-  if (it && confirm(`「${it.name}」を削除しますか？（過去のチェック履歴のポイントも消えます）`)) {
-    DB.items.splice(idx, 1);
-    recompute(); save(); renderAll(); renderItemEditors();
-  }
-});
-$('#btnAddItem').addEventListener('click', () => {
-  DB.items.push({ id: 'custom-' + Date.now(), cat: '食事', name: '新しい項目', pri: '',
-                  act: 1, inc: 0, order: 50, inTodo: true, method: '自己申告', timing: '' });
-  recompute(); save(); renderAll(); renderItemEditors();
-});
-$('#btnResetItems').addEventListener('click', () => {
-  if (!confirm('項目リストを初期値（仕様書の10項目）に戻しますか？\n追加した項目・変更した点数は消えます。記録（チェック・写真）は残ります。')) return;
-  DB.items = structuredClone(DEFAULT_ITEMS);
-  recompute(); save(); renderAll(); renderItemEditors();
-  toast('項目を初期値に戻しました');
 });
 $('#btnExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });

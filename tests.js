@@ -136,5 +136,40 @@ const SPEECH_KEYS = ['juice','training','walked','sugar','mealGood','mealBad','h
 eq('SPEECH has all 10 keys', SPEECH_KEYS.every(k => Array.isArray(SPEECH[k])), true);
 eq('SPEECH each key has >=5 lines', SPEECH_KEYS.every(k => SPEECH[k] && SPEECH[k].length >= 5), true);
 
+/* --- v1.6: sortTodoItems（TODOの並び替え。未チェック→order順、チェック済みは下のブロックへ） --- */
+const todoA = { id:'a', order:2 };
+const todoB = { id:'b', order:1 };
+const todoC = { id:'c', order:3 };
+const todoItems = [todoA, todoB, todoC];
+
+// 全て未チェック → order 順
+eq('sortTodoItems all unchecked → order順',
+  sortTodoItems(todoItems, []).map(it => it.id), ['b', 'a', 'c']);
+
+// 一部チェック済み → 未チェックが先・チェック済みが後・各ブロックorder順
+eq('sortTodoItems partial checked → unchecked先・checked後、各ブロックorder順',
+  sortTodoItems(todoItems, ['a']).map(it => it.id), ['b', 'c', 'a']);
+
+// checkedIds が undefined でも壊れない
+eq('sortTodoItems checkedIds undefined',
+  sortTodoItems(todoItems, undefined).map(it => it.id), ['b', 'a', 'c']);
+
+// checkedIds が空配列でも壊れない
+eq('sortTodoItems checkedIds empty array',
+  sortTodoItems(todoItems, []).map(it => it.id), ['b', 'a', 'c']);
+
+// 元配列を破壊しない（slice確認）
+const todoItemsCopy = [todoA, todoB, todoC];
+sortTodoItems(todoItemsCopy, ['b']);
+eq('sortTodoItems does not mutate original array',
+  todoItemsCopy.map(it => it.id), ['a', 'b', 'c']);
+
+// NG行動は「未チェック通常 → 未チェックNG → チェック済み」の3ブロック順
+const todoNG = { id:'ng1', order:90, ng:true };
+eq('sortTodoItems NG below unchecked, above checked',
+  sortTodoItems([todoA, todoNG, todoB], ['b']).map(it => it.id), ['a', 'ng1', 'b']);
+eq('sortTodoItems checked NG goes to done block',
+  sortTodoItems([todoA, todoNG, todoB], ['ng1']).map(it => it.id), ['b', 'a', 'ng1']);
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);

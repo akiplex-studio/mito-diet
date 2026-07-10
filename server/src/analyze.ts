@@ -33,6 +33,7 @@ const SYSTEM_PROMPT = `あなたは「ミトコンドリア・ダイエット」
   盛り（大盛り・特盛など）やサイドメニューの記述は量に反映する
 - ユーザー申告の「満腹度」が添えられた場合は、量（総カロリー）の推定に反映する
   （例:「食べ過ぎ」なら多め、「軽め」なら少なめに補正。写真の見た目と矛盾する場合は満腹度を優先）
+- 写真とテキスト説明の両方がある場合、テキストは補足情報である。料理の特定は写真から行い、テキストは量（大盛り等）・写真に写っていない品・追加情報の反映に使う。テキストだけで料理を特定できなくても、写真から必ず特定を試みること
 - 数値はすべて概算でよい。日本の家庭料理・外食の一般的な栄養データを基準にする
 - 食事と判断できる情報が無い場合は dishes を空配列にし、advice でその旨をやさしく伝える
 
@@ -132,7 +133,7 @@ export async function analyzeMeal(input: AnalyzeInput): Promise<AnalyzeResult> {
   if (images.length > 1) {
     parts.push(`写真は${images.length}枚ありますが、すべて同じ1回の食事を写したものです。重複して数えず、全体で1つの食事として解析してください。`);
   }
-  if (input.text) parts.push(`ユーザーによる食事の説明：「${input.text}」`);
+  if (input.text) parts.push(images.length ? `ユーザーによる補足（写真の食事に関する追加情報）：「${input.text}」` : `ユーザーによる食事の説明：「${input.text}」`);
   if (input.fullness) parts.push(`ユーザー申告の満腹度：「${input.fullness}」（量の推定に反映してください）`);
   parts.push(images.length ? "この食事を解析してください。" : "この食事内容を解析してください。");
   content.push({ type: "text", text: parts.join("\n") });
