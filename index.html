@@ -136,6 +136,28 @@ header {
   background:rgba(255,255,255,.85); color:var(--primary-900); font-weight:500;
   box-shadow:var(--shadow-sm);
 }
+/* v1.5: ミトの一言（吹き出し） */
+.mito-bubble {
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  max-width:85%; z-index:5; cursor:pointer;
+  background:var(--color-surface); color:var(--color-text);
+  border:1px solid var(--color-border); border-radius:var(--radius-md);
+  box-shadow:var(--shadow-md); padding:var(--space-2) var(--space-3);
+  font-size:13px; line-height:1.5; text-align:left;
+}
+.mito-bubble.show {
+  animation:mito-bubble-in var(--duration-slow) var(--ease-standard);
+}
+.mito-bubble::after {
+  content:''; position:absolute; left:50%; bottom:-6px;
+  width:11px; height:11px; background:var(--color-surface);
+  border-right:1px solid var(--color-border); border-bottom:1px solid var(--color-border);
+  transform:translateX(-50%) rotate(45deg);
+}
+@keyframes mito-bubble-in {
+  from { opacity:0; transform:translate(-50%,-6px) scale(.96); }
+  to   { opacity:1; transform:translate(-50%,0) scale(1); }
+}
 
 /* ============ ④ 食事の写真 ============ */
 .photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-2); }
@@ -544,6 +566,7 @@ nav.footer {
         <span class="chip" id="chipStage">種火</span>
         <span class="chip" id="chipMood">元気</span>
       </div>
+      <div id="mitoBubble" class="mito-bubble" role="status" aria-live="polite" hidden></div>
     </section>
 
     <!-- 今日のミト知識 -->
@@ -909,6 +932,110 @@ function recNutrition(rec) {
   }
   return sum;
 }
+
+/* ---- v1.5 ミトの一言（セリフ辞書と状況キー判定） ---- */
+const SPEECH = {
+  juice: [
+    '野菜きた！体の中がすーっと澄んでいくよ',
+    '朝の野菜ジュース、ぼくの大好物なんだ',
+    'ビタミンが届くと、ぼくピカピカになれるんだ',
+    '今日もありがとう、おかげでサビ知らずだよ',
+    '緑のごはんは、ぼくらのお守りみたいなものなんだ',
+  ],
+  training: [
+    '動いてくれた！ぼくの仲間がぐんと増えるよ',
+    '筋肉が「エネルギーもっと！」って言うと、ぼくら増えるんだ',
+    'トレーニングのあとは、仲間がいっぱい生まれるんだ',
+    'きつい運動ほど、ぼくらには嬉しい合図なんだよ',
+    '今日の頑張り、ちゃんと匹数にひびいてるよ',
+  ],
+  walked: [
+    '3,000歩とうちゃく！歩いた分だけ仲間がふえるんだ',
+    'いっぱい歩いたね、ぼくらの発電所が増えていくよ',
+    '歩くたび、ぼくらのスイッチが入るんだ',
+    '朝の光とお散歩で、体内時計もととのうんだ',
+    '今日もよく歩いたね、仲間が喜んでるよ',
+  ],
+  sugar: [
+    '甘いのかぁ…ぼく、ちょっと苦手なんだよね',
+    'お砂糖が多いと、ぼく少し汚れちゃうんだ',
+    '甘いものの日は、次の野菜が楽しみだなあ',
+    'ちょっとサビつきそう…でも明日でとり返せるよ',
+    'うぅ、糖分の波がきた…ちょっと休憩するね',
+  ],
+  mealGood: [
+    'このごはん、ぼくピカピカになれるやつだ！',
+    'いい食事だね、体の中が澄んでいくよ',
+    'これはぼくらの発電がはかどるごはんだ！',
+    'うれしいなあ、こういうごはんが一番なんだ',
+    'ごちそうさま！ぼくのくすみが晴れていくよ',
+  ],
+  mealBad: [
+    'うぅ、ちょっと油が多いかも…',
+    'これはぼく、少し苦手な感じかなあ…',
+    'ちょっと重たいなあ…次のごはんで整えよう',
+    '揚げ物系かな…ぼく汚れやすいんだよね',
+    '大丈夫、明日の野菜で挽回できるよ',
+  ],
+  hara7: [
+    'お腹すいた時間は、ぼくのお掃除タイムなんだ',
+    '七分目えらい！空いたぶんでぼくら大掃除するよ',
+    '少なめのごはんだと、古い部品を片づけられるんだ',
+    '空腹の時間って、ぼくらが若返る時間なんだよ',
+    '腹七分目は、ぼくへの最高のプレゼントなんだ',
+  ],
+  tooFull: [
+    '今日はぼく、お掃除おやすみかなぁ',
+    '満タンだと、ぼくら片づけの時間がとれないんだ',
+    'ふう、消化のお手伝いでいそがしくなりそう',
+    '次のごはんを軽くすると、ぼく掃除できるよ',
+    'たまにはこんな日もあるさ、明日ととのえよう',
+  ],
+  slept: [
+    '昨日の夜、いっぱいお掃除できたよ！',
+    'よく寝たね！古い部品を新しくしておいたよ',
+    '眠っている間に、体の中をきれいにしたんだ',
+    'ぐっすりの夜は、ぼくらの大掃除デーなんだ',
+    '7時間睡眠、ぼくの掃除がはかどったよ',
+  ],
+  darkNight: [
+    '暗くしてくれると、ぼくぐっすり掃除できるんだ',
+    '夜の光が少ないと、眠りのホルモンが出やすいんだ',
+    'スマホおやすみ、ぼくらもそろそろ準備するね',
+    '今夜はいいお掃除ができそうだよ',
+    '暗い夜は、ぼくらのメンテナンスの合図なんだ',
+  ],
+};
+// TODOチェック → 状況キー（該当なしは null）
+function speechKeyForCheck(itemId) {
+  return ({ juice:'juice', bodyweight:'training', sugar:'sugar', darknight:'darkNight', hara7:'hara7' })[itemId] || null;
+}
+// 食事解析 → 状況キー。優先順: 低スコア > 食べ過ぎ > 高スコア > 七分目/軽め > null
+function speechKeyForMeal(score, fullness) {
+  // score が null/undefined/空文字のときは「スコアなし」として扱う（Number(null)=0 に引きずられて
+  // 低スコア扱いにならないようにする。例: (null,'食べ過ぎ') は tooFull を返すべき）
+  const s = (score === null || score === undefined || score === '') ? NaN : Number(score);
+  if (Number.isFinite(s) && s <= 30) return 'mealBad';
+  if (fullness === '食べ過ぎ') return 'tooFull';
+  if (Number.isFinite(s) && s >= 70) return 'mealGood';
+  if (fullness === '腹七分目くらい' || fullness === '軽め') return 'hara7';
+  return null;
+}
+// 歩数: 未達→達成に跨いだ瞬間だけ 'walked'
+function speechKeyForSteps(prev, next, goal) {
+  return (Number(prev || 0) < goal && Number(next || 0) >= goal) ? 'walked' : null;
+}
+// 睡眠: 7h未満→7h以上に跨いだ瞬間だけ 'slept'（NG判定の6hとは別の、セリフ専用しきい値）
+function speechKeyForSleep(prev, next) {
+  return ((Number(prev) || 0) < 7 && Number(next) >= 7) ? 'slept' : null;
+}
+// セリフのランダム選択。直前と同じ添字は避ける（rand は [0,1)）
+function pickSpeechIndex(len, lastIndex, rand) {
+  if (len <= 1) return 0;
+  let i = Math.min(len - 1, Math.floor(rand * len));
+  if (i === lastIndex) i = (i + 1) % len;
+  return i;
+}
 /* @logic-end */
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
@@ -1141,6 +1268,58 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
+/* ============ v1.5: ミトの一言（吹き出し） ============ */
+let bubbleTimer = null;                 // 自動で消すタイマー
+let bubblePendingKey = null;            // 食事解析モーダルが開いている間の保留キー
+const speechSeenToday = new Map();      // 日付 → Set(状況キー)。セッション内のみ・保存しない
+const speechLastIndex = {};             // 状況キー → 直前に出した添字（同文回避用）
+const MEAL_SPEECH_KEYS = new Set(['mealGood', 'mealBad', 'hara7', 'tooFull']);  // 解析のたびに何度でも可
+
+function mealModalIsOpen() {
+  const m = $('#mealModal');
+  return !!(m && m.classList.contains('open'));
+}
+function showBubble(key) {
+  const lines = SPEECH[key];
+  if (!lines || !lines.length) return;
+  const idx = pickSpeechIndex(lines.length, speechLastIndex[key] ?? -1, Math.random());
+  speechLastIndex[key] = idx;
+  const el = $('#mitoBubble');
+  if (!el) return;
+  el.textContent = lines[idx];
+  el.hidden = false;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(hideBubble, 4000);
+}
+function hideBubble() {
+  clearTimeout(bubbleTimer);
+  const el = $('#mitoBubble');
+  if (el) { el.hidden = true; el.classList.remove('show'); }
+}
+// ミトのセリフを出す。過去日の編集では出さない／食事解析モーダルが開いている間は保留する
+function mitoSpeak(key) {
+  if (sel !== today) return;
+  if (!SPEECH[key]) return;
+  if (mealModalIsOpen()) { bubblePendingKey = key; return; }
+  if (!MEAL_SPEECH_KEYS.has(key)) {
+    let seen = speechSeenToday.get(today);
+    if (!seen) { seen = new Set(); speechSeenToday.set(today, seen); }
+    if (seen.has(key)) return;
+    seen.add(key);
+  }
+  showBubble(key);
+}
+// 食事解析モーダルを閉じたときに、保留していたセリフ（と良食の浄化パルス）を表示する
+function flushPendingSpeech() {
+  if (!bubblePendingKey) return;
+  const k = bubblePendingKey;
+  bubblePendingKey = null;
+  mitoSpeak(k);
+  if (k === 'mealGood') mitoEffect('clean');
+}
+$('#mitoBubble').addEventListener('click', hideBubble);
+
 /* ============ ① ヘッダー ============ */
 function renderHeader() {
   $('#hdrCount').textContent = Math.floor(computed.mito).toLocaleString();
@@ -1205,7 +1384,9 @@ function renderCalendar() {
 const stage = {
   canvas: null, ctx: null, orbs: [], plannedCount: -1, raf: 0, t0: 0, particles: [],
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  cleanStart: 0,  // v1.5: 浄化パルスの開始時刻（0=非表示）
 };
+const CLEAN_DUR = 800;  // v1.5: 浄化パルスの継続時間(ms)
 // 匹数が増えたときのキラキラ・バースト
 function spawnBurst(n) {
   if (stage.reduced || !stage.canvas) return;
@@ -1219,6 +1400,39 @@ function spawnBurst(n) {
       life: 1, r: 1.5 + Math.random() * 3,
     });
   }
+}
+// v1.5: 睡眠十分「おそうじキラキラ」— 白系の粒子がゆっくり上に抜ける
+function spawnSweep() {
+  if (stage.reduced || !stage.canvas) return;
+  const w = stage.canvas.clientWidth, h = stage.canvas.clientHeight;
+  const n = 15 + Math.floor(Math.random() * 11);  // 15〜25個
+  for (let i = 0; i < n; i++) {
+    const j = Math.floor(Math.random() * 12);
+    stage.particles.push({
+      x: Math.random() * w, y: h - Math.random() * 30,
+      vx: (Math.random() - .5) * 16, vy: -(18 + Math.random() * 26),
+      life: 1, r: 1.3 + Math.random() * 2.4,
+      g: 22,                              // 重力弱め（ふわっと上に抜ける）
+      decay: 0.26 + Math.random() * 0.12, // ゆっくり消える
+      col: `rgb(${239 + j},${246 + j},${230 + j})`,
+    });
+  }
+}
+// v1.5: 行動別の体感演出。'clean'=浄化パルス（良い食事等）／'sweep'=おそうじキラキラ（睡眠十分）
+function mitoEffect(kind) {
+  if (stage.reduced) return;
+  if (kind === 'clean') stage.cleanStart = performance.now();
+  else if (kind === 'sweep') spawnSweep();
+}
+// v1.5: rgb(...) 文字列を白方向へ k だけ寄せる（浄化パルスの発色用）
+function mixWhite(rgbStr, k) {
+  if (k <= 0) return rgbStr;
+  const m = /rgb\((\d+),(\d+),(\d+)\)/.exec(rgbStr);
+  if (!m) return rgbStr;
+  const r = Math.round(Number(m[1]) + (255 - Number(m[1])) * k);
+  const g = Math.round(Number(m[2]) + (255 - Number(m[2])) * k);
+  const b = Math.round(Number(m[3]) + (255 - Number(m[3])) * k);
+  return `rgb(${r},${g},${b})`;
 }
 function stageName(n) {
   n = Math.floor(n);
@@ -1280,6 +1494,17 @@ function drawStage(tms) {
   const t = tms / 1000;
   const lowSink = computed.activation < 30 ? 12 : 0;
   const amp = stage.reduced ? 0 : (2 + act * 9);
+  // v1.5: 浄化パルス（良い行動で玉が一瞬明るく澄む）— 0.45→0 にイージングで減衰
+  let cleanK = 0;
+  if (stage.cleanStart) {
+    const el = tms - stage.cleanStart;
+    if (el >= 0 && el < CLEAN_DUR) {
+      const p = el / CLEAN_DUR;
+      cleanK = 0.45 * (1 - p) * (1 - p);
+    } else {
+      stage.cleanStart = 0;
+    }
+  }
   for (const o of stage.orbs) {
     const y = Math.min(h - o.r - 2, o.y + lowSink + Math.sin(t * o.speed * (0.5 + act) + o.phase) * amp);
     const x = o.x + (stage.reduced ? 0 : Math.sin(t * o.speed * 0.4 + o.phase * 2) * amp * 0.4);
@@ -1290,9 +1515,14 @@ function drawStage(tms) {
       ctx.arc(x, y, o.r * 2.1, 0, Math.PI * 2);
       ctx.fill();
     }
-    const core = mixc([201,214,192], [234,247,200], act);
-    const mid  = mixc([148,170,140], [167,201,87],  act);
-    const edge = mixc([116,132,112], [106,153,78],  act);
+    let core = mixc([201,214,192], [234,247,200], act);
+    let mid  = mixc([148,170,140], [167,201,87],  act);
+    let edge = mixc([116,132,112], [106,153,78],  act);
+    if (cleanK > 0) {
+      core = mixWhite(core, cleanK);
+      mid  = mixWhite(mid, cleanK);
+      edge = mixWhite(edge, cleanK * 0.7);
+    }
     const grad = ctx.createRadialGradient(x - o.r * .3, y - o.r * .35, o.r * .1, x, y, o.r);
     grad.addColorStop(0, core); grad.addColorStop(.55, mid); grad.addColorStop(1, edge);
     ctx.globalAlpha = 0.6 + 0.4 * act;
@@ -1311,11 +1541,13 @@ function drawStage(tms) {
   if (stage.particles.length) {
     const dt = 1 / 60;
     for (const p of stage.particles) {
-      p.vy += 90 * dt;
-      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * 0.85;
+      const grav = p.g != null ? p.g : 90;
+      const dec  = p.decay != null ? p.decay : 0.85;
+      p.vy += grav * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * dec;
       if (p.life <= 0) continue;
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
-      ctx.fillStyle = p.life > 0.5 ? '#E2A53C' : '#A7C957';
+      ctx.fillStyle = p.col || (p.life > 0.5 ? '#E2A53C' : '#A7C957');
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -1544,6 +1776,7 @@ async function runMealAnalysis() {
   if (!cfg.url || !cfg.secret) {
     toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
     $('#mealModal').classList.remove('open');
+    flushPendingSpeech();
     openSettings();
     return;
   }
@@ -1575,6 +1808,10 @@ async function runMealAnalysis() {
       photoCount: arr.length,
     };
     commit();          // 保存＋スコアボタン・栄養カード反映
+    const k = speechKeyForMeal(analysis.mito_score, mealFulSel);
+    if (k) mitoSpeak(k);
+    // 浄化パルスはモーダルの裏では見えないため、開いている間は閉じたとき（flush側）に再生する
+    if (k === 'mealGood' && !mealModalIsOpen()) mitoEffect('clean');
     renderMealResult();
     toast('解析完了 ✨');
   } catch (err) {
@@ -1627,6 +1864,9 @@ async function addPhotoFile(file) {
         if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
           rec.checked.push(it.id);
           autoMsg = `「${it.name}」を自動チェックしました`;
+          // v1.5: 朝写真で野菜ジュースが自動チェックされたときのミトの一言・演出
+          mitoSpeak('juice');
+          mitoEffect('clean');
         }
       }
     }
@@ -1710,13 +1950,20 @@ $('#weightInput').addEventListener('change', e => {
 });
 $('#stepInput').addEventListener('change', e => {
   const rec = getRec(sel, true);
+  const prev = rec.steps;
   rec.steps = e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value)));
+  const walk = DB.items.find(i => i.auto === 'steps');
+  const k = speechKeyForSteps(prev, rec.steps, (walk && walk.threshold) || CFG.STEP_GOAL);
+  if (k) mitoSpeak(k);
   commit();
 });
 $('#sleepInput').addEventListener('change', e => {
   const rec = getRec(sel, true);
+  const prev = rec.sleepHours;
   const v = e.target.value;
   rec.sleepHours = v === '' ? null : clamp(Number(v), 0, 24);
+  const k = speechKeyForSleep(prev, rec.sleepHours);
+  if (k) { mitoSpeak(k); mitoEffect('sweep'); }
   commit();
 });
 
@@ -1992,6 +2239,10 @@ function toggleCheck(item, srcEl) {
       if (item.inc) setTimeout(() => floatText(x + 10, y, `+${item.inc}匹`, false), 150);
     }
     if (item.act > 0) toast(`${item.name} ✓ 活+${item.act}${item.inc ? `・+${item.inc}匹` : ''}`);
+    // v1.5: ミトの一言（チェックを付けたときのみ。外し時は不可）
+    const k = speechKeyForCheck(item.id);
+    if (k) mitoSpeak(k);
+    if (item.id === 'juice') mitoEffect('clean');
   }
   commit();
 }
@@ -2340,12 +2591,22 @@ document.querySelectorAll('.modal').forEach(m => {
   m.addEventListener('click', e => {
     if (e.target === m) {
       if (m.id === 'medModal') medStop();
-      else m.classList.remove('open');
+      else {
+        m.classList.remove('open');
+        if (m.id === 'mealModal') flushPendingSpeech();
+      }
     }
   });
 });
-document.querySelectorAll('[data-close]').forEach(b => {
-  b.addEventListener('click', () => b.closest('.modal').classList.remove('open'));
+// data-close は食事解析モーダルのように動的に描画されるボタンにも付くため、
+// document への委譲で拾う（v1.5: 閉じたタイミングで保留中のミトの一言も出す）
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-close]');
+  if (!b) return;
+  const m = b.closest('.modal');
+  if (!m) return;
+  m.classList.remove('open');
+  if (m.id === 'mealModal') flushPendingSpeech();
 });
 
 /* ============ カレンダー操作 ============ */

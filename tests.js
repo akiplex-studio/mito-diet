@@ -95,5 +95,46 @@ const s7 = computeState({ startDate:'2026-07-01', items, days: days7 }, '2026-09
 eq('long run finite', Number.isFinite(s7.mito) && s7.mito > 10, true);
 eq('peak >= mito', s7.peak >= s7.mito, true);
 
+/* --- v1.5: ミトの一言（状況キー判定） --- */
+// speechKeyForCheck
+eq('speechKeyForCheck juice', speechKeyForCheck('juice'), 'juice');
+eq('speechKeyForCheck bodyweight', speechKeyForCheck('bodyweight'), 'training');
+eq('speechKeyForCheck sugar', speechKeyForCheck('sugar'), 'sugar');
+eq('speechKeyForCheck darknight', speechKeyForCheck('darknight'), 'darkNight');
+eq('speechKeyForCheck hara7', speechKeyForCheck('hara7'), 'hara7');
+eq('speechKeyForCheck unknown', speechKeyForCheck('nosake'), null);
+
+// speechKeyForMeal
+eq('speechKeyForMeal low score', speechKeyForMeal(20, null), 'mealBad');
+eq('speechKeyForMeal low score beats overfull', speechKeyForMeal(20, '食べ過ぎ'), 'mealBad');
+eq('speechKeyForMeal overfull beats high score', speechKeyForMeal(80, '食べ過ぎ'), 'tooFull');
+eq('speechKeyForMeal high score', speechKeyForMeal(80, null), 'mealGood');
+eq('speechKeyForMeal hara7 (腹七分目)', speechKeyForMeal(50, '腹七分目くらい'), 'hara7');
+eq('speechKeyForMeal hara7 (軽め)', speechKeyForMeal(50, '軽め'), 'hara7');
+eq('speechKeyForMeal none', speechKeyForMeal(50, null), null);
+eq('speechKeyForMeal null score overfull', speechKeyForMeal(null, '食べ過ぎ'), 'tooFull');
+
+// speechKeyForSteps
+eq('speechKeyForSteps crosses goal', speechKeyForSteps(2000, 3000, 3000), 'walked');
+eq('speechKeyForSteps already achieved', speechKeyForSteps(3000, 3500, 3000), null);
+eq('speechKeyForSteps null prev crosses goal', speechKeyForSteps(null, 3000, 3000), 'walked');
+eq('speechKeyForSteps still under goal', speechKeyForSteps(2000, 2999, 3000), null);
+
+// speechKeyForSleep
+eq('speechKeyForSleep crosses 7h', speechKeyForSleep(6, 7), 'slept');
+eq('speechKeyForSleep already 7h+', speechKeyForSleep(7, 8), null);
+eq('speechKeyForSleep null prev crosses 7h', speechKeyForSleep(null, 7.5), 'slept');
+eq('speechKeyForSleep still under 7h', speechKeyForSleep(6, 6.5), null);
+
+// pickSpeechIndex
+eq('pickSpeechIndex avoids last', pickSpeechIndex(5, 2, 0.4), 3);
+eq('pickSpeechIndex picks 0', pickSpeechIndex(5, 1, 0.0), 0);
+eq('pickSpeechIndex len1 always 0', pickSpeechIndex(1, 0, 0.9), 0);
+
+// SPEECH 辞書の網羅性: 10キーすべてに5本以上の文があること
+const SPEECH_KEYS = ['juice','training','walked','sugar','mealGood','mealBad','hara7','tooFull','slept','darkNight'];
+eq('SPEECH has all 10 keys', SPEECH_KEYS.every(k => Array.isArray(SPEECH[k])), true);
+eq('SPEECH each key has >=5 lines', SPEECH_KEYS.every(k => SPEECH[k] && SPEECH[k].length >= 5), true);
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);
