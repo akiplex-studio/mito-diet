@@ -669,6 +669,7 @@ nav.footer {
           <button class="btn btn-danger" id="btnReset">全データを初期化</button>
         </div>
         <div class="set-note">書き出しには写真データも含まれます。機種変更前のバックアップに使えます。</div>
+        <div class="set-note" id="lastExportNote"></div>
       </div>
       <div class="set-section">
         <h4>写真解析（AI）</h4>
@@ -1046,6 +1047,19 @@ function sortTodoItems(items, checkedIds) {
   const rank = (it) => done.has(it.id) ? 2 : it.ng ? 1 : 0;
   return items.slice().sort((a, b) => rank(a) - rank(b) || a.order - b.order);
 }
+// 2つの日付文字列(YYYY-MM-DD)の日数差（d2 - d1）
+function daysBetween(d1, d2) {
+  return Math.round((new Date(d2 + 'T12:00:00') - new Date(d1 + 'T12:00:00')) / 86400000);
+}
+// バックアップ促しの判定。促すなら {kind:'never'} か {kind:'stale', days:n}、不要なら null
+function backupNudge(db, todayStr) {
+  const recDays = Object.keys((db && db.days) || {}).length;
+  if (recDays < 3) return null;
+  const last = db.lastExport || null;
+  if (!last) return { kind: 'never' };
+  const d = daysBetween(last, todayStr);
+  return d >= 7 ? { kind: 'stale', days: d } : null;
+}
 /* @logic-end */
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
@@ -1139,7 +1153,8 @@ function todayStr() { return fmtDate(new Date()); }
 function freshDB() {
   return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
            analyze:{ url:'', secret:'' },
-           profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 } };
+           profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 },
+           lastExport: null };
 }
 // v1→v3 マイグレーション：写真を {data, analysis} オブジェクトの配列に統一（既存の記録は保持）
 const MEAL_KEYS = ['breakfast','lunch','dinner'];
@@ -1163,6 +1178,7 @@ function migratePhotos(rec) {
 }
 function migrate(d) {
   if (!('goalWeight' in d)) d.goalWeight = null;
+  if (typeof d.lastExport === 'undefined') d.lastExport = null;
   if (!d.analyze || typeof d.analyze !== 'object') d.analyze = { url:'', secret:'' };
   if (!d.profile || typeof d.profile !== 'object') {
     d.profile = { heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 };
@@ -2557,6 +2573,12 @@ function openSettings() {
   $('#setAct').textContent = computed.activation;
   const raw = localStorage.getItem(STORE_KEY) || '';
   $('#setSize').textContent = Math.round(raw.length * 2 / 1024) + 'KB';
+  if (DB.lastExport) {
+    const d = daysBetween(DB.lastExport, todayStr());
+    $('#lastExportNote').textContent = `最終書き出し: ${DB.lastExport}（${d === 0 ? '今日' : d + '日前'}）`;
+  } else {
+    $('#lastExportNote').textContent = 'まだ書き出していません';
+  }
   $('#goalInput').value = (DB.goalWeight != null && DB.goalWeight !== '') ? DB.goalWeight : '';
   $('#anaUrl').value = (DB.analyze && DB.analyze.url) || '';
   $('#anaSecret').value = (DB.analyze && DB.analyze.secret) || '';
@@ -2608,6 +2630,8 @@ $('#btnExport').addEventListener('click', () => {
   a.download = `mito-data-${todayStr()}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  DB.lastExport = todayStr();
+  save();
   toast('JSONを書き出しました');
 });
 $('#btnImport').addEventListener('click', () => {
@@ -2722,6 +2746,19 @@ recompute();
 save();
 renderAll();
 startStage();
+
+// v1.8: バックアップ促し（1日1回まで）
+(function backupNudgeOnLoad() {
+  const nudge = backupNudge(DB, today);
+  if (!nudge) return;
+  let shown = null;
+  try { shown = localStorage.getItem('mito-backup-nudge'); } catch (e) {}
+  if (shown === today) return;
+  try { localStorage.setItem('mito-backup-nudge', today); } catch (e) {}
+  toast(nudge.kind === 'never'
+    ? '記録がたまってきました。設定の「書き出す」でバックアップしておこう'
+    : `最後のバックアップから${nudge.days}日。設定の「書き出す」で保存しておこう`);
+})();
 </script>
 </body>
 </html>

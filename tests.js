@@ -171,5 +171,18 @@ eq('sortTodoItems NG below unchecked, above checked',
 eq('sortTodoItems checked NG goes to done block',
   sortTodoItems([todoA, todoNG, todoB], ['ng1']).map(it => it.id), ['b', 'a', 'ng1']);
 
+/* --- v1.8: バックアップ促し（daysBetween / backupNudge） --- */
+eq('daysBetween 7日', daysBetween('2026-07-01', '2026-07-08'), 7);
+eq('daysBetween 同日', daysBetween('2026-07-11', '2026-07-11'), 0);
+
+eq('backupNudge 記録3日未満は促さない',
+  backupNudge({ days: { a:1, b:1 } }, '2026-07-11'), null);
+eq('backupNudge 未書き出し',
+  backupNudge({ days: { a:1, b:1, c:1 } }, '2026-07-11'), { kind:'never' });
+eq('backupNudge 6日経過は促さない',
+  backupNudge({ days: { a:1, b:1, c:1 }, lastExport:'2026-07-05' }, '2026-07-11'), null);
+eq('backupNudge 7日経過は促す',
+  backupNudge({ days: { a:1, b:1, c:1 }, lastExport:'2026-07-04' }, '2026-07-11'), { kind:'stale', days:7 });
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);
