@@ -1544,8 +1544,9 @@ function drawStage(tms) {
       ctx.arc(x, y, o.r * 2.1, 0, Math.PI * 2);
       ctx.fill();
     }
-    // v1.7: 手描きミトくん画像（半径12px以上・ロード済みのみ。それ未満/未ロードは従来のグラデ玉）
-    if (o.r >= 12 && mitoImg.complete && mitoImg.naturalWidth > 0) {
+    // v1.7: 手描きミトくん画像（半径8px以上・ロード済みのみ。それ未満/未ロードは従来のグラデ玉）
+    // ※最小の玉は半径9（planOrbs参照）。しきい値12だと序盤（30匹以下）は1体もミトくんにならないため8に設定
+    if (o.r >= 8 && mitoImg.complete && mitoImg.naturalWidth > 0) {
       ctx.globalAlpha = 0.6 + 0.4 * act;
       ctx.drawImage(mitoImg, x - o.r, y - o.r, o.r * 2, o.r * 2);
       if (cleanK > 0) {
