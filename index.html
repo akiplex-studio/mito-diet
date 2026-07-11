@@ -126,8 +126,10 @@ header {
 }
 
 /* ============ ③ ミトコンドリア表示 ============ */
-.mito-stage { position:relative; }
-#mitoCanvas { display:block; width:100%; height:240px; border-radius:var(--radius-md);
+/* v1.9: 背景画像の受け皿。--stage-bg は未定義のままにする＝現状の見た目は変わらない（将来ここに画像を差す） */
+.mito-stage { position:relative; background-image:var(--stage-bg, none); background-size:cover; background-position:center; }
+/* v1.9: 表示高さを約1.4倍に拡大（画面幅ベース・破綻しないようmin/maxを付ける） */
+#mitoCanvas { display:block; width:100%; height:clamp(230px, 85vw, 380px); border-radius:var(--radius-md);
   background:linear-gradient(180deg,var(--neutral-50),var(--primary-50)); }
 .mito-chips {
   position:absolute; bottom:10px; left:0; right:0;
@@ -251,6 +253,45 @@ header {
   padding:8px 14px;
 }
 .timer-btn:hover { background:var(--primary-200); }
+
+/* v1.9: トップ（filter==='all'）専用の横スクロールカード列 */
+.todo-rail {
+  display:flex; gap:var(--space-3); overflow-x:auto; padding:2px 2px 6px;
+  scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.todo-rail::-webkit-scrollbar { display:none; }
+.todo-card {
+  flex:none; width:clamp(96px, 28vw, 130px); height:92px;
+  scroll-snap-align:start; position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--space-2);
+  padding:var(--space-3) var(--space-2);
+  border-radius:var(--radius-md); border:1px solid var(--color-border);
+  background:var(--color-surface); text-align:center;
+  transition:opacity var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
+}
+.tc-check {
+  flex:none; width:22px; height:22px; border-radius:var(--radius-full);
+  border:2px solid var(--color-border); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700;
+}
+.tc-name {
+  font-size:12px; font-weight:600; line-height:1.3; color:var(--color-text);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.todo-card.ng { border-color:var(--warning-500); background:#FBF3E2; }
+.todo-card.ng .tc-check { border-color:var(--warning-500); }
+.todo-card.done { opacity:.55; }
+.todo-card.done .tc-check { background:var(--primary-600); border-color:var(--primary-600); }
+.todo-card.ng.done { border-color:var(--color-border); background:var(--color-surface); }
+.todo-card.ng.done .tc-check { background:var(--warning-500); border-color:var(--warning-500); }
+.tc-timer {
+  position:absolute; top:4px; right:4px; width:24px; height:24px;
+  border-radius:var(--radius-full); display:grid; place-items:center;
+  background:var(--primary-100); color:var(--primary-800);
+}
+.tc-timer:hover { background:var(--primary-200); }
 
 /* ============ ⑥ フッター ============ */
 nav.footer {
@@ -588,6 +629,7 @@ nav.footer {
       </div>
       <div class="breakdown" id="breakdown"></div>
       <div class="filter-chips" id="filterChips"></div>
+      <div class="todo-rail" id="todoRail"></div>
       <ul class="todo-list" id="todoList"></ul>
     </section>
 
@@ -1064,16 +1106,16 @@ function backupNudge(db, todayStr) {
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
 const DEFAULT_ITEMS = [
-  { id:'juice',      cat:'食事',      name:'野菜ジュース',                            pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
-  { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計）',   timing:'—' },
-  { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       pri:'S', act:4,  inc:0.3, order:3,  inTodo:true,  method:'写真',                 timing:'夜寝る前' },
-  { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          pri:'S', act:3,  inc:0.3, order:3,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
-  { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
-  { id:'nosake',     cat:'食事',      name:'禁酒',                                    pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
-  { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              pri:'S', act:2,  inc:0,   order:6,  inTodo:true,  method:'自己申告（将来自動化）', timing:'夜' },
-  { id:'meditate',   cat:'睡眠・生活', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）',        pri:'A', act:2,  inc:0.1, order:6,  inTodo:true,  method:'瞑想タイマー',         timing:'終わってから', timer:true },
-  { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           pri:'',  act:-3, inc:0,   order:90, inTodo:true,  ng:true, method:'自己申告',    timing:'寝る前' },
-  { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
+  { id:'juice',      cat:'食事',      name:'野菜ジュース',                            short:'野菜ジュース', pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
+  { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   short:'ウォーキング', pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計）',   timing:'—' },
+  { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       short:'タンパク質',   pri:'S', act:4,  inc:0.3, order:3,  inTodo:true,  method:'写真',                 timing:'夜寝る前' },
+  { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          short:'腹七分目',     pri:'S', act:3,  inc:0.3, order:3,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
+  { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        short:'自重トレ',     pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
+  { id:'nosake',     cat:'食事',      name:'禁酒',                                    short:'禁酒',         pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
+  { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              short:'夜は暗く',     pri:'S', act:2,  inc:0,   order:6,  inTodo:true,  method:'自己申告（将来自動化）', timing:'夜' },
+  { id:'meditate',   cat:'睡眠・生活', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）',        short:'呼吸瞑想',     pri:'A', act:2,  inc:0.1, order:6,  inTodo:true,  method:'瞑想タイマー',         timing:'終わってから', timer:true },
+  { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           short:'砂糖NG',       pri:'',  act:-3, inc:0,   order:90, inTodo:true,  ng:true, method:'自己申告',    timing:'寝る前' },
+  { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           short:'睡眠不足',     pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
 ];
 
 /* ============ ミト解説（TODO項目ごと・教育コンテンツ） ============ */
@@ -1177,6 +1219,15 @@ function migratePhotos(rec) {
   rec.photos = out;
 }
 function migrate(d) {
+  // v1.9: 既存 DB.items に短縮名 short が無ければ DEFAULT_ITEMS から id 一致で補完
+  if (Array.isArray(d.items)) {
+    d.items.forEach(it => {
+      if (it && !it.short) {
+        const def = DEFAULT_ITEMS.find(x => x.id === it.id);
+        if (def) it.short = def.short;
+      }
+    });
+  }
   if (!('goalWeight' in d)) d.goalWeight = null;
   if (typeof d.lastExport === 'undefined') d.lastExport = null;
   if (!d.analyze || typeof d.analyze !== 'object') d.analyze = { url:'', secret:'' };
@@ -2263,6 +2314,80 @@ function renderTodo() {
   ptEl.className = 'num' + (pts < 0 ? ' minus' : '');
 
   const list = $('#todoList');
+  const rail = $('#todoRail');
+  // v1.9: トップ（filter==='all'）は横スクロールカード列、カテゴリフィルタ時は従来の縦リスト
+  if (filter === 'all') {
+    list.style.display = 'none';
+    rail.style.display = '';
+    renderTodoRail(rail, rec);
+  } else {
+    rail.style.display = 'none';
+    list.style.display = '';
+    renderTodoList(list, rec);
+  }
+}
+// v1.9: トップ専用・横スクロールのカード列（チェック済み/NGはカードのスタイルで区別）
+function renderTodoRail(rail, rec) {
+  // 横版FLIP: 再描画前の各カードのleftをid別に記録しておく
+  const prevLefts = {};
+  rail.querySelectorAll('[data-id]').forEach(card => {
+    prevLefts[card.dataset.id] = card.getBoundingClientRect().left;
+  });
+  rail.innerHTML = '';
+  const items = sortTodoItems(DB.items.filter(it => it.inTodo), rec.checked);
+  items.forEach(it => {
+    const done = rec.checked.includes(it.id);
+    const card = document.createElement('div');
+    card.dataset.id = it.id;
+    card.className = 'todo-card' + (done ? ' done' : '') + (it.ng ? ' ng' : '');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-pressed', done ? 'true' : 'false');
+    card.setAttribute('aria-label', `${it.name}${done ? '（済）' : ''}`);
+    card.innerHTML =
+      `<span class="tc-check">${done ? '✓' : ''}</span>` +
+      `<span class="tc-name">${esc(it.short || it.name)}</span>`;
+    const activate = () => toggleCheck(it, card);
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+    if (it.timer) {
+      const tb = document.createElement('button');
+      tb.type = 'button';
+      tb.className = 'tc-timer';
+      tb.setAttribute('aria-label', '瞑想タイマーを開く');
+      tb.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+      tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
+      card.appendChild(tb);
+    }
+    rail.appendChild(card);
+  });
+  // 位置が変わったカードだけ、逆補正 → 次フレームで transition 付きで 0 へ戻す
+  if (!stage.reduced) {
+    const toFlip = [];
+    rail.querySelectorAll('[data-id]').forEach(card => {
+      const prevLeft = prevLefts[card.dataset.id];
+      if (prevLeft == null) return;
+      const diff = prevLeft - card.getBoundingClientRect().left;
+      if (!diff) return;
+      card.style.transition = 'none';
+      card.style.transform = `translateX(${diff}px)`;
+      toFlip.push(card);
+    });
+    if (toFlip.length) {
+      void rail.offsetHeight; // 強制リフローで「移動前」の位置を確定させる
+      requestAnimationFrame(() => {
+        toFlip.forEach(card => {
+          card.style.transition = `transform var(--duration-slow) var(--ease-standard)`;
+          card.style.transform = '';
+        });
+      });
+    }
+  }
+}
+// カテゴリフィルタ時（filter!=='all'）の従来どおりの縦リスト
+function renderTodoList(list, rec) {
   // v1.6: 並び替えのスライド演出（FLIP方式）— 再描画前の各行の位置を id 別に記録しておく
   const prevRects = {};
   list.querySelectorAll('li[data-id]').forEach(li => {
