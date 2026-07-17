@@ -186,7 +186,6 @@ header {
   border-radius:var(--radius-full); background:rgba(26,24,19,.55); color:#fff;
   display:grid; place-items:center;
 }
-.photo-note { font-size:11px; color:var(--color-text-muted); margin-top:var(--space-2); }
 
 /* ============ 記録（歩数・睡眠） ============ */
 .rec-row { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) 0; }
@@ -354,10 +353,13 @@ nav.footer {
 .wt-legend i.goal { border-top:2px dashed var(--info-500); }
 
 /* ============ v1.1: 食事写真（複数枚） ============ */
-.photo-meal + .photo-meal { margin-top:var(--space-4); }
-.photo-meal-label { font-size:12px; font-weight:600; color:var(--neutral-600); margin-bottom:var(--space-2); display:flex; align-items:center; gap:6px; }
-.photo-meal-label .cnt { font-family:var(--font-number); color:var(--color-text-muted); font-weight:500; }
-.photo-thumbs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+/* v1.18: 1食＝1行に圧縮。左の細い列に「朝0/4」＋解析ボタンを縦に並べ、右にサムネイル行 */
+.photo-meal { display:flex; align-items:center; gap:var(--space-2); }
+.photo-meal + .photo-meal { margin-top:var(--space-3); }
+.photo-meal-side { flex:0 0 60px; display:flex; flex-direction:column; gap:4px; }
+.photo-meal-label { font-size:12px; font-weight:600; color:var(--neutral-600); display:flex; align-items:baseline; gap:4px; }
+.photo-meal-label .cnt { font-family:var(--font-number); color:var(--color-text-muted); font-weight:500; font-size:11px; }
+.photo-thumbs { flex:1; min-width:0; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
 .photo-thumb { aspect-ratio:1; border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }
 .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
 .photo-add {
@@ -467,9 +469,9 @@ nav.footer {
 
 /* ============ v1.4: 食事単位のまとめ解析 ============ */
 .meal-ana-btn {
-  margin-left:auto; font-size:11px; font-weight:600;
+  font-size:10px; font-weight:600; text-align:center; line-height:1.3;
   color:var(--primary-800); background:var(--primary-100);
-  border-radius:var(--radius-full); padding:5px 12px;
+  border-radius:var(--radius-full); padding:4px 6px;
   font-family:var(--font-number); font-variant-numeric:tabular-nums;
 }
 .meal-ana-btn:hover { background:var(--primary-200); }
@@ -586,7 +588,6 @@ nav.footer {
       <section class="card">
         <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
         <div id="photoGrid"></div>
-        <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）。写真が選べないときは「追加」を長押しするとファイルから選べます</div>
       </section>
 
       <!-- きょうの栄養（v1.3） -->
@@ -721,6 +722,7 @@ nav.footer {
         <div class="set-note">設定すると「体重のあゆみ」グラフに目標線（青の破線）が表示されます。空欄にすると非表示になります。</div>
       </div>
       <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.4 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <button class="btn btn-primary" id="btnSaveClose" data-close style="width:100%; margin-top:var(--space-4)">保存して閉じる</button>
     </div>
   </div>
 
@@ -1677,7 +1679,10 @@ function renderPhotos() {
       ab.textContent = '🔍 解析';
     }
     if (!mealPending[mealStateKey(sel, key)]) ab.addEventListener('click', () => openMealModal(key));
-    lab.appendChild(ab);
+    const side = document.createElement('div');
+    side.className = 'photo-meal-side';
+    side.appendChild(lab);
+    side.appendChild(ab);
     const thumbs = document.createElement('div');
     thumbs.className = 'photo-thumbs';
     arr.forEach((entry, idx) => {
@@ -1716,7 +1721,7 @@ function renderPhotos() {
     textBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>ことば</span>';
     textBtn.addEventListener('click', () => openMealModal(key));
     thumbs.appendChild(textBtn);
-    meal.appendChild(lab); meal.appendChild(thumbs);
+    meal.appendChild(side); meal.appendChild(thumbs);
     grid.appendChild(meal);
   });
 }
@@ -2723,6 +2728,7 @@ $('#btnImport').addEventListener('click', () => {
   });
   input.click();
 });
+$('#btnSaveClose').addEventListener('click', () => toast('設定を保存しました'));
 $('#btnReset').addEventListener('click', () => {
   if (!confirm('本当に全データを初期化しますか？\n匹数・活性・チェック履歴・写真がすべて消えます。')) return;
   if (!confirm('最終確認：この操作は取り消せません。初期化しますか？（心配なら先に「書き出す」でバックアップ）')) return;
