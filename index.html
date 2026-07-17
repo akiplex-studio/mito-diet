@@ -218,77 +218,29 @@ header {
 }
 .todo-summary b { font-family:var(--font-number); font-size:20px; color:var(--primary-800); }
 .todo-summary b.minus { color:var(--warning-600); }
-.filter-chips { display:flex; gap:var(--space-1); flex-wrap:wrap; margin-bottom:var(--space-2); }
-.filter-chips button {
-  font-size:12px; padding:4px 14px; border-radius:var(--radius-full);
-  background:var(--neutral-50); color:var(--neutral-600); border:1px solid var(--color-border);
-  transition:all var(--duration-fast);
-}
-.filter-chips button.on { background:var(--primary-100); color:var(--primary-800); border-color:var(--primary-200); font-weight:600; }
-.todo-list { list-style:none; }
-.todo {
-  display:flex; align-items:center; gap:var(--space-3);
-  padding:var(--space-3) var(--space-1); min-height:52px;
-  border-bottom:1px solid var(--color-border); cursor:pointer;
-}
-.todo:last-child { border-bottom:none; }
-.todo input[type=checkbox] { width:22px; height:22px; flex:none; accent-color:var(--primary-600); cursor:pointer; }
-.todo.ng input[type=checkbox] { accent-color:var(--warning-500); }
-.todo-body { flex:1; min-width:0; }
-.todo-name { font-size:14px; font-weight:500; display:block; }
-.todo-meta { font-size:11px; color:var(--color-text-muted); display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center; }
-.todo.done { opacity:.55; }
-.todo .pri {
-  font-size:10px; font-weight:700; padding:0 7px; border-radius:var(--radius-full);
-  background:var(--primary-100); color:var(--primary-800);
-}
-.todo.ng .pri { background:#FBF3E2; color:var(--warning-600); }
-.todo .score { font-family:var(--font-number); }
-.score.plus { color:var(--primary-700); font-weight:600; }
-.score.minus { color:var(--warning-600); font-weight:600; }
-.ng-divider {
-  font-size:11px; color:var(--warning-600); font-weight:600;
-  padding:var(--space-3) var(--space-1) var(--space-1);
-  border-bottom:1px solid var(--color-border);
-}
-/* v1.6: チェック済みブロックの仕切り（NGと区別して緑系） */
-.done-divider {
-  font-size:11px; color:var(--primary-600); font-weight:600;
-  padding:var(--space-3) var(--space-1) var(--space-1);
-  border-bottom:1px solid var(--color-border);
-}
-.timer-btn {
-  flex:none; display:flex; align-items:center; gap:4px;
-  font-size:12px; font-weight:600; color:var(--primary-800);
-  background:var(--primary-100); border-radius:var(--radius-full);
-  padding:8px 14px;
-}
-.timer-btn:hover { background:var(--primary-200); }
 
-/* v1.9: トップ（filter==='all'）専用の横スクロールカード列 */
-.todo-rail {
-  display:flex; gap:var(--space-3); overflow-x:auto; padding:2px 2px 6px;
-  scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+/* v1.15: タブ廃止・横並びを1画面に収める2段グリッド（1段目=手動、2段目=自動判定） */
+.todo-row-label {
+  font-size:11px; color:var(--color-text-muted); font-weight:600;
+  margin:var(--space-3) 0 var(--space-1);
 }
-.todo-rail::-webkit-scrollbar { display:none; }
+.todo-grid-row { display:flex; gap:var(--space-1); }
 .todo-card {
-  flex:none; width:clamp(96px, 28vw, 130px); height:92px;
-  scroll-snap-align:start; position:relative;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--space-2);
-  padding:var(--space-3) var(--space-2);
+  flex:1 1 0; min-width:0; height:80px; position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  padding:var(--space-2) 4px;
   border-radius:var(--radius-md); border:1px solid var(--color-border);
   background:var(--color-surface); text-align:center;
   transition:opacity var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .tc-check {
-  flex:none; width:22px; height:22px; border-radius:var(--radius-full);
+  flex:none; width:20px; height:20px; border-radius:var(--radius-full);
   border:2px solid var(--color-border); color:#fff;
   display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700;
+  font-size:11px; font-weight:700;
 }
 .tc-name {
-  font-size:12px; font-weight:600; line-height:1.3; color:var(--color-text);
+  font-size:10.5px; font-weight:600; line-height:1.25; color:var(--color-text);
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .todo-card.ng { border-color:var(--warning-500); background:#FBF3E2; }
@@ -297,12 +249,17 @@ header {
 .todo-card.done .tc-check { background:var(--primary-600); border-color:var(--primary-600); }
 .todo-card.ng.done { border-color:var(--color-border); background:var(--color-surface); }
 .todo-card.ng.done .tc-check { background:var(--warning-500); border-color:var(--warning-500); }
-.tc-timer {
-  position:absolute; top:4px; right:4px; width:24px; height:24px;
+/* 自動判定カード: クリック不可なので押せる見た目を消す */
+.todo-card.auto { border-style:dashed; cursor:default; }
+.todo-card.auto .tc-check { border-style:dashed; }
+.tc-timer, .tc-info {
+  position:absolute; top:2px; width:20px; height:20px;
   border-radius:var(--radius-full); display:grid; place-items:center;
   background:var(--primary-100); color:var(--primary-800);
 }
-.tc-timer:hover { background:var(--primary-200); }
+.tc-timer { right:2px; }
+.tc-info { left:2px; }
+.tc-timer:hover, .tc-info:hover { background:var(--primary-200); }
 
 /* ============ ⑥ フッター ============ */
 nav.footer {
@@ -310,7 +267,7 @@ nav.footer {
   background:var(--color-surface); border-top:1px solid var(--color-border);
   padding-bottom:env(safe-area-inset-bottom);
 }
-.footer-inner { max-width:560px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); }
+.footer-inner { max-width:560px; margin:0 auto; display:flex; justify-content:center; }
 .footer button {
   display:flex; flex-direction:column; align-items:center; gap:2px;
   padding:10px 0 8px; font-size:10px; color:var(--neutral-500);
@@ -479,10 +436,6 @@ nav.footer {
 }
 .know-next:hover { background:var(--primary-200); }
 
-/* ============ v1.1: TODO 情報ボタン ============ */
-.info-btn { flex:none; width:32px; height:32px; border-radius:var(--radius-full); display:grid; place-items:center; color:var(--info-500); }
-.info-btn:hover { background:var(--primary-50); }
-
 /* 解説シート */
 .info-score { display:inline-flex; gap:10px; font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:13px; font-weight:600; background:var(--primary-50); color:var(--primary-800); padding:7px 14px; border-radius:var(--radius-full); margin-bottom:var(--space-4); }
 .info-block { margin-bottom:var(--space-4); }
@@ -639,9 +592,9 @@ nav.footer {
         <span><b class="num" id="dayPt">+0</b> pt</span>
       </div>
       <div class="breakdown" id="breakdown"></div>
-      <div class="filter-chips" id="filterChips"></div>
-      <div class="todo-rail" id="todoRail"></div>
-      <ul class="todo-list" id="todoList"></ul>
+      <div class="todo-grid-row" id="todoRowManual"></div>
+      <div class="todo-row-label">自動判定</div>
+      <div class="todo-grid-row" id="todoRowAuto"></div>
     </section>
 
     <!-- ④ 食事の写真 -->
@@ -700,9 +653,6 @@ nav.footer {
   <!-- ⑥ フッター -->
   <nav class="footer">
     <div class="footer-inner">
-      <button data-nav="運動"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></svg>運動</button>
-      <button data-nav="食事"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>食事</button>
-      <button data-nav="睡眠・生活"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>睡眠</button>
       <button data-nav="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
     </div>
   </nav>
@@ -1329,7 +1279,6 @@ let DB = load();
 let today = todayStr();
 let sel = today;          // 選択中の日付
 let weekOffset = 0;       // 週カレンダーの表示オフセット
-let filter = 'all';       // TODOカテゴリフィルタ
 let computed = computeState(DB, today);
 let photoSlot = null;     // 撮影対象スロット
 
@@ -2423,18 +2372,6 @@ function prevDate(dstr) {
 }
 
 /* ============ ⑤ TODO ============ */
-const FILTERS = [['all','すべて'],['運動','運動'],['食事','食事'],['睡眠・生活','睡眠・生活'],['NG行動','NG']];
-function renderFilterChips() {
-  const box = $('#filterChips');
-  box.innerHTML = '';
-  FILTERS.forEach(([key, label]) => {
-    const b = document.createElement('button');
-    b.textContent = label;
-    b.className = filter === key ? 'on' : '';
-    b.addEventListener('click', () => { filter = key; renderAll(); });
-    box.appendChild(b);
-  });
-}
 function renderTodo() {
   const rec = getRec(sel, false);
   const pd = computed.perDay[sel];
@@ -2443,45 +2380,41 @@ function renderTodo() {
   ptEl.textContent = (pts > 0 ? '+' : '') + pts;
   ptEl.className = 'num' + (pts < 0 ? ' minus' : '');
 
-  const list = $('#todoList');
-  const rail = $('#todoRail');
-  // v1.9: トップ（filter==='all'）は横スクロールカード列、カテゴリフィルタ時は従来の縦リスト
-  if (filter === 'all') {
-    list.style.display = 'none';
-    rail.style.display = '';
-    renderTodoRail(rail, rec);
-  } else {
-    rail.style.display = 'none';
-    list.style.display = '';
-    renderTodoList(list, rec);
-  }
+  // v1.15: タブ廃止・1画面2段グリッド（1段目=手動チェック、2段目=自動判定）
+  const manualItems = sortTodoItems(DB.items.filter(it => it.inTodo), rec.checked);
+  const autoItems = DB.items.filter(it => it.auto).slice().sort((a, b) => a.order - b.order);
+  renderTodoCards($('#todoRowManual'), manualItems, rec, true);
+  renderTodoCards($('#todoRowAuto'), autoItems, rec, false);
 }
-// v1.9: トップ専用・横スクロールのカード列（チェック済み/NGはカードのスタイルで区別）
-function renderTodoRail(rail, rec) {
-  // 横版FLIP: 再描画前の各カードのleftをid別に記録しておく
+// 手動・自動判定の両方で使う共通カード描画。interactive=falseなら自動判定カード（クリック不可・isItemDoneで達成判定）
+function renderTodoCards(container, items, rec, interactive) {
+  // 横並びFLIP: 再描画前の各カードのleftをid別に記録しておく
   const prevLefts = {};
-  rail.querySelectorAll('[data-id]').forEach(card => {
+  container.querySelectorAll('[data-id]').forEach(card => {
     prevLefts[card.dataset.id] = card.getBoundingClientRect().left;
   });
-  rail.innerHTML = '';
-  const items = sortTodoItems(DB.items.filter(it => it.inTodo), rec.checked);
+  container.innerHTML = '';
   items.forEach(it => {
-    const done = rec.checked.includes(it.id);
+    const done = interactive ? rec.checked.includes(it.id) : isItemDone(it, rec);
     const card = document.createElement('div');
     card.dataset.id = it.id;
-    card.className = 'todo-card' + (done ? ' done' : '') + (it.ng ? ' ng' : '');
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('aria-pressed', done ? 'true' : 'false');
-    card.setAttribute('aria-label', `${it.name}${done ? '（済）' : ''}`);
+    card.className = 'todo-card' + (done ? ' done' : '') + (it.ng ? ' ng' : '') + (interactive ? '' : ' auto');
     card.innerHTML =
       `<span class="tc-check">${done ? '✓' : ''}</span>` +
       `<span class="tc-name">${esc(it.short || it.name)}</span>`;
-    const activate = () => toggleCheck(it, card);
-    card.addEventListener('click', activate);
-    card.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
-    });
+    if (interactive) {
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-pressed', done ? 'true' : 'false');
+      card.setAttribute('aria-label', `${it.name}${done ? '（済）' : ''}`);
+      const activate = () => toggleCheck(it, card);
+      card.addEventListener('click', activate);
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+      });
+    } else {
+      card.setAttribute('aria-label', `${it.name}${done ? '（自動達成）' : '（未達成）'}`);
+    }
     if (it.timer) {
       const tb = document.createElement('button');
       tb.type = 'button';
@@ -2491,12 +2424,21 @@ function renderTodoRail(rail, rec) {
       tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
       card.appendChild(tb);
     }
-    rail.appendChild(card);
+    if (interactive && INFO[it.id]) {
+      const ib = document.createElement('button');
+      ib.type = 'button';
+      ib.className = 'tc-info';
+      ib.setAttribute('aria-label', `${it.name} がミトコンドリアに効く理由`);
+      ib.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+      ib.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openInfo(it); });
+      card.appendChild(ib);
+    }
+    container.appendChild(card);
   });
   // 位置が変わったカードだけ、逆補正 → 次フレームで transition 付きで 0 へ戻す
   if (!stage.reduced) {
     const toFlip = [];
-    rail.querySelectorAll('[data-id]').forEach(card => {
+    container.querySelectorAll('[data-id]').forEach(card => {
       const prevLeft = prevLefts[card.dataset.id];
       if (prevLeft == null) return;
       const diff = prevLeft - card.getBoundingClientRect().left;
@@ -2506,116 +2448,11 @@ function renderTodoRail(rail, rec) {
       toFlip.push(card);
     });
     if (toFlip.length) {
-      void rail.offsetHeight; // 強制リフローで「移動前」の位置を確定させる
+      void container.offsetHeight; // 強制リフローで「移動前」の位置を確定させる
       requestAnimationFrame(() => {
         toFlip.forEach(card => {
           card.style.transition = `transform var(--duration-slow) var(--ease-standard)`;
           card.style.transform = '';
-        });
-      });
-    }
-  }
-}
-// カテゴリフィルタ時（filter!=='all'）の従来どおりの縦リスト
-function renderTodoList(list, rec) {
-  // v1.6: 並び替えのスライド演出（FLIP方式）— 再描画前の各行の位置を id 別に記録しておく
-  const prevRects = {};
-  list.querySelectorAll('li[data-id]').forEach(li => {
-    prevRects[li.dataset.id] = li.getBoundingClientRect().top;
-  });
-  list.innerHTML = '';
-  // v1.6: 未チェックを order 順で上に、チェック済みは下のブロックへ
-  const items = sortTodoItems(
-    DB.items.filter(it => it.inTodo && (filter === 'all' || it.cat === filter)),
-    rec.checked
-  );
-  let ngDividerDone = false, doneDividerDone = false;
-  items.forEach(it => {
-    const done = rec.checked.includes(it.id);
-    if (!done && it.ng && !ngDividerDone && filter === 'all') {
-      const div = document.createElement('li');
-      div.className = 'ng-divider';
-      div.textContent = 'NG行動（あったら正直にチェック）';
-      list.appendChild(div);
-      ngDividerDone = true;
-    }
-    // v1.6: チェック済みブロックの頭に仕切りを入れる（NG行動と誤読されないように）
-    if (done && !doneDividerDone) {
-      const div = document.createElement('li');
-      div.className = 'done-divider';
-      div.textContent = '✓ きょうできたこと';
-      list.appendChild(div);
-      doneDividerDone = true;
-    }
-    const li = document.createElement('li');
-    li.dataset.id = it.id;
-    const label = document.createElement('label');
-    label.className = 'todo' + (done ? ' done' : '') + (it.ng ? ' ng' : '');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.checked = done;
-    cb.addEventListener('change', e => toggleCheck(it, e.target));
-    const body = document.createElement('span');
-    body.className = 'todo-body';
-    const scoreCls = it.act >= 0 ? 'plus' : 'minus';
-    const scoreTxt = `活${it.act > 0 ? '+' : ''}${it.act}` + (it.inc ? ` ・ +${it.inc}匹` : '');
-    let extraMeta = '';
-    if (it.id === 'protein') {
-      const lw = latestWeight(today);
-      if (lw) extraMeta = `<span>目安 約${Math.round(lw.weight * 1.6)}g</span>`;
-    }
-    body.innerHTML =
-      `<span class="todo-name">${esc(it.name)}</span>` +
-      `<span class="todo-meta">` +
-        (it.pri ? `<span class="pri">${esc(it.pri)}</span>` : '') +
-        `<span>${esc(it.cat)}</span>` +
-        `<span class="score ${scoreCls}">${scoreTxt}</span>` +
-        (it.timing && it.timing !== '—' ? `<span>${esc(it.timing)}</span>` : '') +
-        extraMeta +
-      `</span>`;
-    label.appendChild(cb);
-    label.appendChild(body);
-    if (it.timer) {
-      const tb = document.createElement('button');
-      tb.className = 'timer-btn';
-      tb.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>タイマー';
-      tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
-      label.appendChild(tb);
-    }
-    if (INFO[it.id]) {
-      const ib = document.createElement('button');
-      ib.className = 'info-btn';
-      ib.setAttribute('aria-label', `${it.name} がミトコンドリアに効く理由`);
-      ib.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
-      ib.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openInfo(it); });
-      label.appendChild(ib);
-    }
-    li.appendChild(label);
-    list.appendChild(li);
-  });
-  if (!items.length) {
-    const li = document.createElement('li');
-    li.style.cssText = 'padding:16px 4px; font-size:13px; color:var(--color-text-muted)';
-    li.textContent = 'このカテゴリのTODOはありません';
-    list.appendChild(li);
-  }
-  // v1.6: 位置が変わった行だけ、逆補正 → 次フレームで transition 付きで 0 へ戻す
-  if (!stage.reduced) {
-    const toFlip = [];
-    list.querySelectorAll('li[data-id]').forEach(li => {
-      const prevTop = prevRects[li.dataset.id];
-      if (prevTop == null) return;
-      const diff = prevTop - li.getBoundingClientRect().top;
-      if (!diff) return;
-      li.style.transition = 'none';
-      li.style.transform = `translateY(${diff}px)`;
-      toFlip.push(li);
-    });
-    if (toFlip.length) {
-      void list.offsetHeight; // 強制リフローで「移動前」の位置を確定させる
-      requestAnimationFrame(() => {
-        toFlip.forEach(li => {
-          li.style.transition = `transform var(--duration-slow) var(--ease-standard)`;
-          li.style.transform = '';
         });
       });
     }
@@ -2753,21 +2590,7 @@ $('#knowNext').addEventListener('click', () => {
 });
 
 /* ============ ⑥ フッター ============ */
-document.querySelectorAll('.footer button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const nav = btn.dataset.nav;
-    if (nav === 'settings') { openSettings(); return; }
-    filter = (filter === nav) ? 'all' : nav;
-    renderAll();
-    $('#todoCard').scrollIntoView({ behavior:'smooth', block:'start' });
-  });
-});
-function renderFooter() {
-  document.querySelectorAll('.footer button').forEach(btn => {
-    const nav = btn.dataset.nav;
-    btn.classList.toggle('on', nav !== 'settings' && filter === nav);
-  });
-}
+$('[data-nav="settings"]').addEventListener('click', openSettings);
 
 /* ============ 瞑想タイマー ============ */
 const MED = { inhale: 5000, exhale: 8000, cycles: 20 };
@@ -2923,7 +2746,7 @@ $('#btnReset').addEventListener('click', () => {
   if (!confirm('最終確認：この操作は取り消せません。初期化しますか？（心配なら先に「書き出す」でバックアップ）')) return;
   localStorage.removeItem(STORE_KEY);
   DB = freshDB();
-  sel = today; weekOffset = 0; filter = 'all';
+  sel = today; weekOffset = 0;
   commit();
   $('#settingsModal').classList.remove('open');
   toast('初期化しました。今日からまた育てよう 🌱');
@@ -2964,9 +2787,7 @@ function renderAll() {
   renderInputs();
   renderWeightGraph();
   renderNutrition();
-  renderFilterChips();
   renderTodo();
-  renderFooter();
   renderKnowledge();
   if (breakdownOpen) renderBreakdown();
 }
