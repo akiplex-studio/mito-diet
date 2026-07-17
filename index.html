@@ -662,7 +662,7 @@ nav.footer {
       <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>きょうの記録</h2>
       <div class="rec-row">
         <div class="rec-label">体重<div class="rec-status" id="weightStatus"></div></div>
-        <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="weightInput" placeholder="例: 72.4"><span class="rec-unit">kg</span></div>
+        <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="weightInput" placeholder="例: 72.4"><span class="rec-unit">kg</span><button type="button" class="rec-sync" id="weightSyncBtn" title="ヘルスデータから取得">🔄</button></div>
       </div>
       <div class="rec-row">
         <div class="rec-label">歩数<div class="rec-status" id="stepStatus"></div></div>
@@ -1851,7 +1851,7 @@ async function fetchHealthData(date) {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json || !json.ok) return null;
-    return { steps: json.steps, sleepHours: json.sleepHours };
+    return { steps: json.steps, sleepHours: json.sleepHours, weight: json.weight };
   } catch {
     return null; // オフライン・サーバー未起動などはベストエフォートで無視（手入力は妨げない）
   } finally {
@@ -1871,6 +1871,7 @@ async function autoSyncHealthData() {
   // 空欄のときだけ自動反映（手入力・既存の自動反映値は上書きしない）
   if ((rec.steps === null || rec.steps === undefined) && typeof data.steps === 'number') { rec.steps = data.steps; changed = true; }
   if ((rec.sleepHours === null || rec.sleepHours === undefined) && typeof data.sleepHours === 'number') { rec.sleepHours = data.sleepHours; changed = true; }
+  if ((rec.weight === null || rec.weight === undefined) && typeof data.weight === 'number') { rec.weight = data.weight; changed = true; }
   if (changed) commit();
 }
 // 🔄ボタン：表示中の日について明示的に取得し直す（既存値があっても上書き＝ユーザーの意図的操作）
@@ -1887,6 +1888,7 @@ async function manualSyncHealthField(field, btn) {
 }
 $('#stepSyncBtn').addEventListener('click', () => manualSyncHealthField('steps', $('#stepSyncBtn')));
 $('#sleepSyncBtn').addEventListener('click', () => manualSyncHealthField('sleepHours', $('#sleepSyncBtn')));
+$('#weightSyncBtn').addEventListener('click', () => manualSyncHealthField('weight', $('#weightSyncBtn')));
 
 /* ---- 食事解析モーダル ---- */
 const MEAL_JP = { breakfast: '朝', lunch: '昼', dinner: '晩' };
