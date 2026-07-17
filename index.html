@@ -1002,10 +1002,11 @@ function recNutrition(rec) {
   }
   return sum;
 }
-// 「腹七分目くらい」と申告された食事の数（v1.13: 2食以上で自動達成の判定に使う）
+// 「腹七分目くらい」または「軽め」と申告された食事の数（v1.13: 2食以上で自動達成の判定に使う）
+const HARA7_OK_FULLNESS = ['腹七分目くらい', '軽め'];
 function countHara7Meals(rec) {
   const mas = (rec && rec.mealAnalysis) || {};
-  return ['breakfast', 'lunch', 'dinner'].filter(m => mas[m] && mas[m].fullness === '腹七分目くらい').length;
+  return ['breakfast', 'lunch', 'dinner'].filter(m => mas[m] && HARA7_OK_FULLNESS.includes(mas[m].fullness)).length;
 }
 
 /* ---- v1.5 ミトの一言（セリフ辞書と状況キー判定） ---- */
@@ -2218,10 +2219,10 @@ function renderInputs() {
     const need = hara7.threshold ?? 2;
     if (count >= need) {
       hara7St.className = 'rec-status ok';
-      hara7St.textContent = `✓ ${count}食が腹七分目（活+${hara7.act}・+${hara7.inc}匹）`;
+      hara7St.textContent = `✓ ${count}食が腹七分目以下（活+${hara7.act}・+${hara7.inc}匹）`;
     } else {
       hara7St.className = 'rec-status wait';
-      hara7St.textContent = `${count}/${need}食が腹七分目（食事解析で「腹七分目くらい」を選ぶと集計されます）`;
+      hara7St.textContent = `${count}/${need}食が腹七分目以下（食事解析で「軽め」「腹七分目くらい」を選ぶと集計されます）`;
     }
   }
 }
