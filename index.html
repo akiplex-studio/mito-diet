@@ -675,6 +675,9 @@ nav.footer {
       <div class="rec-row">
         <div class="rec-label">タンパク質<div class="rec-status" id="proteinStatus"></div></div>
       </div>
+      <div class="rec-row">
+        <div class="rec-label">腹七分目<div class="rec-status" id="hara7Status"></div></div>
+      </div>
     </section>
 
     <!-- 体重のあゆみ -->
@@ -876,6 +879,9 @@ function isItemDone(item, rec) {
     if (!(w > 0)) return false; // その日の体重が無いと目安gを計算できない
     return recNutrition(rec).p >= w * (item.threshold ?? 1.6);
   }
+  if (item.auto === 'hara7') {
+    return countHara7Meals(rec) >= (item.threshold ?? 2);
+  }
   return (rec.checked || []).includes(item.id);
 }
 
@@ -995,6 +1001,11 @@ function recNutrition(rec) {
     };
   }
   return sum;
+}
+// 「腹七分目くらい」と申告された食事の数（v1.13: 2食以上で自動達成の判定に使う）
+function countHara7Meals(rec) {
+  const mas = (rec && rec.mealAnalysis) || {};
+  return ['breakfast', 'lunch', 'dinner'].filter(m => mas[m] && mas[m].fullness === '腹七分目くらい').length;
 }
 
 /* ---- v1.5 ミトの一言（セリフ辞書と状況キー判定） ---- */
@@ -1128,10 +1139,10 @@ const DEFAULT_ITEMS = [
   { id:'juice',      cat:'食事',      name:'野菜ジュース',                            short:'野菜ジュース', pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
   { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   short:'ウォーキング', pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計）',   timing:'—' },
   { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       short:'タンパク質',   pri:'S', act:4,  inc:0.3, order:3,  inTodo:false, auto:'protein', threshold:1.6, method:'写真（自動判定）',     timing:'夜寝る前' },
-  { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          short:'腹七分目',     pri:'S', act:3,  inc:0.3, order:3,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
+  { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          short:'腹七分目',     pri:'S', act:3,  inc:0.3, order:3,  inTodo:false, auto:'hara7', threshold:2, method:'満腹度（自動集計・2食以上）', timing:'夜寝る前' },
   { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        short:'自重トレ',     pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
   { id:'nosake',     cat:'食事',      name:'禁酒',                                    short:'禁酒',         pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
-  { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              short:'夜は暗く',     pri:'S', act:2,  inc:0,   order:6,  inTodo:true,  method:'自己申告（将来自動化）', timing:'夜' },
+  { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              short:'夜は暗く',     pri:'S', act:2,  inc:0,   order:6,  inTodo:false, method:'自己申告（判定曖昧のため一時停止）', timing:'夜' },
   { id:'meditate',   cat:'睡眠・生活', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）',        short:'呼吸瞑想',     pri:'A', act:2,  inc:0.1, order:6,  inTodo:true,  method:'瞑想タイマー',         timing:'終わってから', timer:true },
   { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           short:'砂糖NG',       pri:'',  act:-3, inc:0,   order:90, inTodo:true,  ng:true, method:'自己申告',    timing:'寝る前' },
   { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           short:'睡眠不足',     pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
@@ -1249,6 +1260,16 @@ function migrate(d) {
       if (it && it.id === 'protein' && it.auto !== 'protein') {
         const def = DEFAULT_ITEMS.find(x => x.id === 'protein');
         if (def) { it.auto = def.auto; it.threshold = def.threshold; it.inTodo = def.inTodo; it.method = def.method; }
+      }
+      // v1.13: hara7項目を自動判定（満腹度2食以上）に切り替え
+      if (it && it.id === 'hara7' && it.auto !== 'hara7') {
+        const def = DEFAULT_ITEMS.find(x => x.id === 'hara7');
+        if (def) { it.auto = def.auto; it.threshold = def.threshold; it.inTodo = def.inTodo; it.method = def.method; }
+      }
+      // v1.13: darknightは判定が曖昧なためチェックリストから除外（履歴のact集計はそのまま維持）
+      if (it && it.id === 'darknight' && it.inTodo !== false) {
+        it.inTodo = false;
+        it.method = '自己申告（判定曖昧のため一時停止）';
       }
     });
   }
@@ -2187,6 +2208,20 @@ function renderInputs() {
         proteinSt.className = 'rec-status wait';
         proteinSt.textContent = `${Math.round(p)}g / 目安${Math.round(target)}g（あと${Math.round(target - p)}g）`;
       }
+    }
+  }
+  // 腹七分目：「腹七分目くらい」と申告した食事が2食以上あれば自動達成
+  const hara7 = DB.items.find(i => i.auto === 'hara7');
+  const hara7St = $('#hara7Status');
+  if (hara7) {
+    const count = countHara7Meals(rec);
+    const need = hara7.threshold ?? 2;
+    if (count >= need) {
+      hara7St.className = 'rec-status ok';
+      hara7St.textContent = `✓ ${count}食が腹七分目（活+${hara7.act}・+${hara7.inc}匹）`;
+    } else {
+      hara7St.className = 'rec-status wait';
+      hara7St.textContent = `${count}/${need}食が腹七分目（食事解析で「腹七分目くらい」を選ぶと集計されます）`;
     }
   }
 }
