@@ -122,12 +122,18 @@ app.post("/api/analyze-meal", async (req, res) => {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** 日本時間での「今日」（YYYY-MM-DD）。Renderのサーバー時計はUTCのため、単純なnew Date()だと日付境界がズレる */
+function todayJST(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
+}
+
 app.post("/api/health-data", (req, res) => {
   if (!secretOk(req.header("x-app-secret"))) {
     res.status(401).json({ error: "unauthorized" });
     return;
   }
-  const date = req.body?.date;
+  // dateは省略可（Tasker側で日付を組み立てる手間を無くすため）。省略時は日本時間の今日を使う
+  const date = req.body?.date ?? todayJST();
   if (typeof date !== "string" || !DATE_RE.test(date)) {
     res.status(400).json({ error: "bad_request", message: "date は YYYY-MM-DD 形式が必要です" });
     return;
