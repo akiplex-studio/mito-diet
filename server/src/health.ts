@@ -9,10 +9,13 @@ const HEALTH_FILE = path.join(DATA_DIR, "health-log.json");
 export interface HealthEntry {
   steps: number | null;
   sleepHours: number | null;
+  weight: number | null;
   updatedAt: string;
 }
 
 type HealthLog = Record<string, HealthEntry>;
+
+const EMPTY_ENTRY: HealthEntry = { steps: null, sleepHours: null, weight: null, updatedAt: "" };
 
 function load(): HealthLog {
   try {
@@ -23,17 +26,18 @@ function load(): HealthLog {
   }
 }
 
-/** 指定日のsteps/sleepHoursを部分更新（送られなかった側は既存値を保持） */
+/** 指定日のsteps/sleepHours/weightを部分更新（送られなかった側は既存値を保持） */
 export function upsertHealthData(
   date: string,
-  patch: { steps?: number; sleepHours?: number }
+  patch: { steps?: number; sleepHours?: number; weight?: number }
 ): HealthEntry {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const log = load();
-  const prev = log[date] ?? { steps: null, sleepHours: null, updatedAt: "" };
+  const prev = log[date] ?? EMPTY_ENTRY;
   const entry: HealthEntry = {
     steps: patch.steps ?? prev.steps,
     sleepHours: patch.sleepHours ?? prev.sleepHours,
+    weight: patch.weight ?? prev.weight,
     updatedAt: new Date().toISOString(),
   };
   log[date] = entry;
@@ -43,7 +47,7 @@ export function upsertHealthData(
 
 export function getHealthData(date: string): HealthEntry {
   const log = load();
-  return log[date] ?? { steps: null, sleepHours: null, updatedAt: "" };
+  return log[date] ?? EMPTY_ENTRY;
 }
 
 // TaskerHealthConnectプラグイン（Read Aggregated Data）の生の結果JSONから値を取り出す。
@@ -82,4 +86,11 @@ export function extractSleepHoursFromRaw(raw: unknown): number | null {
   const ms = numField(parseAggregatedResult(raw), "SleepSession_duration");
   if (ms === null) return null;
   return Math.round((ms / 3600000) * 10) / 10;
+}
+
+/** Weight_weight_avgはkg想定（Health ConnectのMassはkilograms基準）。小数1桁に丸める */
+export function extractWeightFromRaw(raw: unknown): number | null {
+  const kg = numField(parseAggregatedResult(raw), "Weight_weight_avg");
+  if (kg === null || kg <= 0) return null;
+  return Math.round(kg * 10) / 10;
 }

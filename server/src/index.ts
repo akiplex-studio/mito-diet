@@ -4,7 +4,13 @@ import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeMeal, BadImageError } from "./analyze.js";
 import { checkAndCountDaily, estimateCostUSD, logUsage } from "./usage.js";
-import { extractSleepHoursFromRaw, extractStepsFromRaw, getHealthData, upsertHealthData } from "./health.js";
+import {
+  extractSleepHoursFromRaw,
+  extractStepsFromRaw,
+  extractWeightFromRaw,
+  getHealthData,
+  upsertHealthData,
+} from "./health.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.APP_SHARED_SECRET || "";
@@ -140,7 +146,8 @@ app.post("/api/health-data", (req, res) => {
   }
   const rawSteps = req.body?.steps;
   const rawSleep = req.body?.sleepHours;
-  const patch: { steps?: number; sleepHours?: number } = {};
+  const rawWeight = req.body?.weight;
+  const patch: { steps?: number; sleepHours?: number; weight?: number } = {};
   if (rawSteps !== undefined) {
     if (typeof rawSteps !== "number" || !Number.isFinite(rawSteps) || rawSteps < 0) {
       res.status(400).json({ error: "bad_request", message: "steps は0以上の数値が必要です" });
@@ -164,8 +171,19 @@ app.post("/api/health-data", (req, res) => {
     const extracted = extractSleepHoursFromRaw(req.body.sleepRaw);
     if (extracted !== null) patch.sleepHours = extracted;
   }
+  if (rawWeight !== undefined) {
+    if (typeof rawWeight !== "number" || !Number.isFinite(rawWeight) || rawWeight <= 0 || rawWeight > 300) {
+      res.status(400).json({ error: "bad_request", message: "weight は0〜300の数値が必要です" });
+      return;
+    }
+    patch.weight = rawWeight;
+  } else if (req.body?.weightRaw !== undefined) {
+    // Weight_weight_avg（kg）を抽出
+    const extracted = extractWeightFromRaw(req.body.weightRaw);
+    if (extracted !== null) patch.weight = extracted;
+  }
   const entry = upsertHealthData(date, patch);
-  res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours });
+  res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours, weight: entry.weight });
 });
 
 app.get("/api/health-data", (req, res) => {
@@ -179,7 +197,7 @@ app.get("/api/health-data", (req, res) => {
     return;
   }
   const entry = getHealthData(date);
-  res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours });
+  res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours, weight: entry.weight });
 });
 
 app.listen(PORT, () => {
