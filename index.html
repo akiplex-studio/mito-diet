@@ -628,25 +628,9 @@ nav.footer {
         <div id="weightBody"></div>
       </section>
     </div>
-  </main>
 
-  <!-- ⑥ フッター -->
-  <nav class="footer">
-    <div class="footer-inner">
-      <button data-tab="home" class="on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>ホーム</button>
-      <button data-tab="meals"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>食事</button>
-      <button data-tab="records"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>記録</button>
-      <button data-nav="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
-    </div>
-  </nav>
-
-  <!-- 設定モーダル -->
-  <div class="modal" id="settingsModal">
-    <div class="sheet">
-      <div class="sheet-head">
-        <h3>設定</h3>
-        <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-      </div>
+    <!-- 設定: 他のタブと同じくmain内の1タブとして表示 -->
+    <div class="tab-page" id="tabSettings" hidden>
       <div class="set-section">
         <h4>育成データ</h4>
         <div class="set-stats">
@@ -722,9 +706,19 @@ nav.footer {
         <div class="set-note">設定すると「体重のあゆみ」グラフに目標線（青の破線）が表示されます。空欄にすると非表示になります。</div>
       </div>
       <div class="set-note" style="text-align:center">ミトコンドリア・ダイエット v1.4 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
-      <button class="btn btn-primary" id="btnSaveClose" data-close style="width:100%; margin-top:var(--space-4)">保存して閉じる</button>
+      <button class="btn btn-primary" id="btnSaveClose" style="width:100%; margin-top:var(--space-4)">保存して閉じる</button>
     </div>
-  </div>
+  </main>
+
+  <!-- ⑥ フッター -->
+  <nav class="footer">
+    <div class="footer-inner">
+      <button data-tab="home" class="on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>ホーム</button>
+      <button data-tab="meals"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>食事</button>
+      <button data-tab="records"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>記録</button>
+      <button data-tab="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
+    </div>
+  </nav>
 
   <!-- 写真ライトボックス -->
   <div class="modal" id="lightbox">
@@ -2559,25 +2553,29 @@ function renderKnowledge() {
   $('#knowLine').textContent = KNOWLEDGE[knowIdx];
 }
 
-/* ============ ⑥ フッター（v1.17: ホーム/食事/記録タブ + 設定） ============ */
-let activeTab = 'home'; // 'home' | 'meals' | 'records'
+/* ============ ⑥ フッター（v1.19: ホーム/食事/記録/設定の4タブ） ============ */
+let activeTab = 'home'; // 'home' | 'meals' | 'records' | 'settings'
 function renderTabs() {
   $('#tabHome').hidden = activeTab !== 'home';
   $('#tabMeals').hidden = activeTab !== 'meals';
   $('#tabRecords').hidden = activeTab !== 'records';
+  $('#tabSettings').hidden = activeTab !== 'settings';
   document.querySelectorAll('.footer button[data-tab]').forEach(btn => {
     btn.classList.toggle('on', btn.dataset.tab === activeTab);
   });
 }
+function switchTab(tab) {
+  if (activeTab === tab) return;
+  activeTab = tab;
+  renderTabs();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 document.querySelectorAll('.footer button[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (activeTab === btn.dataset.tab) return;
-    activeTab = btn.dataset.tab;
-    renderTabs();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (btn.dataset.tab === 'settings') { openSettings(); return; }
+    switchTab(btn.dataset.tab);
   });
 });
-$('[data-nav="settings"]').addEventListener('click', openSettings);
 
 /* ============ 瞑想タイマー ============ */
 const MED = { inhale: 5000, exhale: 8000, cycles: 20 };
@@ -2653,7 +2651,7 @@ function openSettings() {
   $('#profSex').value = prof.sex || '';
   $('#profActivity').value = String(prof.activity || 1.375);
   $('#profRatio').value = String(prof.targetRatio || 0.7);
-  $('#settingsModal').classList.add('open');
+  switchTab('settings');
 }
 function setProfile(field, value) {
   DB.profile = DB.profile || { heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 };
@@ -2728,7 +2726,10 @@ $('#btnImport').addEventListener('click', () => {
   });
   input.click();
 });
-$('#btnSaveClose').addEventListener('click', () => toast('設定を保存しました'));
+$('#btnSaveClose').addEventListener('click', () => {
+  toast('設定を保存しました');
+  switchTab('home');
+});
 $('#btnReset').addEventListener('click', () => {
   if (!confirm('本当に全データを初期化しますか？\n匹数・活性・チェック履歴・写真がすべて消えます。')) return;
   if (!confirm('最終確認：この操作は取り消せません。初期化しますか？（心配なら先に「書き出す」でバックアップ）')) return;
@@ -2736,7 +2737,6 @@ $('#btnReset').addEventListener('click', () => {
   DB = freshDB();
   sel = today; weekOffset = 0;
   commit();
-  $('#settingsModal').classList.remove('open');
   toast('初期化しました。今日からまた育てよう 🌱');
 });
 document.querySelectorAll('.modal').forEach(m => {
