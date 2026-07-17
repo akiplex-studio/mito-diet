@@ -45,3 +45,41 @@ export function getHealthData(date: string): HealthEntry {
   const log = load();
   return log[date] ?? { steps: null, sleepHours: null, updatedAt: "" };
 }
+
+// TaskerHealthConnectプラグイン（Read Aggregated Data）の生の結果JSONから値を取り出す。
+// 例: {"dataOrigins":[],"doubleValues":{},"longValues":{"Steps_count_total":8000}}
+// Tasker側でのJSONパース・単位換算を避けるため、生JSONをそのままサーバーへ送ってもらう想定。
+interface AggregatedResultLike {
+  longValues?: Record<string, unknown>;
+  doubleValues?: Record<string, unknown>;
+}
+
+function parseAggregatedResult(raw: unknown): AggregatedResultLike | null {
+  if (raw == null) return null;
+  if (typeof raw === "object") return raw as AggregatedResultLike;
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function numField(obj: AggregatedResultLike | null, key: string): number | null {
+  const v = obj?.longValues?.[key] ?? obj?.doubleValues?.[key];
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+export function extractStepsFromRaw(raw: unknown): number | null {
+  const v = numField(parseAggregatedResult(raw), "Steps_count_total");
+  return v === null ? null : Math.max(0, Math.floor(v));
+}
+
+/** SleepSession_durationはミリ秒で来るため時間に換算（小数1桁） */
+export function extractSleepHoursFromRaw(raw: unknown): number | null {
+  const ms = numField(parseAggregatedResult(raw), "SleepSession_duration");
+  if (ms === null) return null;
+  return Math.round((ms / 3600000) * 10) / 10;
+}

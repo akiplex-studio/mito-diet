@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeMeal, BadImageError } from "./analyze.js";
 import { checkAndCountDaily, estimateCostUSD, logUsage } from "./usage.js";
-import { getHealthData, upsertHealthData } from "./health.js";
+import { extractSleepHoursFromRaw, extractStepsFromRaw, getHealthData, upsertHealthData } from "./health.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.APP_SHARED_SECRET || "";
@@ -141,6 +141,11 @@ app.post("/api/health-data", (req, res) => {
       return;
     }
     patch.steps = Math.floor(rawSteps);
+  } else if (req.body?.stepsRaw !== undefined) {
+    // TaskerHealthConnectの Read Aggregated Data が返す生JSON（%healthconnectresult）をそのまま受け取り、
+    // Steps_count_total を抽出する（Tasker側でのJSON処理を避けるため）
+    const extracted = extractStepsFromRaw(req.body.stepsRaw);
+    if (extracted !== null) patch.steps = extracted;
   }
   if (rawSleep !== undefined) {
     if (typeof rawSleep !== "number" || !Number.isFinite(rawSleep) || rawSleep < 0 || rawSleep > 24) {
@@ -148,6 +153,10 @@ app.post("/api/health-data", (req, res) => {
       return;
     }
     patch.sleepHours = rawSleep;
+  } else if (req.body?.sleepRaw !== undefined) {
+    // SleepSession_duration（ミリ秒）を時間に換算して抽出
+    const extracted = extractSleepHoursFromRaw(req.body.sleepRaw);
+    if (extracted !== null) patch.sleepHours = extracted;
   }
   const entry = upsertHealthData(date, patch);
   res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours });
