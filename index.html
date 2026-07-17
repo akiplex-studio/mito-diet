@@ -672,6 +672,9 @@ nav.footer {
         <div class="rec-label">睡眠時間<div class="rec-status" id="sleepStatus"></div></div>
         <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="24" step="0.5" id="sleepInput" placeholder="例: 7.5"><span class="rec-unit">時間</span><button type="button" class="rec-sync" id="sleepSyncBtn" title="ヘルスデータから取得">🔄</button></div>
       </div>
+      <div class="rec-row">
+        <div class="rec-label">タンパク質<div class="rec-status" id="proteinStatus"></div></div>
+      </div>
     </section>
 
     <!-- 体重のあゆみ -->
@@ -867,6 +870,11 @@ function isItemDone(item, rec) {
     if (h === null || h === undefined || h === '') return false;
     const n = Number(h);
     return n > 0 && n < (item.threshold ?? CFG.SLEEP_LACK);
+  }
+  if (item.auto === 'protein') {
+    const w = Number(rec.weight);
+    if (!(w > 0)) return false; // その日の体重が無いと目安gを計算できない
+    return recNutrition(rec).p >= w * (item.threshold ?? 1.6);
   }
   return (rec.checked || []).includes(item.id);
 }
@@ -1119,7 +1127,7 @@ function backupNudge(db, todayStr) {
 const DEFAULT_ITEMS = [
   { id:'juice',      cat:'食事',      name:'野菜ジュース',                            short:'野菜ジュース', pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
   { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   short:'ウォーキング', pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計）',   timing:'—' },
-  { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       short:'タンパク質',   pri:'S', act:4,  inc:0.3, order:3,  inTodo:true,  method:'写真',                 timing:'夜寝る前' },
+  { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       short:'タンパク質',   pri:'S', act:4,  inc:0.3, order:3,  inTodo:false, auto:'protein', threshold:1.6, method:'写真（自動判定）',     timing:'夜寝る前' },
   { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          short:'腹七分目',     pri:'S', act:3,  inc:0.3, order:3,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
   { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        short:'自重トレ',     pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
   { id:'nosake',     cat:'食事',      name:'禁酒',                                    short:'禁酒',         pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
@@ -1236,6 +1244,11 @@ function migrate(d) {
       if (it && !it.short) {
         const def = DEFAULT_ITEMS.find(x => x.id === it.id);
         if (def) it.short = def.short;
+      }
+      // v1.13: protein項目を自動判定（栄養集計×体重）に切り替え
+      if (it && it.id === 'protein' && it.auto !== 'protein') {
+        const def = DEFAULT_ITEMS.find(x => x.id === 'protein');
+        if (def) { it.auto = def.auto; it.threshold = def.threshold; it.inTodo = def.inTodo; it.method = def.method; }
       }
     });
   }
@@ -2155,6 +2168,25 @@ function renderInputs() {
     } else {
       sleepSt.className = 'rec-status ok';
       sleepSt.textContent = '✓ しっかり眠れました';
+    }
+  }
+  // タンパク質：食事解析の合計と体重×1.6gを比較して自動判定（写真解析＋体重の記録が前提）
+  const protein = DB.items.find(i => i.auto === 'protein');
+  const proteinSt = $('#proteinStatus');
+  if (protein) {
+    if (!(Number(rec.weight) > 0)) {
+      proteinSt.className = 'rec-status wait';
+      proteinSt.textContent = '体重を記録すると自動判定されます';
+    } else {
+      const target = Number(rec.weight) * (protein.threshold ?? 1.6);
+      const p = recNutrition(rec).p;
+      if (p >= target) {
+        proteinSt.className = 'rec-status ok';
+        proteinSt.textContent = `✓ ${Math.round(p)}g / 目安${Math.round(target)}g（活+${protein.act}・+${protein.inc}匹）`;
+      } else {
+        proteinSt.className = 'rec-status wait';
+        proteinSt.textContent = `${Math.round(p)}g / 目安${Math.round(target)}g（あと${Math.round(target - p)}g）`;
+      }
     }
   }
 }
