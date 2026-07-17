@@ -156,6 +156,13 @@ header {
   border-right:1px solid var(--color-border); border-bottom:1px solid var(--color-border);
   transform:translateX(-50%) rotate(45deg);
 }
+/* v1.17: 今日のミト知識をカード単体から、ミト表示の下に添える一言に圧縮
+   （固定フッターに隠れないよう、絶対配置ではなく通常フローに置く） */
+.know-line {
+  margin-top:4px; text-align:center; font-size:11px; line-height:1.4; color:var(--color-text-muted);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.tab-page[hidden] { display:none; }
 @keyframes mito-bubble-in {
   from { opacity:0; transform:translate(-50%,-6px) scale(.96); }
   to   { opacity:1; transform:translate(-50%,0) scale(1); }
@@ -257,7 +264,7 @@ nav.footer {
   background:var(--color-surface); border-top:1px solid var(--color-border);
   padding-bottom:env(safe-area-inset-bottom);
 }
-.footer-inner { max-width:560px; margin:0 auto; display:flex; justify-content:center; }
+.footer-inner { max-width:560px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); }
 .footer button {
   display:flex; flex-direction:column; align-items:center; gap:2px;
   padding:10px 0 8px; font-size:10px; color:var(--neutral-500);
@@ -415,17 +422,6 @@ nav.footer {
 .bd-total { border-top:1px solid var(--color-border); margin-top:var(--space-2); padding-top:var(--space-2); font-weight:700; }
 .bd-empty { font-size:12px; color:var(--color-text-muted); padding:6px 0; }
 
-/* ============ v1.1: ミト知識 ============ */
-.know-card { background:linear-gradient(135deg, var(--primary-50), var(--neutral-100)); }
-.know-text { font-size:14.5px; line-height:1.8; color:var(--neutral-700); }
-.know-foot { display:flex; align-items:center; justify-content:space-between; margin-top:var(--space-3); gap:var(--space-2); }
-.know-idx { font-size:11px; color:var(--color-text-muted); font-family:var(--font-number); }
-.know-next {
-  font-size:12px; font-weight:600; color:var(--primary-800); background:var(--primary-100);
-  border-radius:var(--radius-full); padding:7px 16px; display:inline-flex; align-items:center; gap:5px;
-}
-.know-next:hover { background:var(--primary-200); }
-
 /* 解説シート */
 .info-score { display:inline-flex; gap:10px; font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:13px; font-weight:600; background:var(--primary-50); color:var(--primary-800); padding:7px 14px; border-radius:var(--radius-full); margin-bottom:var(--space-4); }
 .info-block { margin-bottom:var(--space-4); }
@@ -548,94 +544,97 @@ nav.footer {
   </header>
 
   <main>
-    <!-- ② 週カレンダー -->
-    <section class="card" id="calCard">
-      <div class="cal-row">
-        <button id="calPrev" class="cal-arrow" aria-label="前の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-        <div class="cal-grid" id="calGrid"></div>
-        <button id="calNext" class="cal-arrow" aria-label="次の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-      </div>
-      <div id="selBanner" style="display:none" class="sel-banner">
-        <span id="selBannerText"></span>
-        <button id="selBannerBack">今日へ戻る</button>
-      </div>
-    </section>
+    <!-- ホーム: 週カレンダー・ミトコンドリア表示・今日やること -->
+    <div class="tab-page" id="tabHome">
+      <!-- ② 週カレンダー -->
+      <section class="card" id="calCard">
+        <div class="cal-row">
+          <button id="calPrev" class="cal-arrow" aria-label="前の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <div class="cal-grid" id="calGrid"></div>
+          <button id="calNext" class="cal-arrow" aria-label="次の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+        <div id="selBanner" style="display:none" class="sel-banner">
+          <span id="selBannerText"></span>
+          <button id="selBannerBack">今日へ戻る</button>
+        </div>
+      </section>
 
-    <!-- ③ ミトコンドリア表示 -->
-    <section class="card mito-stage">
-      <canvas id="mitoCanvas"></canvas>
-      <div id="mitoBubble" class="mito-bubble" role="status" aria-live="polite" hidden></div>
-    </section>
+      <!-- ③ ミトコンドリア表示（今日のミト知識を一言だけ添える） -->
+      <section class="card mito-stage">
+        <canvas id="mitoCanvas"></canvas>
+        <div class="know-line" id="knowLine"></div>
+        <div id="mitoBubble" class="mito-bubble" role="status" aria-live="polite" hidden></div>
+      </section>
 
-    <!-- ⑤ 今日やること -->
-    <section class="card" id="todoCard">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
-      <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
-        <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
-        <span><b class="num" id="dayPt">+0</b> pt</span>
-      </div>
-      <div class="breakdown" id="breakdown"></div>
-      <div class="todo-grid-row" id="todoRowManual"></div>
-      <div class="todo-row-label">自動判定</div>
-      <div class="todo-grid-row" id="todoRowAuto"></div>
-    </section>
+      <!-- ⑤ 今日やること -->
+      <section class="card" id="todoCard">
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
+        <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
+          <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span><b class="num" id="dayPt">+0</b> pt</span>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+        <div class="todo-grid-row" id="todoRowManual"></div>
+        <div class="todo-row-label">自動判定</div>
+        <div class="todo-grid-row" id="todoRowAuto"></div>
+      </section>
+    </div>
 
-    <!-- ④ 食事の写真 -->
-    <section class="card">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
-      <div id="photoGrid"></div>
-      <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）。写真が選べないときは「追加」を長押しするとファイルから選べます</div>
-    </section>
+    <!-- 食事: 食事の写真・きょうの栄養 -->
+    <div class="tab-page" id="tabMeals" hidden>
+      <!-- ④ 食事の写真 -->
+      <section class="card">
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
+        <div id="photoGrid"></div>
+        <div class="photo-note">各食事ごとに最大4枚。タップで撮影・選択（長辺800pxに縮小して端末内に保存）。写真が選べないときは「追加」を長押しするとファイルから選べます</div>
+      </section>
 
-    <!-- きょうの栄養（v1.3） -->
-    <section class="card" id="nutriCard">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M21.2 8A10 10 0 0 0 16 2.8V8h5.2Z"/></svg>きょうの栄養（AI解析から集計）</h2>
-      <div id="nutriBody"></div>
-    </section>
+      <!-- きょうの栄養（v1.3） -->
+      <section class="card" id="nutriCard">
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M21.2 8A10 10 0 0 0 16 2.8V8h5.2Z"/></svg>きょうの栄養（AI解析から集計）</h2>
+        <div id="nutriBody"></div>
+      </section>
+    </div>
 
-    <!-- 記録（体重・歩数・睡眠） -->
-    <section class="card">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>きょうの記録</h2>
-      <div class="rec-row">
-        <div class="rec-label">体重<div class="rec-status" id="weightStatus"></div></div>
-        <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="weightInput" placeholder="例: 72.4"><span class="rec-unit">kg</span><button type="button" class="rec-sync" id="weightSyncBtn" title="ヘルスデータから取得">🔄</button></div>
-      </div>
-      <div class="rec-row">
-        <div class="rec-label">歩数<div class="rec-status" id="stepStatus"></div></div>
-        <div class="rec-input"><input type="number" inputmode="numeric" min="0" max="99999" id="stepInput" placeholder="0"><span class="rec-unit">歩</span><button type="button" class="rec-sync" id="stepSyncBtn" title="ヘルスデータから取得">🔄</button></div>
-      </div>
-      <div class="rec-row">
-        <div class="rec-label">睡眠時間<div class="rec-status" id="sleepStatus"></div></div>
-        <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="24" step="0.5" id="sleepInput" placeholder="例: 7.5"><span class="rec-unit">時間</span><button type="button" class="rec-sync" id="sleepSyncBtn" title="ヘルスデータから取得">🔄</button></div>
-      </div>
-      <div class="rec-row">
-        <div class="rec-label">タンパク質<div class="rec-status" id="proteinStatus"></div></div>
-      </div>
-      <div class="rec-row">
-        <div class="rec-label">腹七分目<div class="rec-status" id="hara7Status"></div></div>
-      </div>
-    </section>
+    <!-- 記録: きょうの記録・体重のあゆみ -->
+    <div class="tab-page" id="tabRecords" hidden>
+      <!-- 記録（体重・歩数・睡眠） -->
+      <section class="card">
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>きょうの記録</h2>
+        <div class="rec-row">
+          <div class="rec-label">体重<div class="rec-status" id="weightStatus"></div></div>
+          <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="300" step="0.1" id="weightInput" placeholder="例: 72.4"><span class="rec-unit">kg</span><button type="button" class="rec-sync" id="weightSyncBtn" title="ヘルスデータから取得">🔄</button></div>
+        </div>
+        <div class="rec-row">
+          <div class="rec-label">歩数<div class="rec-status" id="stepStatus"></div></div>
+          <div class="rec-input"><input type="number" inputmode="numeric" min="0" max="99999" id="stepInput" placeholder="0"><span class="rec-unit">歩</span><button type="button" class="rec-sync" id="stepSyncBtn" title="ヘルスデータから取得">🔄</button></div>
+        </div>
+        <div class="rec-row">
+          <div class="rec-label">睡眠時間<div class="rec-status" id="sleepStatus"></div></div>
+          <div class="rec-input"><input type="number" inputmode="decimal" min="0" max="24" step="0.5" id="sleepInput" placeholder="例: 7.5"><span class="rec-unit">時間</span><button type="button" class="rec-sync" id="sleepSyncBtn" title="ヘルスデータから取得">🔄</button></div>
+        </div>
+        <div class="rec-row">
+          <div class="rec-label">タンパク質<div class="rec-status" id="proteinStatus"></div></div>
+        </div>
+        <div class="rec-row">
+          <div class="rec-label">腹七分目<div class="rec-status" id="hara7Status"></div></div>
+        </div>
+      </section>
 
-    <!-- 体重のあゆみ -->
-    <section class="card" id="weightCard">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>体重のあゆみ</h2>
-      <div id="weightBody"></div>
-    </section>
-
-    <!-- 今日のミト知識 -->
-    <section class="card know-card">
-      <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>今日のミト知識</h2>
-      <div class="know-text" id="knowText"></div>
-      <div class="know-foot">
-        <span class="know-idx" id="knowIdx"></span>
-        <button class="know-next" id="knowNext">別の豆知識 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button>
-      </div>
-    </section>
+      <!-- 体重のあゆみ -->
+      <section class="card" id="weightCard">
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>体重のあゆみ</h2>
+        <div id="weightBody"></div>
+      </section>
+    </div>
   </main>
 
   <!-- ⑥ フッター -->
   <nav class="footer">
     <div class="footer-inner">
+      <button data-tab="home" class="on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M9 21v-6h6v6"/></svg>ホーム</button>
+      <button data-tab="meals"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>食事</button>
+      <button data-tab="records"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>記録</button>
       <button data-nav="settings"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>設定</button>
     </div>
   </nav>
@@ -2552,15 +2551,27 @@ function todayKnowledgeIndex() {
   return ((epochDay % KNOWLEDGE.length) + KNOWLEDGE.length) % KNOWLEDGE.length;
 }
 function renderKnowledge() {
-  $('#knowText').textContent = KNOWLEDGE[knowIdx];
-  $('#knowIdx').textContent = `${knowIdx + 1} / ${KNOWLEDGE.length}`;
+  $('#knowLine').textContent = KNOWLEDGE[knowIdx];
 }
-$('#knowNext').addEventListener('click', () => {
-  knowIdx = (knowIdx + 1) % KNOWLEDGE.length;
-  renderKnowledge();
-});
 
-/* ============ ⑥ フッター ============ */
+/* ============ ⑥ フッター（v1.17: ホーム/食事/記録タブ + 設定） ============ */
+let activeTab = 'home'; // 'home' | 'meals' | 'records'
+function renderTabs() {
+  $('#tabHome').hidden = activeTab !== 'home';
+  $('#tabMeals').hidden = activeTab !== 'meals';
+  $('#tabRecords').hidden = activeTab !== 'records';
+  document.querySelectorAll('.footer button[data-tab]').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.tab === activeTab);
+  });
+}
+document.querySelectorAll('.footer button[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (activeTab === btn.dataset.tab) return;
+    activeTab = btn.dataset.tab;
+    renderTabs();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
 $('[data-nav="settings"]').addEventListener('click', openSettings);
 
 /* ============ 瞑想タイマー ============ */
