@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeMeal, BadImageError } from "./analyze.js";
 import { checkAndCountDaily, estimateCostUSD, logUsage } from "./usage.js";
+import { getHealthData, upsertHealthData } from "./health.js";
 
 const PORT = Number(process.env.PORT || 8787);
 const SECRET = process.env.APP_SHARED_SECRET || "";
@@ -119,8 +120,56 @@ app.post("/api/analyze-meal", async (req, res) => {
   }
 });
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+app.post("/api/health-data", (req, res) => {
+  if (!secretOk(req.header("x-app-secret"))) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  const date = req.body?.date;
+  if (typeof date !== "string" || !DATE_RE.test(date)) {
+    res.status(400).json({ error: "bad_request", message: "date は YYYY-MM-DD 形式が必要です" });
+    return;
+  }
+  const rawSteps = req.body?.steps;
+  const rawSleep = req.body?.sleepHours;
+  const patch: { steps?: number; sleepHours?: number } = {};
+  if (rawSteps !== undefined) {
+    if (typeof rawSteps !== "number" || !Number.isFinite(rawSteps) || rawSteps < 0) {
+      res.status(400).json({ error: "bad_request", message: "steps は0以上の数値が必要です" });
+      return;
+    }
+    patch.steps = Math.floor(rawSteps);
+  }
+  if (rawSleep !== undefined) {
+    if (typeof rawSleep !== "number" || !Number.isFinite(rawSleep) || rawSleep < 0 || rawSleep > 24) {
+      res.status(400).json({ error: "bad_request", message: "sleepHours は0〜24の数値が必要です" });
+      return;
+    }
+    patch.sleepHours = rawSleep;
+  }
+  const entry = upsertHealthData(date, patch);
+  res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours });
+});
+
+app.get("/api/health-data", (req, res) => {
+  if (!secretOk(req.header("x-app-secret"))) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  const date = req.query?.date;
+  if (typeof date !== "string" || !DATE_RE.test(date)) {
+    res.status(400).json({ error: "bad_request", message: "date は YYYY-MM-DD 形式が必要です" });
+    return;
+  }
+  const entry = getHealthData(date);
+  res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours });
+});
+
 app.listen(PORT, () => {
   console.log(`mito-meal-analyzer: http://localhost:${PORT}`);
   console.log(`  POST /api/analyze-meal (x-app-secret 必須) / 日次上限 ${DAILY_LIMIT} 回`);
+  console.log(`  POST/GET /api/health-data (x-app-secret 必須)`);
   console.log(`  CORS許可: ${ALLOWED_ORIGINS.join(", ")}`);
 });
