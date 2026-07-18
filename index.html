@@ -53,9 +53,10 @@ body {
   font-size:16px; line-height:1.7;
 }
 /* v1.11: 背景画像はページ全体の固定背景に（--stage-bg は下で定義） */
+/* v1.22: coverだと画面の縦横比によって拡大率が変わり、スマホの縦長画面で左右が大きく切れていたためcontainに変更 */
 body::before {
   content:''; position:fixed; inset:0; z-index:-1;
-  background-image:var(--stage-bg); background-size:cover; background-position:center;
+  background-image:var(--stage-bg); background-size:contain; background-position:center; background-repeat:no-repeat;
 }
 button { font-family:inherit; font-size:inherit; cursor:pointer; border:none; background:none; color:inherit; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline:none; box-shadow:var(--shadow-focus); }
