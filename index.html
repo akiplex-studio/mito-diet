@@ -425,6 +425,8 @@ nav.footer {
 .bd-empty { font-size:12px; color:var(--color-text-muted); padding:6px 0; }
 
 /* 解説シート */
+/* v1.23: 達成の瞬間に見せる反応ダイアログの見出し */
+.info-celebrate { font-size:15px; font-weight:700; color:var(--primary-800); margin-bottom:var(--space-2); }
 .info-score { display:inline-flex; gap:10px; font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:13px; font-weight:600; background:var(--primary-50); color:var(--primary-800); padding:7px 14px; border-radius:var(--radius-full); margin-bottom:var(--space-4); }
 .info-block { margin-bottom:var(--space-4); }
 .info-block .lbl { font-size:12px; font-weight:700; color:var(--primary-700); display:flex; align-items:center; gap:6px; margin-bottom:var(--space-1); }
@@ -1827,6 +1829,7 @@ async function autoSyncHealthData() {
     rec.weight = data.weight; rec.weightSource = 'auto'; changed = true;
   }
   if (changed) commit();
+  checkAutoAchievements();
 }
 // 🔄ボタン：表示中の日について明示的に取得し直す（既存値があっても上書き＝ユーザーの意図的操作）。
 // 以後その項目は自動更新の対象に戻す（手入力ロックを解除）
@@ -2433,6 +2436,33 @@ function renderTodoCards(container, items, rec, interactive) {
     }
   }
 }
+
+/* ============ v1.23: 達成の瞬間の反応ダイアログ（キュー・自動判定の達成検知） ============ */
+let reactionQueue = [];
+function queueReaction(item) {
+  if (!INFO[item.id]) return; // 説明が無い項目は演出しない
+  reactionQueue.push(item);
+  if (!$('#infoModal').classList.contains('open') && !mealModalIsOpen()) showNextReaction();
+}
+function showNextReaction() {
+  const item = reactionQueue.shift();
+  if (item) openInfo(item, true);
+}
+// 自動判定項目（プラス方向のみ・NG行動は対象外）が「未達成→達成」に変わった瞬間を検知し、
+// アプリを開く／フォアグラウンド復帰するたびにチェックする。1日1回だけ祝う
+function checkAutoAchievements() {
+  const rec = getRec(today, true);
+  if (!rec.celebratedAuto || typeof rec.celebratedAuto !== 'object') rec.celebratedAuto = {};
+  let changed = false;
+  DB.items.filter(it => it.auto && !it.ng).forEach(it => {
+    if (isItemDone(it, rec) && !rec.celebratedAuto[it.id]) {
+      rec.celebratedAuto[it.id] = true;
+      changed = true;
+      queueReaction(it);
+    }
+  });
+  if (changed) save();
+}
 function toggleCheck(item, srcEl) {
   const rec = getRec(sel, true);
   const i = rec.checked.indexOf(item.id);
@@ -2451,6 +2481,10 @@ function toggleCheck(item, srcEl) {
     const k = speechKeyForCheck(item.id);
     if (k) mitoSpeak(k);
     if (item.id === 'juice') mitoEffect('clean');
+    // v1.23: プラスの変化があったときだけ、少し間を置いてから「なぜ効くか」の反応ダイアログを見せる
+    if (!item.ng && (item.act > 0 || item.inc > 0)) {
+      setTimeout(() => queueReaction(item), 550);
+    }
   }
   commit();
 }
@@ -2534,17 +2568,20 @@ $('#ptSummary').addEventListener('keydown', e => {
 });
 
 /* ============ ミト解説シート ============ */
-function openInfo(item) {
+// v1.23: celebratory=trueで「達成しました」演出付きの反応ダイアログとして開く（手動チェック直後・自動判定達成時に使用）
+function openInfo(item, celebratory) {
   const info = INFO[item.id];
   if (!info) return;
-  $('#infoTitle').textContent = item.name;
+  $('#infoTitle').textContent = (celebratory ? '🎉 ' : '') + item.name;
   const scoreTxt = `活${item.act > 0 ? '+' : ''}${item.act}` + (item.inc ? `　+${item.inc}匹` : '');
   $('#infoBody').innerHTML =
+    (celebratory ? `<div class="info-celebrate">✓ 達成しました！ミトコンドリアにこんな変化が</div>` : '') +
     `<div class="info-score">${esc(scoreTxt)}</div>` +
     `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.34 6.34-.7-.7"/><path d="M2 12h4"/><circle cx="12" cy="14" r="4"/></svg>なぜミトコンドリアに効くの？</div><p>${esc(info.why)}</p></div>` +
     `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a7 7 0 0 0-4-12Z"/></svg>実践のコツ</div><p>${esc(info.tips)}</p></div>` +
     `<div class="info-disclaimer">※ 一般的な健康情報であり、医療上の助言ではありません。持病や治療中の方は主治医にご相談ください。</div>`;
   $('#infoModal').classList.add('open');
+  if (celebratory && !stage.reduced) spawnBurst(30);
 }
 
 /* ============ 今日のミト知識 ============ */
@@ -2752,6 +2789,7 @@ document.querySelectorAll('.modal').forEach(m => {
       else {
         m.classList.remove('open');
         if (m.id === 'mealModal') flushPendingSpeech();
+        if (m.id === 'infoModal' && reactionQueue.length) setTimeout(showNextReaction, 350);
       }
     }
   });
@@ -2765,6 +2803,7 @@ document.addEventListener('click', e => {
   if (!m) return;
   m.classList.remove('open');
   if (m.id === 'mealModal') flushPendingSpeech();
+  if (m.id === 'infoModal' && reactionQueue.length) setTimeout(showNextReaction, 350);
 });
 
 /* ============ カレンダー操作 ============ */
@@ -2798,7 +2837,7 @@ function checkDayChange() {
 }
 setInterval(checkDayChange, 60 * 1000);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) { checkDayChange(); startStage(); autoSyncHealthData(); }
+  if (!document.hidden) { checkDayChange(); startStage(); autoSyncHealthData(); checkAutoAchievements(); }
 });
 let resizeTimer = null;
 window.addEventListener('resize', () => {
@@ -2815,6 +2854,7 @@ recompute();
 save();
 renderAll();
 autoSyncHealthData();
+checkAutoAchievements();
 startStage();
 
 // v1.8: バックアップ促し（1日1回まで）
