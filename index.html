@@ -84,6 +84,7 @@ header {
 .hdr-brand { display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-2); font-size:11px; color:var(--color-text-muted); letter-spacing:.06em; }
 .hdr-date { font-weight:600; white-space:nowrap; }
 .hdr-row { display:flex; align-items:center; gap:var(--space-4); }
+.mito-hdr-row { margin-bottom:var(--space-3); }
 .hdr-count { display:flex; align-items:baseline; gap:2px; white-space:nowrap; }
 .hdr-count .mito-num { font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:32px; font-weight:700; line-height:1; color:var(--primary-800); }
 .hdr-count .mito-unit { font-size:13px; color:var(--color-text-muted); font-weight:500; }
@@ -94,9 +95,7 @@ header {
 .gauge-bar { height:12px; background:var(--neutral-200); border-radius:var(--radius-full); overflow:hidden; }
 .gauge-fill { height:100%; border-radius:var(--radius-full); width:0; background:var(--warning-500); transition:width var(--duration-slow) var(--ease-standard); }
 
-/* ============ ② 週カレンダー ============ */
-/* v1.11: 週カレンダーは他カードより透明度を上げ、背景の葉が透けるように */
-#calCard { background:var(--surface-glass-cal); }
+/* ============ ② 週カレンダー（v1.21: ヘッダーへ移動・全タブ共通） ============ */
 /* v1.16: 「2026年7月」見出しを廃止しヘッダーのhdr-dateへ移動。矢印は週グリッドの左右に配置 */
 .cal-row { display:flex; align-items:center; gap:var(--space-1); }
 .cal-arrow {
@@ -535,12 +534,15 @@ nav.footer {
   <header>
     <div class="hdr-inner">
       <div class="hdr-brand"><span>ミトコンドリア・ダイエット</span><span class="hdr-date" id="hdrDate"></span></div>
-      <div class="hdr-row">
-        <div class="hdr-count"><span class="mito-num" id="hdrCount">1</span><span class="mito-unit">匹</span></div>
-        <div class="hdr-gauge">
-          <div class="gauge-label"><span>活性ゲージ<span class="hdr-mood" id="hdrMood"></span></span><span><b id="hdrAct">50</b>/100</span></div>
-          <div class="gauge-bar"><div class="gauge-fill" id="hdrGauge"></div></div>
-        </div>
+      <!-- v1.21: 週カレンダーはタブ共通のヘッダーへ移動（食事/記録タブでも日付選択できるように） -->
+      <div class="cal-row">
+        <button id="calPrev" class="cal-arrow" aria-label="前の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="cal-grid" id="calGrid"></div>
+        <button id="calNext" class="cal-arrow" aria-label="次の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+      <div id="selBanner" style="display:none" class="sel-banner">
+        <span id="selBannerText"></span>
+        <button id="selBannerBack">今日へ戻る</button>
       </div>
     </div>
   </header>
@@ -548,21 +550,15 @@ nav.footer {
   <main>
     <!-- ホーム: 週カレンダー・ミトコンドリア表示・今日やること -->
     <div class="tab-page" id="tabHome">
-      <!-- ② 週カレンダー -->
-      <section class="card" id="calCard">
-        <div class="cal-row">
-          <button id="calPrev" class="cal-arrow" aria-label="前の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-          <div class="cal-grid" id="calGrid"></div>
-          <button id="calNext" class="cal-arrow" aria-label="次の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-        </div>
-        <div id="selBanner" style="display:none" class="sel-banner">
-          <span id="selBannerText"></span>
-          <button id="selBannerBack">今日へ戻る</button>
-        </div>
-      </section>
-
-      <!-- ③ ミトコンドリア表示（今日のミト知識を一言だけ添える） -->
+      <!-- ③ ミトコンドリア表示（匹数・活性ゲージ・今日のミト知識を一言だけ添える） -->
       <section class="card mito-stage">
+        <div class="hdr-row mito-hdr-row">
+          <div class="hdr-count"><span class="mito-num" id="hdrCount">1</span><span class="mito-unit">匹</span></div>
+          <div class="hdr-gauge">
+            <div class="gauge-label"><span>活性ゲージ<span class="hdr-mood" id="hdrMood"></span></span><span><b id="hdrAct">50</b>/100</span></div>
+            <div class="gauge-bar"><div class="gauge-fill" id="hdrGauge"></div></div>
+          </div>
+        </div>
         <canvas id="mitoCanvas"></canvas>
         <div class="know-line" id="knowLine"></div>
         <div id="mitoBubble" class="mito-bubble" role="status" aria-live="polite" hidden></div>
