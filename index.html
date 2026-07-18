@@ -1811,23 +1811,28 @@ async function fetchHealthData(date) {
     clearTimeout(timer);
   }
 }
-// アプリを開くたび（visibilitychange含む）に呼ぶが、同じ日に一度取得できたら再取得しない
-let healthAutoSyncedDate = null;
+// v1.20: 「手入力した項目」だけは死守しつつ、自動取得どうしなら何度でも上書きして最新化する。
+// rec.{field}Source が 'manual' の項目だけスキップし、それ以外（未設定/'auto'）は自動で上書きする。
+// アプリを開くたび（visibilitychange含む）に呼ぶ。1日1回だけの制限は撤廃（Taskerが朝昼晩など複数回同期する想定のため）
 async function autoSyncHealthData() {
   if (!DB.analyze || !DB.analyze.url || !DB.analyze.secret) return;
-  if (healthAutoSyncedDate === today) return;
-  healthAutoSyncedDate = today;
   const data = await fetchHealthData(today);
   if (!data) return;
   const rec = getRec(today, true);
   let changed = false;
-  // 空欄のときだけ自動反映（手入力・既存の自動反映値は上書きしない）
-  if ((rec.steps === null || rec.steps === undefined) && typeof data.steps === 'number') { rec.steps = data.steps; changed = true; }
-  if ((rec.sleepHours === null || rec.sleepHours === undefined) && typeof data.sleepHours === 'number') { rec.sleepHours = data.sleepHours; changed = true; }
-  if ((rec.weight === null || rec.weight === undefined) && typeof data.weight === 'number') { rec.weight = data.weight; changed = true; }
+  if (rec.stepsSource !== 'manual' && typeof data.steps === 'number' && rec.steps !== data.steps) {
+    rec.steps = data.steps; rec.stepsSource = 'auto'; changed = true;
+  }
+  if (rec.sleepHoursSource !== 'manual' && typeof data.sleepHours === 'number' && rec.sleepHours !== data.sleepHours) {
+    rec.sleepHours = data.sleepHours; rec.sleepHoursSource = 'auto'; changed = true;
+  }
+  if (rec.weightSource !== 'manual' && typeof data.weight === 'number' && rec.weight !== data.weight) {
+    rec.weight = data.weight; rec.weightSource = 'auto'; changed = true;
+  }
   if (changed) commit();
 }
-// 🔄ボタン：表示中の日について明示的に取得し直す（既存値があっても上書き＝ユーザーの意図的操作）
+// 🔄ボタン：表示中の日について明示的に取得し直す（既存値があっても上書き＝ユーザーの意図的操作）。
+// 以後その項目は自動更新の対象に戻す（手入力ロックを解除）
 async function manualSyncHealthField(field, btn) {
   if (!DB.analyze || !DB.analyze.url || !DB.analyze.secret) { toast('設定でバックエンドURL・シークレットを入力してください'); return; }
   btn.disabled = true;
@@ -1836,6 +1841,7 @@ async function manualSyncHealthField(field, btn) {
   if (!data || typeof data[field] !== 'number') { toast('取得できませんでした'); return; }
   const rec = getRec(sel, true);
   rec[field] = data[field];
+  rec[field + 'Source'] = 'auto';
   commit();
   toast('ヘルスデータを反映しました');
 }
@@ -2148,12 +2154,14 @@ $('#weightInput').addEventListener('change', e => {
   const rec = getRec(sel, true);
   const v = e.target.value;
   rec.weight = v === '' ? null : Math.round(clamp(Number(v), 0, 300) * 10) / 10;
+  rec.weightSource = v === '' ? null : 'manual'; // 手入力した項目は自動同期で上書きしない
   commit();
 });
 $('#stepInput').addEventListener('change', e => {
   const rec = getRec(sel, true);
   const prev = rec.steps;
   rec.steps = e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value)));
+  rec.stepsSource = e.target.value === '' ? null : 'manual';
   const walk = DB.items.find(i => i.auto === 'steps');
   const k = speechKeyForSteps(prev, rec.steps, (walk && walk.threshold) || CFG.STEP_GOAL);
   if (k) mitoSpeak(k);
@@ -2164,6 +2172,7 @@ $('#sleepInput').addEventListener('change', e => {
   const prev = rec.sleepHours;
   const v = e.target.value;
   rec.sleepHours = v === '' ? null : clamp(Number(v), 0, 24);
+  rec.sleepHoursSource = v === '' ? null : 'manual';
   const k = speechKeyForSleep(prev, rec.sleepHours);
   if (k) { mitoSpeak(k); mitoEffect('sweep'); }
   commit();
