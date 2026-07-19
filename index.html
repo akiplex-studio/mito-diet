@@ -1095,7 +1095,8 @@ const DEFAULT_ITEMS = [
   { id:'nosake',     cat:'食事',      name:'禁酒',                                    short:'禁酒',         pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
   { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              short:'夜は暗く',     pri:'S', act:2,  inc:0,   order:6,  inTodo:false, method:'自己申告（判定曖昧のため一時停止）', timing:'夜' },
   { id:'meditate',   cat:'睡眠・生活', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）',        short:'呼吸瞑想',     pri:'A', act:2,  inc:0.1, order:6,  inTodo:true,  method:'瞑想タイマー',         timing:'終わってから', timer:true },
-  { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           short:'砂糖NG',       pri:'',  act:-3, inc:0,   order:90, inTodo:true,  ng:true, method:'自己申告',    timing:'寝る前' },
+  { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           short:'砂糖NG',       pri:'',  act:-3, inc:0,   order:90, inTodo:false, ng:true, method:'自己申告（廃止・sugarCtrlに統合）', timing:'寝る前' },
+  { id:'sugarCtrl',  cat:'食事',      name:'お菓子・ジュースの果糖を摂らず、白米などの糖質も控えめ（腹七分目・白米は拳1個分が目安）', short:'糖分', pri:'B', act:1, inc:0, order:5, inTodo:true, method:'自己申告', timing:'寝る前' },
   { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           short:'睡眠不足',     pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
 ];
 
@@ -1137,6 +1138,10 @@ const INFO = {
   sugar: {
     why:'砂糖や甘い飲料は血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。ミトを守るには、まず甘い飲み物から見直すのが近道です。',
     tips:'甘い飲料を水・お茶・炭酸水に置き換えるだけでも大きく変わります。'
+  },
+  sugarCtrl: {
+    why:'砂糖や甘い飲料、白米などの糖質のとりすぎは血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。甘いものや主食を控えめにすることは、ミトコンドリアを守る近道です。',
+    tips:'白米は拳1個分を目安に。甘い飲料は水・お茶・炭酸水に置き換えるだけでも大きく変わります。'
   },
   sleeplack: {
     why:'睡眠中に、ミトコンドリアの修復や体内の掃除が進みます。6時間未満が続くと回復が追いつかず、日中のエネルギー効率も落ちてしまいます。',
@@ -1180,6 +1185,11 @@ const WHY_VARIANTS = {
     'ゆっくりした呼吸は自律神経を整え、ストレスホルモンを下げます。',
     '慢性的なストレスはミトコンドリアを消耗させます。意識して休ませる時間が効きます。',
     '深い呼吸でリラックスすると、ミトコンドリアも一緒にひと息つけます。',
+  ],
+  sugarCtrl: [
+    '甘いものや白米の摂りすぎは血糖の急upダウンを招き、余った糖がミトコンドリアの負担になります。',
+    '糖質を控えめにすると血糖が安定し、ミトコンドリアが余分な活性酸素にさらされにくくなります。',
+    '主食は腹七分目、甘いものは控えめに。それだけでミトコンドリアへの負担が大きく減ります。',
   ],
 };
 
@@ -1261,7 +1271,18 @@ function migrate(d) {
         it.inTodo = false;
         it.method = '自己申告（判定曖昧のため一時停止）';
       }
+      // v1.27: sugar（減点NG）はsugarCtrl（加点）に統合し、チェックリストから除外
+      //（過去にsugarをチェックした日の減点はそのまま維持するため、項目定義自体は残す）
+      if (it && it.id === 'sugar' && it.inTodo !== false) {
+        it.inTodo = false;
+        it.method = '自己申告（廃止・sugarCtrlに統合）';
+      }
     });
+    // v1.27: 既存ユーザーのDB.itemsにsugarCtrlが無ければ新規追加する
+    if (!d.items.some(it => it && it.id === 'sugarCtrl')) {
+      const def = DEFAULT_ITEMS.find(x => x.id === 'sugarCtrl');
+      if (def) d.items.push(structuredClone(def));
+    }
   }
   if (!('goalWeight' in d)) d.goalWeight = null;
   if (typeof d.lastExport === 'undefined') d.lastExport = null;
@@ -2490,6 +2511,7 @@ function renderTodoCards(container, items, rec, interactive) {
 }
 
 /* ============ v1.26: 達成の演出（段階1=変化量オーバーレイ／段階2=反応ダイアログ） ============ */
+const ACHIEVE_DIALOG_DELAY_MS = 1000; // v1.27: 段階1→段階2の待ち時間（3秒→1秒に短縮）
 // 段階1: ミトの群れの上に「活力ポイント50→68！（+18pt）」等を大きく表示（変化がある行だけ）
 function showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct) {
   const bm = Math.floor(beforeMito), am = Math.floor(afterMito);
@@ -2538,7 +2560,7 @@ function showNextReaction() {
 // 段階1（変化量オーバーレイ）→ 3秒待って段階2（反応ダイアログ）、という一連の流れ
 function celebrateAchievement(item, beforeMito, afterMito, beforeAct, afterAct) {
   const shown = showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct);
-  setTimeout(() => queueReaction(item), shown ? 3000 : 0);
+  setTimeout(() => queueReaction(item), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
 }
 // 自動判定項目（プラス方向のみ・NG行動は対象外）が「未達成→達成」に変わった瞬間を検知し、
 // アプリを開く／フォアグラウンド復帰するたびにチェックする。1日1回だけ祝う。
@@ -2554,7 +2576,7 @@ function checkAutoAchievements() {
   const beforeMito = afterMito - newly.reduce((s, it) => s + (Number(it.inc) || 0), 0);
   const beforeAct = afterAct - newly.reduce((s, it) => s + (Number(it.act) || 0), 0);
   const shown = showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct);
-  setTimeout(() => newly.forEach(it => queueReaction(it)), shown ? 3000 : 0);
+  setTimeout(() => newly.forEach(it => queueReaction(it)), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
 }
 function toggleCheck(item, srcEl) {
   const rec = getRec(sel, true);
