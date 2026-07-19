@@ -96,13 +96,14 @@ eq('long run finite', Number.isFinite(s7.mito) && s7.mito > 10, true);
 eq('peak >= mito', s7.peak >= s7.mito, true);
 
 /* --- v1.5: ミトの一言（状況キー判定） --- */
-// speechKeyForCheck
+// speechKeyForCheck（v1.30: item.idとSPEECHキーを統一。無いキーはnull）
 eq('speechKeyForCheck juice', speechKeyForCheck('juice'), 'juice');
-eq('speechKeyForCheck bodyweight', speechKeyForCheck('bodyweight'), 'training');
+eq('speechKeyForCheck bodyweight', speechKeyForCheck('bodyweight'), 'bodyweight');
 eq('speechKeyForCheck sugar', speechKeyForCheck('sugar'), 'sugar');
-eq('speechKeyForCheck darknight', speechKeyForCheck('darknight'), 'darkNight');
+eq('speechKeyForCheck darknight (廃止項目・キー無し)', speechKeyForCheck('darknight'), null);
 eq('speechKeyForCheck hara7', speechKeyForCheck('hara7'), 'hara7');
-eq('speechKeyForCheck unknown', speechKeyForCheck('nosake'), null);
+eq('speechKeyForCheck nosake', speechKeyForCheck('nosake'), 'nosake');
+eq('speechKeyForCheck unknown', speechKeyForCheck('nonexistent-item'), null);
 
 // speechKeyForMeal
 eq('speechKeyForMeal low score', speechKeyForMeal(20, null), 'mealBad');
@@ -114,11 +115,7 @@ eq('speechKeyForMeal hara7 (軽め)', speechKeyForMeal(50, '軽め'), 'hara7');
 eq('speechKeyForMeal none', speechKeyForMeal(50, null), null);
 eq('speechKeyForMeal null score overfull', speechKeyForMeal(null, '食べ過ぎ'), 'tooFull');
 
-// speechKeyForSteps
-eq('speechKeyForSteps crosses goal', speechKeyForSteps(2000, 3000, 3000), 'walked');
-eq('speechKeyForSteps already achieved', speechKeyForSteps(3000, 3500, 3000), null);
-eq('speechKeyForSteps null prev crosses goal', speechKeyForSteps(null, 3000, 3000), 'walked');
-eq('speechKeyForSteps still under goal', speechKeyForSteps(2000, 2999, 3000), null);
+// v1.30: speechKeyForSteps は廃止（歩数の達成判定はcheckAutoAchievements経由のitem.idキーに統一）
 
 // speechKeyForSleep
 eq('speechKeyForSleep crosses 7h', speechKeyForSleep(6, 7), 'slept');
@@ -131,9 +128,9 @@ eq('pickSpeechIndex avoids last', pickSpeechIndex(5, 2, 0.4), 3);
 eq('pickSpeechIndex picks 0', pickSpeechIndex(5, 1, 0.0), 0);
 eq('pickSpeechIndex len1 always 0', pickSpeechIndex(1, 0, 0.9), 0);
 
-// SPEECH 辞書の網羅性: 10キーすべてに5本以上の文があること
-const SPEECH_KEYS = ['juice','training','walked','sugar','mealGood','mealBad','hara7','tooFull','slept','darkNight'];
-eq('SPEECH has all 10 keys', SPEECH_KEYS.every(k => Array.isArray(SPEECH[k])), true);
+// SPEECH 辞書の網羅性: 14キーすべてに5本以上の文があること（v1.30: 達成系はitem.idキーに統一）
+const SPEECH_KEYS = ['walk','bodyweight','protein','hara7','juice','nosake','meditate','sugarCtrl','sugar','mealGood','mealBad','tooFull','slept','darkNight'];
+eq('SPEECH has all 14 keys', SPEECH_KEYS.every(k => Array.isArray(SPEECH[k])), true);
 eq('SPEECH each key has >=5 lines', SPEECH_KEYS.every(k => SPEECH[k] && SPEECH[k].length >= 5), true);
 
 /* --- v1.6: sortTodoItems（TODOの並び替え。未チェック→order順、チェック済みは下のブロックへ） --- */
