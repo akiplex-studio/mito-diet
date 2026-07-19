@@ -115,6 +115,19 @@ eq('speechKeyForMeal hara7 (軽め)', speechKeyForMeal(50, '軽め'), 'hara7');
 eq('speechKeyForMeal none', speechKeyForMeal(50, null), null);
 eq('speechKeyForMeal null score overfull', speechKeyForMeal(null, '食べ過ぎ'), 'tooFull');
 
+// mealSpeechText（v1.33: good_points/adviceを使った具体的なミトコメント）
+const msGood = mealSpeechText({ mito_score: 80, good_points: ['野菜がしっかり摂れています'] }, null, 0);
+eq('mealSpeechText good includes good_point', msGood.text.includes('野菜がしっかり摂れています'), true);
+eq('mealSpeechText good key', msGood.key, 'mealGood');
+const msBad = mealSpeechText({ mito_score: 10, advice: '揚げ物を控えましょう' }, null, 0);
+eq('mealSpeechText bad includes advice', msBad.text.includes('揚げ物を控えましょう'), true);
+eq('mealSpeechText bad key', msBad.key, 'mealBad');
+eq('mealSpeechText none for mid score', mealSpeechText({ mito_score: 50 }, null, 0), null);
+const msNoDetail = mealSpeechText({ mito_score: 80 }, null, 0);
+eq('mealSpeechText good with no good_points falls back to lead only', msNoDetail.text.includes('\n'), false);
+const msLong = mealSpeechText({ mito_score: 10, advice: 'あ'.repeat(60) }, null, 0);
+eq('mealSpeechText truncates long advice', msLong.text.length < 60 + 10, true);
+
 // v1.30: speechKeyForSteps は廃止（歩数の達成判定はcheckAutoAchievements経由のitem.idキーに統一）
 
 // speechKeyForSleep

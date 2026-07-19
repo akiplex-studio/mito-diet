@@ -137,7 +137,7 @@ header {
 /* v1.11: 背景画像は body::before の全画面背景に移動。ステージはカード枠を外し「開けた背景エリア」に */
 .card.mito-stage { position:relative; background:none; border:none; box-shadow:none; }
 /* v1.9: 表示高さを約1.4倍に拡大（画面幅ベース・破綻しないようmin/maxを付ける） */
-#mitoCanvas { display:block; width:100%; height:clamp(230px, 85vw, 380px); border-radius:var(--radius-md); background:none; }
+#mitoCanvas { display:block; width:100%; height:clamp(230px, 85vw, 380px); border-radius:var(--radius-md); background:none; cursor:pointer; }
 /* v1.26: 段階1＝ミトの群れの上に大きく変化量を表示する */
 .mito-canvas-wrap { position:relative; }
 .change-overlay {
@@ -281,9 +281,10 @@ header {
 .todo-card.done .tc-check { background:var(--primary-600); border-color:var(--primary-600); }
 .todo-card.ng.done { border-color:var(--color-border); background:var(--color-surface); }
 .todo-card.ng.done .tc-check { background:var(--warning-500); border-color:var(--warning-500); }
-/* 自動判定カード: クリック不可なので押せる見た目を消す */
+/* 自動判定カード: クリック不可なので押せる見た目を消す（manual-ok＝手動チェックも可な項目は例外） */
 .todo-card.auto { border-style:dashed; cursor:default; }
 .todo-card.auto .tc-check { border-style:dashed; }
+.todo-card.auto.manual-ok { cursor:pointer; }
 .tc-timer, .tc-info {
   position:absolute; top:2px; width:20px; height:20px;
   border-radius:var(--radius-full); display:grid; place-items:center;
@@ -350,7 +351,7 @@ nav.footer {
 #achieveModal.open { align-items:center; }
 .achieve-card {
   background:var(--color-surface); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
-  padding:var(--space-6) var(--space-5); margin:var(--space-4); width:min(360px, calc(100% - 32px));
+  padding:var(--space-6) var(--space-5); margin:var(--space-4); width:min(440px, calc(100% - 24px));
   text-align:center; animation:achievePop 320ms var(--ease-standard);
 }
 @keyframes achievePop { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
@@ -684,6 +685,18 @@ nav.footer {
         <div class="set-note" id="lastExportNote"></div>
       </div>
       <div class="set-section">
+        <h4>やることリマインダー</h4>
+        <div class="set-field">
+          <label for="remindTime">通知する時刻</label>
+          <input type="time" id="remindTime" value="22:00">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnNotifyPermission">通知を許可する</button>
+        </div>
+        <div class="set-note" id="notifyStatusNote"></div>
+        <div class="set-note">指定した時刻になっても「今日やること」が残っていたら知らせます。ブラウザのタブが開いている間だけ有効です（アプリを完全に閉じていると届きません）。</div>
+      </div>
+      <div class="set-section">
         <h4>写真解析（AI）</h4>
         <div class="set-field col">
           <label for="anaUrl">バックエンドURL</label>
@@ -839,7 +852,8 @@ function regress(act) { return Math.round(act + (CFG.ACT_START - act) * CFG.REGR
 // その項目がその日「達成」かどうか（自動判定含む）
 function isItemDone(item, rec) {
   if (item.auto === 'steps') {
-    return Number(rec.steps || 0) >= (item.threshold ?? CFG.STEP_GOAL);
+    // v1.33: 万歩計の数値が実態と合わないことがあるため、手動チェックでも達成扱いにできる
+    return Number(rec.steps || 0) >= (item.threshold ?? CFG.STEP_GOAL) || (rec.checked || []).includes(item.id);
   }
   if (item.auto === 'sleepLack') {
     const h = rec.sleepHours;
@@ -1104,6 +1118,25 @@ function speechKeyForMeal(score, fullness) {
 function speechKeyForSleep(prev, next) {
   return ((Number(prev) || 0) < 7 && Number(next) >= 7) ? 'slept' : null;
 }
+// v1.33: 食事解析の結果（good_points/advice）を使って、何が良い/ダメだったか分かるミトコメントを組み立てる
+function mealSpeechText(analysis, fullness, pickRand) {
+  const k = speechKeyForMeal(analysis && analysis.mito_score, fullness);
+  if (!k) return null;
+  const lines = SPEECH[k] || [];
+  const rand = typeof pickRand === 'number' ? pickRand : Math.random();
+  const lead = lines.length ? lines[Math.min(lines.length - 1, Math.floor(rand * lines.length))] : '';
+  let detail = '';
+  if (k === 'mealGood' && analysis && Array.isArray(analysis.good_points) && analysis.good_points[0]) {
+    detail = analysis.good_points[0];
+  } else if ((k === 'mealBad' || k === 'tooFull') && analysis && analysis.advice) {
+    detail = analysis.advice;
+  }
+  if (detail) {
+    if (detail.length > 44) detail = detail.slice(0, 44) + '…';
+    return { key: k, text: lead + '\n' + detail };
+  }
+  return { key: k, text: lead };
+}
 // セリフのランダム選択。直前と同じ添字は避ける（rand は [0,1)）
 function pickSpeechIndex(len, lastIndex, rand) {
   if (len <= 1) return 0;
@@ -1137,7 +1170,7 @@ function backupNudge(db, todayStr) {
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
 const DEFAULT_ITEMS = [
   { id:'juice',      cat:'食事',      name:'野菜ジュース',                            short:'野菜ジュース', pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
-  { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   short:'ウォーキング', pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計）',   timing:'—' },
+  { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   short:'ウォーキング', pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計・手動チェックも可）', timing:'—', manualFallback:true },
   { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       short:'タンパク質',   pri:'S', act:4,  inc:0.3, order:3,  inTodo:false, auto:'protein', threshold:1.6, method:'写真（自動判定）',     timing:'夜寝る前' },
   { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          short:'腹七分目',     pri:'S', act:3,  inc:0.3, order:3,  inTodo:false, auto:'hara7', threshold:2, method:'満腹度（自動集計・2食以上）', timing:'夜寝る前' },
   { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        short:'自重トレ',     pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
@@ -1275,7 +1308,7 @@ function freshDB() {
   return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
            analyze:{ url:'', secret:'' },
            profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 },
-           lastExport: null };
+           lastExport: null, reminderTime: '22:00' };
 }
 // v1→v3 マイグレーション：写真を {data, analysis} オブジェクトの配列に統一（既存の記録は保持）
 const MEAL_KEYS = ['breakfast','lunch','dinner'];
@@ -1330,6 +1363,11 @@ function migrate(d) {
       if (it && it.id === 'sugarCtrl' && it.name !== '糖分に気を付ける') {
         it.name = '糖分に気を付ける';
       }
+      // v1.33: 万歩計の数値が実態と合わないことがあるため、歩数も手動チェックできるようにする
+      if (it && it.id === 'walk' && !it.manualFallback) {
+        it.manualFallback = true;
+        it.method = '万歩計（自動集計・手動チェックも可）';
+      }
     });
     // v1.27: 既存ユーザーのDB.itemsにsugarCtrlが無ければ新規追加する
     if (!d.items.some(it => it && it.id === 'sugarCtrl')) {
@@ -1339,6 +1377,7 @@ function migrate(d) {
   }
   if (!('goalWeight' in d)) d.goalWeight = null;
   if (typeof d.lastExport === 'undefined') d.lastExport = null;
+  if (!d.reminderTime) d.reminderTime = '22:00'; // v1.33: やることリマインダーの通知時刻
   if (!d.analyze || typeof d.analyze !== 'object') d.analyze = { url:'', secret:'' };
   if (!d.profile || typeof d.profile !== 'object') {
     d.profile = { heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 };
@@ -1446,28 +1485,32 @@ function toast(msg) {
 /* ============ v1.5: ミトの一言（吹き出し） ============ */
 let bubbleTimer = null;                 // 自動で消すタイマー
 let bubblePendingKey = null;            // 食事解析モーダルが開いている間の保留キー
-const speechSeenToday = new Map();      // 日付 → Set(状況キー)。セッション内のみ・保存しない
+let bubblePendingText = null;           // 同上・自由テキスト版（食事コメントなど）
+let bubblePendingTextClean = false;     // 保留中のテキストが「良い食事」判定だったか（浄化パルス用）
 const speechLastIndex = {};             // 状況キー → 直前に出した添字（同文回避用）
-const MEAL_SPEECH_KEYS = new Set(['mealGood', 'mealBad', 'hara7', 'tooFull']);  // 解析のたびに何度でも可
 
 function mealModalIsOpen() {
   const m = $('#mealModal');
   return !!(m && m.classList.contains('open'));
+}
+function showBubbleText(text) {
+  if (!text) return;
+  const el = $('#mitoBubble');
+  if (!el) return;
+  const faceImg = $('#mitoBubbleFaceImg');
+  if (faceImg && !faceImg.src) faceImg.src = MITO_IMG_SRC;
+  $('#mitoBubbleText').textContent = text;
+  el.hidden = false;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(hideBubble, 4000);
 }
 function showBubble(key) {
   const lines = SPEECH[key];
   if (!lines || !lines.length) return;
   const idx = pickSpeechIndex(lines.length, speechLastIndex[key] ?? -1, Math.random());
   speechLastIndex[key] = idx;
-  const el = $('#mitoBubble');
-  if (!el) return;
-  const faceImg = $('#mitoBubbleFaceImg');
-  if (faceImg && !faceImg.src) faceImg.src = MITO_IMG_SRC;
-  $('#mitoBubbleText').textContent = lines[idx];
-  el.hidden = false;
-  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-  clearTimeout(bubbleTimer);
-  bubbleTimer = setTimeout(hideBubble, 4000);
+  showBubbleText(lines[idx]);
 }
 function hideBubble() {
   clearTimeout(bubbleTimer);
@@ -1481,8 +1524,22 @@ function mitoSpeak(key) {
   if (mealModalIsOpen()) { bubblePendingKey = key; return; }
   showBubble(key);
 }
+// v1.33: 食事コメントなど、SPEECH辞書に無い自由テキストでミトに喋らせる
+function mitoSpeakText(text, isGood) {
+  if (sel !== today || !text) return;
+  if (mealModalIsOpen()) { bubblePendingText = text; bubblePendingTextClean = !!isGood; return; }
+  showBubbleText(text);
+  if (isGood) mitoEffect('clean');
+}
 // 食事解析モーダルを閉じたときに、保留していたセリフ（と良食の浄化パルス）を表示する
 function flushPendingSpeech() {
+  if (bubblePendingText) {
+    const t = bubblePendingText, clean = bubblePendingTextClean;
+    bubblePendingText = null; bubblePendingTextClean = false;
+    showBubbleText(t);
+    if (clean) mitoEffect('clean');
+    return;
+  }
   if (!bubblePendingKey) return;
   const k = bubblePendingKey;
   bubblePendingKey = null;
@@ -1700,6 +1757,27 @@ function spawnBump(x, y) {
     });
   }
 }
+// v1.33: ミトの群れをタップすると、近くの子たちが一斉にそこへ集まってくる
+const GATHER_RADIUS = 130;
+function triggerGather(x, y) {
+  if (stage.reduced) return;
+  const tsec = performance.now() / 1000;
+  let gathered = 0;
+  for (const o of stage.orbs) {
+    const dx = x - o.x, dy = y - o.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 1 && dist < GATHER_RADIUS) {
+      const speed = 70 + Math.random() * 50;
+      o.vx = (dx / dist) * speed;
+      o.vy = (dy / dist) * speed;
+      o.behavior = 'gather';
+      o.gatherTarget = { x, y };
+      o.gatherUntil = tsec + 1.1 + Math.random() * 0.5;
+      gathered++;
+    }
+  }
+  if (gathered) spawnBurst(Math.min(16, 4 + gathered));
+}
 function updateOrbsPhysics(dt, tms, w, h) {
   const tsec = tms / 1000;
   for (const gid in stage.swarmGroups) {
@@ -1713,7 +1791,19 @@ function updateOrbsPhysics(dt, tms, w, h) {
   for (const o of stage.orbs) {
     o.rot += o.rotSpeed * dt;
     const padX = o.r + 4, padY = o.r + 10;
-    if (o.behavior === 'drift') {
+    if (o.behavior === 'gather') {
+      // v1.33: タップされた場所に一時的に集まる
+      if (tsec >= o.gatherUntil) {
+        o.behavior = 'idle'; o.vx = 0; o.vy = 0;
+        o.nextDashAt = tsec + 3 + Math.random() * 6;
+      } else {
+        o.x += o.vx * dt; o.y += o.vy * dt;
+        o.x = Math.max(padX, Math.min(w - padX, o.x));
+        o.y = Math.max(padY, Math.min(h - padY, o.y));
+        const gdx = o.gatherTarget.x - o.x, gdy = o.gatherTarget.y - o.y;
+        if (Math.hypot(gdx, gdy) < 18) { o.vx *= 0.85; o.vy *= 0.85; }
+      }
+    } else if (o.behavior === 'drift') {
       o.x += o.vx * dt; o.y += o.vy * dt;
       if (o.x < padX || o.x > w - padX) { o.vx *= -1; o.x = Math.max(padX, Math.min(w - padX, o.x)); }
       if (o.y < padY || o.y > h - padY) { o.vy *= -1; o.y = Math.max(padY, Math.min(h - padY, o.y)); }
@@ -1964,6 +2054,12 @@ function currentLbEntry(create) {
   return (rec.photos && rec.photos[meal] && rec.photos[meal][index]) || null;
 }
 // 解析結果の共通表示（食事モーダル・旧形式の写真結果で共用）
+// v1.33: 認識された料理を「修正して再解析」用の編集可能テキストに変換
+function dishesToText(a) {
+  const dishes = (a && a.dishes) || [];
+  if (!dishes.length) return '';
+  return dishes.map(d => (d.amount ? `${d.name}（${d.amount}）` : d.name)).join('、');
+}
 function analysisHTML(a) {
   const confJp = ({ low: '低', medium: '中', high: '高' })[a.confidence] || '—';
   const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
@@ -2124,7 +2220,7 @@ function renderMealForm() {
   body.innerHTML =
     strip +
     `<textarea id="mealNote" class="meal-textarea" placeholder="${arr.length ? 'ことばで補足（任意）例：ご飯は大盛り、味噌汁も飲んだ' : '例：すき家でご飯大盛りの牛丼と肉皿'}"${pending ? ' disabled' : ''}>${esc((ma && ma.note) || '')}</textarea>` +
-    `<div class="ful-label">食べた量の感覚（任意・量の推定に使います）</div>` +
+    `<div class="ful-label">食べた量の感覚（必須）</div>` +
     `<div class="ful-chips" id="mealFul"></div>` +
     `<div class="btn-row" style="margin-top:14px">` +
       `<button class="btn btn-primary" id="mealRun"${pending ? ' disabled' : ''}>${pending ? '解析中…' : '解析する'}</button>` +
@@ -2151,15 +2247,26 @@ function renderMealResult() {
     ma.fullness ? `満腹度: ${esc(ma.fullness)}` : '',
     ma.note ? `補足: ${esc(ma.note)}` : '',
   ].filter(Boolean).join(' ・ ');
+  // v1.33: 写真解析は間違っていることが多いため、認識した料理を手で修正して再解析できるようにする
+  const fixSk = mealStateKey(sel, mealModalKey);
+  const fixPending = mealFixPending[fixSk];
+  const fixErr = mealFixError[fixSk];
   body.innerHTML =
     analysisHTML(ma.analysis) +
     (metaBits ? `<div class="nut-meta">${metaBits}</div>` : '') +
     (stale ? `<div class="ana-note" style="text-align:left">⟳ 解析後に写真の枚数が変わっています。再解析すると正確になります</div>` : '') +
+    `<div class="ful-label">料理が違う場合はここを直して再解析できます</div>` +
+    `<textarea id="mealDishesEdit" class="meal-textarea"${fixPending ? ' disabled' : ''}>${esc(dishesToText(ma.analysis))}</textarea>` +
+    `<div class="btn-row" style="margin-top:10px">` +
+      `<button class="btn btn-secondary" id="mealFixRun"${fixPending ? ' disabled' : ''}>${fixPending ? '再解析中…' : 'この内容で修正・再解析'}</button>` +
+    `</div>` +
+    `<div class="ana-note" id="mealFixMsg" style="text-align:left; min-height:1.2em">${fixPending ? '🔬 再解析中…' : (fixErr ? '⚠ ' + esc(fixErr) : '')}</div>` +
     `<div class="btn-row" style="margin-top:14px">` +
-      `<button class="btn btn-secondary" id="mealRedo">再解析する</button>` +
+      `<button class="btn btn-secondary" id="mealRedo">写真からやり直す</button>` +
       `<button class="btn btn-primary" data-close>閉じる</button>` +
     `</div>`;
   $('#mealRedo').addEventListener('click', renderMealForm);
+  $('#mealFixRun').addEventListener('click', runMealReanalysisFromText);
 }
 // v1.6: 解析の非同期化。「解析する」を押したら即モーダルを閉じ、通信はバックグラウンドで継続する。
 // sel（表示中の日付）は解析中に変わりうるため、開始時点の日付とmeal keyをここで閉じ込め、
@@ -2182,6 +2289,11 @@ async function runMealAnalysis() {
   const note = ($('#mealNote') ? $('#mealNote').value.trim() : '');
   if (!arr.length && note.length < 2) {
     $('#mealMsg').textContent = '写真が無い場合は、食べたものを入力してください';
+    return;
+  }
+  // v1.33: 満腹度は量の推定に直結するため必須項目にする
+  if (!mealFulSel) {
+    $('#mealMsg').textContent = '食べた量の感覚を選んでください';
     return;
   }
   const fullness = mealFulSel;
@@ -2211,10 +2323,9 @@ async function runMealAnalysis() {
     commit();          // 保存＋スコアボタン・栄養カード反映（renderPhotosも再描画される）
     // v1.30: 解析直後にタンパク質・腹七分目の自動達成判定も即座に行う
     if (startSel === today) checkAutoAchievements();
-    const k = speechKeyForMeal(analysis.mito_score, fullness);
-    if (k) mitoSpeak(k);
-    // 浄化パルスはモーダルの裏では見えないため、開いている間は閉じたとき（flush側）に再生する
-    if (k === 'mealGood' && !mealModalIsOpen()) mitoEffect('clean');
+    // v1.33: 良い点・アドバイスを使って「何が良くて何がダメか」が分かるミトコメントにする
+    const ms = mealSpeechText(analysis, fullness);
+    if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood');
     // 解析中に別途モーダルを開き直していた場合（「ことば」タイル等）は、その中身も更新する
     if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
     toast('解析完了 ✨');
@@ -2224,6 +2335,60 @@ async function runMealAnalysis() {
     renderPhotos();
     if (mealModalIsOpen() && mealModalKey === meal) renderMealForm();
     toast('解析に失敗しました');
+  }
+}
+// v1.33: 写真解析の認識ミスを手で直して、そのテキストだけで再解析する（画像は送らない）
+const mealFixPending = {};
+const mealFixError = {};
+async function runMealReanalysisFromText() {
+  const meal = mealModalKey;
+  const sk = mealStateKey(sel, meal);
+  if (mealFixPending[sk]) return;
+  const cfg = DB.analyze || {};
+  if (!cfg.url || !cfg.secret) {
+    toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
+    return;
+  }
+  const text = ($('#mealDishesEdit') ? $('#mealDishesEdit').value.trim() : '');
+  if (text.length < 2) {
+    $('#mealFixMsg').textContent = '修正後の内容を入力してください';
+    return;
+  }
+  const startSel = sel;
+  const rec = getRec(startSel, true);
+  const ma = (rec.mealAnalysis || {})[meal];
+  const fullness = (ma && ma.fullness) || mealFulSel;
+  mealFixPending[sk] = true;
+  delete mealFixError[sk];
+  renderMealResult();
+  try {
+    const bodyReq = { text };
+    if (fullness) bodyReq.fullness = fullness;
+    const analysis = await callAnalyzeAPI(bodyReq);
+    const rec2 = getRec(startSel, true);
+    if (!rec2.mealAnalysis || typeof rec2.mealAnalysis !== 'object') {
+      rec2.mealAnalysis = { breakfast: null, lunch: null, dinner: null };
+    }
+    const arr = (rec2.photos && rec2.photos[meal]) || [];
+    rec2.mealAnalysis[meal] = {
+      analysis,
+      note: (ma && ma.note) || null,
+      fullness: fullness || null,
+      analyzedAt: new Date().toISOString(),
+      photoCount: arr.length,
+    };
+    mealFixPending[sk] = false;
+    commit();
+    if (startSel === today) checkAutoAchievements();
+    const ms = mealSpeechText(analysis, fullness);
+    if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood');
+    if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
+    toast('修正して再解析しました ✨');
+  } catch (err) {
+    mealFixPending[sk] = false;
+    mealFixError[sk] = analyzeErrMsg(err);
+    if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
+    toast('再解析に失敗しました');
   }
 }
 $('#lbDel').addEventListener('click', () => {
@@ -2602,17 +2767,19 @@ function renderTodoCards(container, items, rec, interactive) {
   container.innerHTML = '';
   items.forEach(it => {
     const done = interactive ? rec.checked.includes(it.id) : isItemDone(it, rec);
+    // v1.33: 自動判定カードでも manualFallback が立っている項目（歩数など）はタップで手動チェックできる
+    const clickable = interactive || it.manualFallback;
     const card = document.createElement('div');
     card.dataset.id = it.id;
-    card.className = 'todo-card' + (done ? ' done' : '') + (it.ng ? ' ng' : '') + (interactive ? '' : ' auto');
+    card.className = 'todo-card' + (done ? ' done' : '') + (it.ng ? ' ng' : '') + (interactive ? '' : ' auto') + (!interactive && it.manualFallback ? ' manual-ok' : '');
     card.innerHTML =
       `<span class="tc-check">${done ? '✓' : ''}</span>` +
       `<span class="tc-name">${esc(it.short || it.name)}</span>`;
-    if (interactive) {
+    if (clickable) {
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-pressed', done ? 'true' : 'false');
-      card.setAttribute('aria-label', `${it.name}${done ? '（済）' : ''}`);
+      card.setAttribute('aria-label', `${it.name}${done ? '（済）' : ''}` + (!interactive ? '（自動判定・手動チェックも可）' : ''));
       const activate = () => toggleCheck(it, card);
       card.addEventListener('click', activate);
       card.addEventListener('keydown', e => {
@@ -2700,7 +2867,33 @@ function openAchieveDialog(item) {
   $('#achieveTitle').textContent = item.name;
   $('#achieveWhy').textContent = why;
   $('#achieveModal').classList.add('open');
+  pinBubbleAboveAchieveCard();
   if (!stage.reduced) spawnBurst(30);
+}
+// v1.33: 達成ダイアログを開いている間だけ、ミトの一言をダイアログのすぐ上に固定表示する
+// （通常はミト表示エリア上部に出るため、ダイアログが中央に開くと離れて見えていた）
+function pinBubbleAboveAchieveCard() {
+  const bubble = $('#mitoBubble');
+  const card = document.querySelector('#achieveModal .achieve-card');
+  if (!bubble || !card) return;
+  requestAnimationFrame(() => {
+    const cardRect = card.getBoundingClientRect();
+    const bubbleH = bubble.offsetHeight || 60;
+    bubble.style.position = 'fixed';
+    bubble.style.left = Math.max(8, cardRect.left) + 'px';
+    bubble.style.right = 'auto';
+    bubble.style.width = cardRect.width + 'px';
+    bubble.style.top = Math.max(8, cardRect.top - bubbleH - 10) + 'px';
+  });
+}
+function resetBubblePosition() {
+  const bubble = $('#mitoBubble');
+  if (!bubble) return;
+  bubble.style.position = '';
+  bubble.style.left = '';
+  bubble.style.right = '';
+  bubble.style.width = '';
+  bubble.style.top = '';
 }
 let reactionQueue = [];
 function queueReaction(item) {
@@ -2942,6 +3135,8 @@ function openSettings() {
   $('#setMito').textContent = computed.mito.toFixed(1);
   $('#setPeak').textContent = computed.peak.toFixed(1);
   $('#setAct').textContent = computed.activation;
+  $('#remindTime').value = DB.reminderTime || '22:00';
+  renderNotifyStatus();
   const raw = localStorage.getItem(STORE_KEY) || '';
   $('#setSize').textContent = Math.round(raw.length * 2 / 1024) + 'KB';
   if (DB.lastExport) {
@@ -2994,6 +3189,61 @@ $('#goalInput').addEventListener('change', e => {
   save();
   renderWeightGraph();
 });
+/* ============ v1.33: やることリマインダー ============ */
+function renderNotifyStatus() {
+  const note = $('#notifyStatusNote');
+  if (!note) return;
+  if (typeof Notification === 'undefined') {
+    note.textContent = 'このブラウザは通知に対応していません（アプリ内のお知らせのみ表示します）';
+  } else if (Notification.permission === 'granted') {
+    note.textContent = '通知はONです';
+  } else if (Notification.permission === 'denied') {
+    note.textContent = '通知がブロックされています（ブラウザの設定から許可してください）';
+  } else {
+    note.textContent = 'まだ通知が許可されていません';
+  }
+}
+$('#remindTime').addEventListener('change', e => {
+  DB.reminderTime = e.target.value || '22:00';
+  save();
+  scheduleTodoReminder();
+});
+$('#btnNotifyPermission').addEventListener('click', async () => {
+  if (typeof Notification === 'undefined') { toast('このブラウザは通知に対応していません'); return; }
+  try {
+    await Notification.requestPermission();
+  } catch {}
+  renderNotifyStatus();
+});
+// 手動チェック項目（inTodo）が全部済んでいるか
+function allManualTodoDone(rec) {
+  const items = DB.items.filter(it => it.inTodo);
+  return items.length > 0 && items.every(it => rec.checked.includes(it.id));
+}
+function fireTodoReminder() {
+  const rec = getRec(today, true);
+  if (rec.reminded || allManualTodoDone(rec)) return;
+  rec.reminded = true;
+  save();
+  toast('今日のやること、まだ残ってるよ🌙 忘れずにチェックしよう');
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    try { new Notification('ミトコンドリア・ダイエット', { body: '今日のやることをチェックし忘れていませんか？' }); } catch {}
+  }
+}
+let reminderTimer = null;
+// リマインダー時刻に向けてタイマーを（再）セットする。既に時刻を過ぎていれば即判定する
+function scheduleTodoReminder() {
+  clearTimeout(reminderTimer);
+  const rec = getRec(today, true);
+  if (rec.reminded) return;
+  const [hh, mm] = (DB.reminderTime || '22:00').split(':').map(Number);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(hh || 0, mm || 0, 0, 0);
+  const diff = target - now;
+  if (diff <= 0) { fireTodoReminder(); return; }
+  reminderTimer = setTimeout(fireTodoReminder, Math.min(diff, 2147483647));
+}
 $('#btnExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -3054,7 +3304,10 @@ document.querySelectorAll('.modal').forEach(m => {
       else {
         m.classList.remove('open');
         if (m.id === 'mealModal') flushPendingSpeech();
-        if (m.id === 'achieveModal' && reactionQueue.length) setTimeout(showNextReaction, 350);
+        if (m.id === 'achieveModal') {
+          resetBubblePosition();
+          if (reactionQueue.length) setTimeout(showNextReaction, 350);
+        }
       }
     }
   });
@@ -3068,7 +3321,10 @@ document.addEventListener('click', e => {
   if (!m) return;
   m.classList.remove('open');
   if (m.id === 'mealModal') flushPendingSpeech();
-  if (m.id === 'achieveModal' && reactionQueue.length) setTimeout(showNextReaction, 350);
+  if (m.id === 'achieveModal') {
+    resetBubblePosition();
+    if (reactionQueue.length) setTimeout(showNextReaction, 350);
+  }
 });
 
 /* ============ カレンダー操作 ============ */
@@ -3098,11 +3354,12 @@ function checkDayChange() {
     weekOffset = 0;
     knowIdx = todayKnowledgeIndex();
     recompute(); save(); renderAll();
+    scheduleTodoReminder(); // 日付が変わったので新しい日の分を再スケジュール
   }
 }
 setInterval(checkDayChange, 60 * 1000);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) { checkDayChange(); startStage(); autoSyncHealthData(); checkAutoAchievements(); }
+  if (!document.hidden) { checkDayChange(); startStage(); autoSyncHealthData(); checkAutoAchievements(); scheduleTodoReminder(); }
 });
 let resizeTimer = null;
 window.addEventListener('resize', () => {
@@ -3114,12 +3371,18 @@ window.addEventListener('resize', () => {
 
 stage.canvas = $('#mitoCanvas');
 stage.ctx = stage.canvas.getContext('2d');
+// v1.33: ミトの群れをタップすると、近くの子たちが集まってくる
+stage.canvas.addEventListener('click', e => {
+  const rect = stage.canvas.getBoundingClientRect();
+  triggerGather(e.clientX - rect.left, e.clientY - rect.top);
+});
 knowIdx = todayKnowledgeIndex();
 recompute();
 save();
 renderAll();
 autoSyncHealthData();
 checkAutoAchievements();
+scheduleTodoReminder();
 startStage();
 
 // v1.8: バックアップ促し（1日1回まで）
