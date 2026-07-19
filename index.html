@@ -433,6 +433,10 @@ nav.footer {
 .dish-line:last-child { border-bottom:none; }
 .dish-line.muted { color:var(--color-text-muted); }
 .dish-lines-hint { align-self:center; font-size:12px; color:var(--color-text-muted); }
+/* v1.36: 満腹度アイコン・解析コメント */
+.photo-meal-status { display:flex; align-items:center; gap:6px; }
+.meal-fullness-icon { font-size:15px; line-height:1; }
+.dish-comment { font-size:12.5px; color:var(--primary-700); background:var(--primary-50); border-radius:var(--radius-sm); padding:6px 8px; cursor:pointer; }
 
 /* ライトボックス（写真拡大） */
 #lightbox.open { align-items:center; }
@@ -1997,6 +2001,8 @@ function renderPhotos() {
     lab.className = 'photo-meal-label';
     lab.innerHTML = `${label}<span class="cnt">${arr.length}/${MAX_PHOTOS}</span>`;
     top.appendChild(lab);
+    const status = document.createElement('div');
+    status.className = 'photo-meal-status';
     const ab = document.createElement('button');
     let showAb = true;
     if (mealPending[mealStateKey(sel, key)]) {
@@ -2016,10 +2022,19 @@ function renderPhotos() {
     } else {
       showAb = false;
     }
+    // v1.36: 満腹度アイコンをミトスコアバッジの左に添える
+    if (ma && ma.analysis && ma.fullness && FULLNESS_ICON[ma.fullness]) {
+      const ful = document.createElement('span');
+      ful.className = 'meal-fullness-icon';
+      ful.textContent = FULLNESS_ICON[ma.fullness];
+      ful.title = ma.fullness;
+      status.appendChild(ful);
+    }
     if (showAb) {
       if (!mealPending[mealStateKey(sel, key)]) ab.addEventListener('click', () => openMealModal(key));
-      top.appendChild(ab);
+      status.appendChild(ab);
     }
+    top.appendChild(status);
     meal.appendChild(top);
 
     // v1.34→v1.35: 下段＝「＋」1つだけの追加口。撮った写真は常に表示し、解析済みなら料理も1行ずつ添える
@@ -2067,6 +2082,15 @@ function renderPhotos() {
       }
       lines.addEventListener('click', () => openMealModal(key));
       content.appendChild(lines);
+      // v1.36: 解析コメント（アドバイス・良い点）をメニューの下にも表示する
+      const comment = analysisComment(ma.analysis);
+      if (comment) {
+        const c = document.createElement('div');
+        c.className = 'dish-comment';
+        c.textContent = comment;
+        c.addEventListener('click', () => openMealModal(key));
+        content.appendChild(c);
+      }
     } else if (!arr.length) {
       const hint = document.createElement('div');
       hint.className = 'dish-lines-hint';
@@ -2121,6 +2145,15 @@ function dishesToText(a) {
   if (!dishes.length) return '';
   return dishes.map(d => (d.amount ? `${d.name}（${d.amount}）` : d.name)).join('、');
 }
+// v1.36: 食事一覧のメニュー下にも出す解析コメント（アドバイス優先、無ければ良い点）
+function analysisComment(a) {
+  if (!a) return '';
+  if (a.advice) return a.advice;
+  if (Array.isArray(a.good_points) && a.good_points.length) return a.good_points.join('。');
+  return '';
+}
+// v1.36: 満腹度アイコン（ミトスコアバッジの左に添える）
+const FULLNESS_ICON = { '軽め':'🍃', '腹七分目くらい':'👍', '満腹':'😌', '食べ過ぎ':'⚠️' };
 function analysisHTML(a) {
   const confJp = ({ low: '低', medium: '中', high: '高' })[a.confidence] || '—';
   const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
