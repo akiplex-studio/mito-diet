@@ -423,14 +423,16 @@ nav.footer {
   transition:border-color var(--duration-fast), background var(--duration-fast);
 }
 .photo-add-btn:hover { border-color:var(--primary-400); background:var(--primary-50); color:var(--primary-700); }
-.photo-thumbs { flex:1; min-width:0; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+/* v1.35: 撮った写真は常に表示し、解析済みなら料理の1行リストをその下に添える */
+.photo-meal-content { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.photo-thumbs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; max-width:220px; }
 .photo-thumb { aspect-ratio:1; border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }
 .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
-.dish-lines { flex:1; min-width:0; padding-top:4px; cursor:pointer; }
+.dish-lines { cursor:pointer; }
 .dish-line { font-size:13.5px; color:var(--neutral-800); padding:3px 0; border-bottom:1px dashed var(--color-border); }
 .dish-line:last-child { border-bottom:none; }
 .dish-line.muted { color:var(--color-text-muted); }
-.dish-lines-hint { flex:1; align-self:center; font-size:12px; color:var(--color-text-muted); }
+.dish-lines-hint { align-self:center; font-size:12px; color:var(--color-text-muted); }
 
 /* ライトボックス（写真拡大） */
 #lightbox.open { align-items:center; }
@@ -2020,7 +2022,7 @@ function renderPhotos() {
     }
     meal.appendChild(top);
 
-    // v1.34: 下段＝「＋」1つだけの追加口。解析済みなら右側に料理を1行ずつ、未解析は写真サムネイル
+    // v1.34→v1.35: 下段＝「＋」1つだけの追加口。撮った写真は常に表示し、解析済みなら料理も1行ずつ添える
     const body = document.createElement('div');
     body.className = 'photo-meal-body';
     const addBtn = document.createElement('button');
@@ -2030,6 +2032,22 @@ function renderPhotos() {
     addBtn.addEventListener('click', () => openAddChoice(key));
     body.appendChild(addBtn);
 
+    const content = document.createElement('div');
+    content.className = 'photo-meal-content';
+    if (arr.length) {
+      const thumbs = document.createElement('div');
+      thumbs.className = 'photo-thumbs';
+      arr.forEach((entry, idx) => {
+        const t = document.createElement('div');
+        t.className = 'photo-thumb';
+        const img = document.createElement('img');
+        img.src = entry.data; img.alt = `${label}の食事 ${idx + 1}`;
+        img.addEventListener('click', () => openLightbox(key, idx));
+        t.appendChild(img);
+        thumbs.appendChild(t);
+      });
+      content.appendChild(thumbs);
+    }
     if (ma && ma.analysis) {
       const lines = document.createElement('div');
       lines.className = 'dish-lines';
@@ -2048,26 +2066,14 @@ function renderPhotos() {
         lines.appendChild(line);
       }
       lines.addEventListener('click', () => openMealModal(key));
-      body.appendChild(lines);
-    } else if (arr.length) {
-      const thumbs = document.createElement('div');
-      thumbs.className = 'photo-thumbs';
-      arr.forEach((entry, idx) => {
-        const t = document.createElement('div');
-        t.className = 'photo-thumb';
-        const img = document.createElement('img');
-        img.src = entry.data; img.alt = `${label}の食事 ${idx + 1}`;
-        img.addEventListener('click', () => openLightbox(key, idx));
-        t.appendChild(img);
-        thumbs.appendChild(t);
-      });
-      body.appendChild(thumbs);
-    } else {
+      content.appendChild(lines);
+    } else if (!arr.length) {
       const hint = document.createElement('div');
       hint.className = 'dish-lines-hint';
       hint.textContent = '「＋」から食べたものを追加してください';
-      body.appendChild(hint);
+      content.appendChild(hint);
     }
+    body.appendChild(content);
     meal.appendChild(body);
     grid.appendChild(meal);
     if (mealIdx < MEALS.length - 1) grid.appendChild(Object.assign(document.createElement('div'), { className: 'meal-divider' }));
