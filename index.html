@@ -1575,6 +1575,8 @@ const stage = {
   canvas: null, ctx: null, orbs: [], plannedCount: -1, raf: 0, t0: 0, particles: [],
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
   cleanStart: 0,  // v1.5: 浄化パルスの開始時刻（0=非表示）
+  lastTms: 0,     // v1.32: 物理更新の前回フレーム時刻（Δt算出用）
+  swarmGroups: {}, // v1.32: id → {vx,vy,nextTurnAt}（群れで移動する仲間の共有速度）
 };
 const CLEAN_DUR = 800;  // v1.5: 浄化パルスの継続時間(ms)
 // 匹数が増えたときのキラキラ・バースト
@@ -1647,17 +1649,110 @@ function planOrbs(count) {
   for (let i = 0; i < on; i++) sizes.push(9);
   return sizes;
 }
+// v1.32: 群れの人数（3〜4匹ごとに共有速度で一緒に動く）
+const SWARM_GROUP_SIZE = 3;
 function buildOrbs() {
   const w = stage.canvas.clientWidth, h = stage.canvas.clientHeight;
   const sizes = planOrbs(computed.mito);
-  stage.orbs = sizes.map((r, i) => ({
-    r,
-    x: r + 8 + prand(i) * (w - 2 * (r + 8)),
-    y: r + 14 + prand(i + 57) * (h - 2 * r - 46),
-    phase: prand(i + 113) * Math.PI * 2,
-    speed: 0.6 + prand(i + 211) * 0.8,
-  }));
+  stage.swarmGroups = {};
+  stage.orbs = sizes.map((r, i) => {
+    // 挙動を抽選: 12%=素早く漂う「drift」／10%=群れで移動する「swarm」／残りは通常の「idle」（たまにダッシュ）
+    const roll = prand(i + 401);
+    const behavior = roll < 0.12 ? 'drift' : (roll < 0.22 ? 'swarm' : 'idle');
+    const angle0 = prand(i + 501) * Math.PI * 2;
+    const driftSpeed = 12 + prand(i + 601) * 20;
+    const swarmGroup = behavior === 'swarm' ? Math.floor(i / SWARM_GROUP_SIZE) : -1;
+    if (swarmGroup >= 0 && !stage.swarmGroups[swarmGroup]) {
+      const gAngle = prand(swarmGroup + 701) * Math.PI * 2;
+      stage.swarmGroups[swarmGroup] = {
+        vx: Math.cos(gAngle) * 9, vy: Math.sin(gAngle) * 9,
+        nextTurnAt: 3 + prand(swarmGroup + 801) * 5,
+      };
+    }
+    return {
+      r,
+      x: r + 8 + prand(i) * (w - 2 * (r + 8)),
+      y: r + 14 + prand(i + 57) * (h - 2 * r - 46),
+      phase: prand(i + 113) * Math.PI * 2,
+      speed: 0.6 + prand(i + 211) * 0.8,
+      // v1.32: 初期の向き（0/90/180/270度からランダム。180度＝最初から下向き）と、ゆっくり続く自転
+      rot: Math.floor(prand(i + 301) * 4) * (Math.PI / 2),
+      rotSpeed: (prand(i + 351) - 0.5) * 0.5,
+      behavior,
+      vx: behavior === 'drift' ? Math.cos(angle0) * driftSpeed : 0,
+      vy: behavior === 'drift' ? Math.sin(angle0) * driftSpeed : 0,
+      swarmGroup,
+      dashUntil: 0,
+      nextDashAt: 3 + prand(i + 901) * 7,
+    };
+  });
   stage.plannedCount = Math.floor(computed.mito);
+  stage.lastTms = 0;
+}
+// v1.32: 群れ・漂い・たまのダッシュで玉の基準位置(x,y)と向き(rot)を毎フレーム更新する
+function spawnBump(x, y) {
+  if (stage.reduced) return;
+  for (let i = 0; i < 6; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 20 + Math.random() * 40;
+    stage.particles.push({
+      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: 1, r: 1 + Math.random() * 1.5, decay: 2.2, col: '#A7C957',
+    });
+  }
+}
+function updateOrbsPhysics(dt, tms, w, h) {
+  const tsec = tms / 1000;
+  for (const gid in stage.swarmGroups) {
+    const g = stage.swarmGroups[gid];
+    if (tsec >= g.nextTurnAt) {
+      const ang = Math.random() * Math.PI * 2, sp = 7 + Math.random() * 12;
+      g.vx = Math.cos(ang) * sp; g.vy = Math.sin(ang) * sp;
+      g.nextTurnAt = tsec + 4 + Math.random() * 4;
+    }
+  }
+  for (const o of stage.orbs) {
+    o.rot += o.rotSpeed * dt;
+    const padX = o.r + 4, padY = o.r + 10;
+    if (o.behavior === 'drift') {
+      o.x += o.vx * dt; o.y += o.vy * dt;
+      if (o.x < padX || o.x > w - padX) { o.vx *= -1; o.x = Math.max(padX, Math.min(w - padX, o.x)); }
+      if (o.y < padY || o.y > h - padY) { o.vy *= -1; o.y = Math.max(padY, Math.min(h - padY, o.y)); }
+    } else if (o.behavior === 'swarm' && o.swarmGroup >= 0) {
+      const g = stage.swarmGroups[o.swarmGroup];
+      if (g) {
+        o.x += g.vx * dt; o.y += g.vy * dt;
+        if (o.x < padX || o.x > w - padX) { g.vx *= -1; o.x = Math.max(padX, Math.min(w - padX, o.x)); }
+        if (o.y < padY || o.y > h - padY) { g.vy *= -1; o.y = Math.max(padY, Math.min(h - padY, o.y)); }
+      }
+    } else {
+      // idle: 普段はその場で漂うだけだが、たまに素早くダッシュする
+      if (o.dashUntil > tsec) {
+        o.x += o.vx * dt; o.y += o.vy * dt;
+        o.x = Math.max(padX, Math.min(w - padX, o.x));
+        o.y = Math.max(padY, Math.min(h - padY, o.y));
+      } else if (tsec >= o.nextDashAt) {
+        const ang = Math.random() * Math.PI * 2, sp = 55 + Math.random() * 55;
+        o.vx = Math.cos(ang) * sp; o.vy = Math.sin(ang) * sp;
+        o.dashUntil = tsec + 0.3 + Math.random() * 0.3;
+        o.nextDashAt = tsec + 6 + Math.random() * 8;
+      }
+    }
+  }
+  // ダッシュ中の玉だけ、他の玉とぶつかったら軽くバウンドしてキラキラを散らす（簡易衝突判定）
+  for (const o of stage.orbs) {
+    if (o.dashUntil <= tsec) continue;
+    for (const p of stage.orbs) {
+      if (p === o) continue;
+      const dx = p.x - o.x, dy = p.y - o.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 0 && dist < (o.r + p.r) * 0.85) {
+        spawnBump((o.x + p.x) / 2, (o.y + p.y) / 2);
+        o.vx *= -0.6; o.vy *= -0.6;
+        o.dashUntil = tsec;
+        break;
+      }
+    }
+  }
 }
 function mixc(c1, c2, t) {
   return `rgb(${Math.round(c1[0]+(c2[0]-c1[0])*t)},${Math.round(c1[1]+(c2[1]-c1[1])*t)},${Math.round(c1[2]+(c2[2]-c1[2])*t)})`;
@@ -1670,6 +1765,12 @@ function drawStage(tms) {
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   }
   if (stage.plannedCount !== Math.floor(computed.mito)) buildOrbs();
+  // v1.32: 回転・漂い・群れ移動・ダッシュの物理更新（Δt基準。タブ非表示明けの飛びはクランプ）
+  if (!stage.reduced) {
+    const dt = stage.lastTms ? Math.min(0.05, (tms - stage.lastTms) / 1000) : 0;
+    stage.lastTms = tms;
+    if (dt > 0) updateOrbsPhysics(dt, tms, w, h);
+  }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   const act = computed.activation / 100;
@@ -1701,7 +1802,12 @@ function drawStage(tms) {
     // ※最小の玉は半径9（planOrbs参照）。しきい値12だと序盤（30匹以下）は1体もミトくんにならないため8に設定
     if (o.r >= 8 && mitoImg.complete && mitoImg.naturalWidth > 0) {
       ctx.globalAlpha = 0.6 + 0.4 * act;
-      ctx.drawImage(mitoImg, x - o.r, y - o.r, o.r * 2, o.r * 2);
+      // v1.32: 個体ごとにゆっくり自転させる（初期の向きもばらばら＝最初から上下逆の子もいる）
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(o.rot);
+      ctx.drawImage(mitoImg, -o.r, -o.r, o.r * 2, o.r * 2);
+      ctx.restore();
       if (cleanK > 0) {
         // 浄化パルス「ピカッ」— 画像の上に白い半透明円を重ねる
         ctx.globalAlpha = cleanK;
