@@ -137,7 +137,9 @@ header {
 /* v1.11: 背景画像は body::before の全画面背景に移動。ステージはカード枠を外し「開けた背景エリア」に */
 .card.mito-stage { position:relative; background:none; border:none; box-shadow:none; }
 /* v1.9: 表示高さを約1.4倍に拡大（画面幅ベース・破綻しないようmin/maxを付ける） */
-#mitoCanvas { display:block; width:100%; height:clamp(230px, 85vw, 380px); border-radius:var(--radius-md); background:none; cursor:pointer; }
+/* v1.37: タップしたときの青い選択・ハイライトを出さない */
+#mitoCanvas { display:block; width:100%; height:clamp(230px, 85vw, 380px); border-radius:var(--radius-md); background:none; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
 /* v1.26: 段階1＝ミトの群れの上に大きく変化量を表示する */
 .mito-canvas-wrap { position:relative; }
 .change-overlay {
@@ -1109,6 +1111,14 @@ const SPEECH = {
     '次のごはんを軽くすると、ぼく掃除できるよ',
     'たまにはこんな日もあるさ、明日ととのえよう',
   ],
+  // v1.37: 良くも悪くもない食事でも、必ずミトが何か反応するようにするための受け皿
+  mealOk: [
+    'ごちそうさま！しっかり受け取ったよ',
+    'ふむふむ、これはこれで悪くないね',
+    '記録ありがとう。ちゃんと見てたよ',
+    'おいしそう！ぼくの燃料にさせてもらうね',
+    'うん、まずまずかな。次のごはんも楽しみ',
+  ],
   slept: [
     '昨日の夜、いっぱいお掃除できたよ！',
     'よく寝たね！古い部品を新しくしておいたよ',
@@ -1137,7 +1147,7 @@ function speechKeyForMeal(score, fullness) {
   if (fullness === '食べ過ぎ') return 'tooFull';
   if (Number.isFinite(s) && s >= 70) return 'mealGood';
   if (fullness === '腹七分目くらい' || fullness === '軽め') return 'hara7';
-  return null;
+  return 'mealOk';   // v1.37: どれにも当てはまらない食事でも必ず一言反応する（以前は null で無反応だった）
 }
 // 睡眠: 7h未満→7h以上に跨いだ瞬間だけ 'slept'（NG判定の6hとは別の、セリフ専用しきい値）
 function speechKeyForSleep(prev, next) {
@@ -1512,6 +1522,7 @@ let bubbleTimer = null;                 // 自動で消すタイマー
 let bubblePendingKey = null;            // 食事解析モーダルが開いている間の保留キー
 let bubblePendingText = null;           // 同上・自由テキスト版（食事コメントなど）
 let bubblePendingTextClean = false;     // 保留中のテキストが「良い食事」判定だったか（浄化パルス用）
+let bubblePendingMealReact = false;     // v1.37: 保留中のテキストが食事登録だったか（群がる演出用）
 const speechLastIndex = {};             // 状況キー → 直前に出した添字（同文回避用）
 
 function mealModalIsOpen() {
@@ -1550,19 +1561,24 @@ function mitoSpeak(key) {
   showBubble(key);
 }
 // v1.33: 食事コメントなど、SPEECH辞書に無い自由テキストでミトに喋らせる
-function mitoSpeakText(text, isGood) {
+function mitoSpeakText(text, isGood, isMeal) {
   if (sel !== today || !text) return;
-  if (mealModalIsOpen()) { bubblePendingText = text; bubblePendingTextClean = !!isGood; return; }
+  if (mealModalIsOpen()) {
+    bubblePendingText = text; bubblePendingTextClean = !!isGood; bubblePendingMealReact = !!isMeal;
+    return;
+  }
   showBubbleText(text);
   if (isGood) mitoEffect('clean');
+  if (isMeal) mitoMealReact(!!isGood);
 }
 // 食事解析モーダルを閉じたときに、保留していたセリフ（と良食の浄化パルス）を表示する
 function flushPendingSpeech() {
   if (bubblePendingText) {
-    const t = bubblePendingText, clean = bubblePendingTextClean;
-    bubblePendingText = null; bubblePendingTextClean = false;
+    const t = bubblePendingText, clean = bubblePendingTextClean, meal = bubblePendingMealReact;
+    bubblePendingText = null; bubblePendingTextClean = false; bubblePendingMealReact = false;
     showBubbleText(t);
     if (clean) mitoEffect('clean');
+    if (meal) mitoMealReact(clean);
     return;
   }
   if (!bubblePendingKey) return;
@@ -1782,26 +1798,48 @@ function spawnBump(x, y) {
     });
   }
 }
-// v1.33: ミトの群れをタップすると、近くの子たちが一斉にそこへ集まってくる
-const GATHER_RADIUS = 130;
-function triggerGather(x, y) {
+// v1.37: ミトの群れをタップすると、近くの子たちが驚いて一斉に逃げる（v1.33までは集まってきていた）
+const FLEE_RADIUS = 130;
+function triggerFlee(x, y) {
   if (stage.reduced) return;
   const tsec = performance.now() / 1000;
-  let gathered = 0;
+  let fled = 0;
   for (const o of stage.orbs) {
-    const dx = x - o.x, dy = y - o.y;
+    const dx = o.x - x, dy = o.y - y;
     const dist = Math.hypot(dx, dy);
-    if (dist > 1 && dist < GATHER_RADIUS) {
-      const speed = 70 + Math.random() * 50;
-      o.vx = (dx / dist) * speed;
-      o.vy = (dy / dist) * speed;
-      o.behavior = 'gather';
-      o.gatherTarget = { x, y };
-      o.gatherUntil = tsec + 1.1 + Math.random() * 0.5;
-      gathered++;
+    if (dist < FLEE_RADIUS) {
+      // 真上をタップされた（dist≒0）ときは逃げる向きが決まらないので、ランダムな方向に散らす
+      const ang = dist > 1 ? Math.atan2(dy, dx) : Math.random() * Math.PI * 2;
+      // 近い子ほど強く弾かれる
+      const speed = 150 + (1 - Math.min(dist, FLEE_RADIUS) / FLEE_RADIUS) * 120 + Math.random() * 40;
+      o.vx = Math.cos(ang) * speed;
+      o.vy = Math.sin(ang) * speed;
+      o.behavior = 'flee';
+      o.fleeUntil = tsec + 0.5 + Math.random() * 0.4;
+      fled++;
     }
   }
-  if (gathered) spawnBurst(Math.min(16, 4 + gathered));
+  if (fled) spawnBump(x, y);   // タップした場所に驚きのキラキラ
+}
+// v1.37: 食事を登録したとき、ミトたちが中央のごはんに群がってくる演出
+function mitoMealReact(good) {
+  spawnBurst(good ? 18 : 10);
+  if (stage.reduced || !stage.canvas) return;
+  const w = stage.canvas.clientWidth, h = stage.canvas.clientHeight;
+  if (!w || !h) return;
+  const tsec = performance.now() / 1000;
+  const cx = w / 2, cy = h / 2;
+  for (const o of stage.orbs) {
+    const dx = cx - o.x, dy = cy - o.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 1) continue;
+    const speed = 60 + Math.random() * 60;
+    o.vx = (dx / dist) * speed;
+    o.vy = (dy / dist) * speed;
+    o.behavior = 'gather';
+    o.gatherTarget = { x: cx, y: cy };
+    o.gatherUntil = tsec + 1.2 + Math.random() * 0.6;
+  }
 }
 function updateOrbsPhysics(dt, tms, w, h) {
   const tsec = tms / 1000;
@@ -1817,7 +1855,7 @@ function updateOrbsPhysics(dt, tms, w, h) {
     o.rot += o.rotSpeed * dt;
     const padX = o.r + 4, padY = o.r + 10;
     if (o.behavior === 'gather') {
-      // v1.33: タップされた場所に一時的に集まる
+      // v1.37: 食事登録時、中央のごはんに一時的に群がる
       if (tsec >= o.gatherUntil) {
         o.behavior = 'idle'; o.vx = 0; o.vy = 0;
         o.nextDashAt = tsec + 3 + Math.random() * 6;
@@ -1827,6 +1865,18 @@ function updateOrbsPhysics(dt, tms, w, h) {
         o.y = Math.max(padY, Math.min(h - padY, o.y));
         const gdx = o.gatherTarget.x - o.x, gdy = o.gatherTarget.y - o.y;
         if (Math.hypot(gdx, gdy) < 18) { o.vx *= 0.85; o.vy *= 0.85; }
+      }
+    } else if (o.behavior === 'flee') {
+      // v1.37: タップされた場所から逃げる。壁は跳ね返り、だんだん勢いが落ちて元の漂いに戻る
+      if (tsec >= o.fleeUntil) {
+        o.behavior = 'idle'; o.vx = 0; o.vy = 0;
+        o.nextDashAt = tsec + 2 + Math.random() * 5;
+      } else {
+        o.x += o.vx * dt; o.y += o.vy * dt;
+        if (o.x < padX || o.x > w - padX) { o.vx *= -1; o.x = Math.max(padX, Math.min(w - padX, o.x)); }
+        if (o.y < padY || o.y > h - padY) { o.vy *= -1; o.y = Math.max(padY, Math.min(h - padY, o.y)); }
+        const damp = Math.pow(0.35, dt);   // 1秒でおよそ1/3まで減速（フレームレートに依存させない）
+        o.vx *= damp; o.vy *= damp;
       }
     } else if (o.behavior === 'drift') {
       o.x += o.vx * dt; o.y += o.vy * dt;
@@ -2153,7 +2203,7 @@ function analysisComment(a) {
   return '';
 }
 // v1.36: 満腹度アイコン（ミトスコアバッジの左に添える）
-const FULLNESS_ICON = { '軽め':'🍃', '腹七分目くらい':'👍', '満腹':'😌', '食べ過ぎ':'⚠️' };
+const FULLNESS_ICON = { '軽め':'🍃', '腹七分目くらい':'👍', '普通':'🙂', '満腹':'😌', '食べ過ぎ':'⚠️' };
 function analysisHTML(a) {
   const confJp = ({ low: '低', medium: '中', high: '高' })[a.confidence] || '—';
   const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
@@ -2269,7 +2319,8 @@ $('#weightSyncBtn').addEventListener('click', () => manualSyncHealthField('weigh
 
 /* ---- 食事解析モーダル ---- */
 const MEAL_JP = { breakfast: '朝', lunch: '昼', dinner: '晩' };
-const FULLNESS_OPTS = ['軽め', '腹七分目くらい', '満腹', '食べ過ぎ'];
+// v1.37: 「普通（いつも通りの量）」を追加。腹七分目より多いので hara7 の自動達成には数えない
+const FULLNESS_OPTS = ['軽め', '腹七分目くらい', '普通', '満腹', '食べ過ぎ'];
 let mealModalKey = null, mealFulSel = null;
 // v1.6: 解析の非同期化 — グローバルmealBusyの代わりに「日付|食事」別に持つ（メモリのみ・保存しない）
 // 日付をキーに含めるのは、解析中に過去日へ表示を切り替えたとき別日の同じ食事に「解析中」が出ないようにするため
@@ -2440,7 +2491,7 @@ async function runMealAnalysis() {
     if (startSel === today) checkAutoAchievements();
     // v1.33: 良い点・アドバイスを使って「何が良くて何がダメか」が分かるミトコメントにする
     const ms = mealSpeechText(analysis, fullness);
-    if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood');
+    if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood', true);  // v1.37: 第3引数=食事登録（群がる演出）
     // 解析中に別途モーダルを開き直していた場合（「ことば」タイル等）は、その中身も更新する
     if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
     toast('解析完了 ✨');
@@ -2497,7 +2548,7 @@ async function runMealReanalysisFromText() {
     commit();
     if (startSel === today) checkAutoAchievements();
     const ms = mealSpeechText(analysis, fullness);
-    if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood');
+    if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood', true);  // v1.37: 第3引数=食事登録（群がる演出）
     if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
     toast('修正して再解析しました ✨');
   } catch (err) {
@@ -3488,10 +3539,10 @@ window.addEventListener('resize', () => {
 
 stage.canvas = $('#mitoCanvas');
 stage.ctx = stage.canvas.getContext('2d');
-// v1.33: ミトの群れをタップすると、近くの子たちが集まってくる
+// v1.37: ミトの群れをタップすると、近くの子たちが逃げる
 stage.canvas.addEventListener('click', e => {
   const rect = stage.canvas.getBoundingClientRect();
-  triggerGather(e.clientX - rect.left, e.clientY - rect.top);
+  triggerFlee(e.clientX - rect.left, e.clientY - rect.top);
 });
 knowIdx = todayKnowledgeIndex();
 recompute();

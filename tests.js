@@ -112,7 +112,9 @@ eq('speechKeyForMeal overfull beats high score', speechKeyForMeal(80, '食べ過
 eq('speechKeyForMeal high score', speechKeyForMeal(80, null), 'mealGood');
 eq('speechKeyForMeal hara7 (腹七分目)', speechKeyForMeal(50, '腹七分目くらい'), 'hara7');
 eq('speechKeyForMeal hara7 (軽め)', speechKeyForMeal(50, '軽め'), 'hara7');
-eq('speechKeyForMeal none', speechKeyForMeal(50, null), null);
+eq('speechKeyForMeal 普通 is not hara7', speechKeyForMeal(50, '普通'), 'mealOk');
+eq('countHara7Meals excludes 普通', countHara7Meals({ mealAnalysis: { breakfast:{fullness:'普通'}, lunch:{fullness:'軽め'}, dinner:{fullness:'普通'} } }), 1);
+eq('speechKeyForMeal none', speechKeyForMeal(50, null), 'mealOk');  // v1.37: 無反応をやめ、必ず一言返す
 eq('speechKeyForMeal null score overfull', speechKeyForMeal(null, '食べ過ぎ'), 'tooFull');
 
 // mealSpeechText（v1.33: good_points/adviceを使った具体的なミトコメント）
@@ -122,7 +124,7 @@ eq('mealSpeechText good key', msGood.key, 'mealGood');
 const msBad = mealSpeechText({ mito_score: 10, advice: '揚げ物を控えましょう' }, null, 0);
 eq('mealSpeechText bad includes advice', msBad.text.includes('揚げ物を控えましょう'), true);
 eq('mealSpeechText bad key', msBad.key, 'mealBad');
-eq('mealSpeechText none for mid score', mealSpeechText({ mito_score: 50 }, null, 0), null);
+eq('mealSpeechText mid score returns mealOk', mealSpeechText({ mito_score: 50 }, null, 0).key, 'mealOk');
 const msNoDetail = mealSpeechText({ mito_score: 80 }, null, 0);
 eq('mealSpeechText good with no good_points falls back to lead only', msNoDetail.text.includes('\n'), false);
 const msLong = mealSpeechText({ mito_score: 10, advice: 'あ'.repeat(60) }, null, 0);
