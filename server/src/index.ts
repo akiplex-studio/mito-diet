@@ -133,6 +133,10 @@ function todayJST(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
 }
 
+// 直近に受け取ったヘルスPOSTの生bodyと抽出結果を1件だけ覚えておく（診断用・メモリのみ・再起動で消える）。
+// Renderのログを見なくても、アプリの「ヘルス同期の診断」から実際に何が届いたか確認できるようにするため。
+let lastHealthPost: { at: string; body: unknown; parsed: { steps: number | null; sleepHours: number | null; weight: number | null } } | null = null;
+
 app.post("/api/health-data", (req, res) => {
   if (!secretOk(req.header("x-app-secret"))) {
     res.status(401).json({ error: "unauthorized" });
@@ -191,8 +195,24 @@ app.post("/api/health-data", (req, res) => {
   if (patch.sleepHours === undefined) {
     console.error("[health-data] 睡眠が取り込めませんでした。body keys:", Object.keys(req.body ?? {}));
   }
+  // 診断用に直近のPOST内容を保持（生body＋抽出結果）
+  lastHealthPost = {
+    at: new Date().toISOString(),
+    body: req.body,
+    parsed: { steps: patch.steps ?? null, sleepHours: patch.sleepHours ?? null, weight: patch.weight ?? null },
+  };
   const entry = upsertHealthData(date, patch);
   res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours, weight: entry.weight });
+});
+
+// 診断: 直近にサーバーが受け取ったヘルスPOSTの生body・抽出結果を返す（x-app-secret 必須）。
+// 「睡眠だけ取れない」原因（Taskerが送っていない/キー名が違う等）を実データで特定するため。
+app.get("/api/health-debug", (req, res) => {
+  if (!secretOk(req.header("x-app-secret"))) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  res.json({ ok: true, lastHealthPost });
 });
 
 app.get("/api/health-data", (req, res) => {

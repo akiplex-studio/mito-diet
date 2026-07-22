@@ -717,6 +717,11 @@ nav.footer {
           <input type="password" id="anaSecret" placeholder="サーバー側と同じ値">
         </div>
         <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・ミトスコアを推定します。設定はこの端末内にのみ保存されます。</div>
+        <div class="set-field col" style="margin-top:var(--space-3)">
+          <button class="btn btn-secondary" id="btnHealthDebug">🩺 ヘルス同期の診断</button>
+          <textarea id="healthDebugOut" readonly hidden style="margin-top:var(--space-2);width:100%;min-height:160px;font-family:var(--font-number);font-size:11px;line-height:1.4;white-space:pre;overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px"></textarea>
+          <div class="set-note">Tasker→サーバーに<b>直近に届いたヘルスデータの生の中身</b>を表示します。睡眠が取れないとき、これをコピーして送ってください。</div>
+        </div>
       </div>
       <div class="set-section">
         <h4>からだのプロフィール（必要カロリー計算に使用）</h4>
@@ -2319,6 +2324,30 @@ async function manualSyncHealthField(field, btn) {
 $('#stepSyncBtn').addEventListener('click', () => manualSyncHealthField('steps', $('#stepSyncBtn')));
 $('#sleepSyncBtn').addEventListener('click', () => manualSyncHealthField('sleepHours', $('#sleepSyncBtn')));
 $('#weightSyncBtn').addEventListener('click', () => manualSyncHealthField('weight', $('#weightSyncBtn')));
+// 診断: サーバーが直近に受け取ったヘルスPOSTの生bodyを取り出して画面に表示する（睡眠が取れない原因の特定用）
+$('#btnHealthDebug').addEventListener('click', async () => {
+  const out = $('#healthDebugOut');
+  const cfg = DB.analyze || {};
+  if (!cfg.url || !cfg.secret) { toast('設定でバックエンドURL・シークレットを入力してください'); return; }
+  const btn = $('#btnHealthDebug');
+  btn.disabled = true;
+  out.hidden = false;
+  out.value = '取得中…';
+  try {
+    const res = await fetch(cfg.url.replace(/\/+$/, '') + '/api/health-debug', { headers: { 'x-app-secret': cfg.secret } });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json) { out.value = 'エラー: ' + res.status + '（URL・シークレットを確認）'; return; }
+    if (!json.lastHealthPost) {
+      out.value = 'サーバーはまだヘルスデータのPOSTを1件も受け取っていません。\n（Taskerの送信タスクが実行されたか、送信先URL・シークレットが正しいか確認してください。サーバー再起動でも消えます）';
+      return;
+    }
+    out.value = JSON.stringify(json.lastHealthPost, null, 2);
+  } catch (e) {
+    out.value = '接続できませんでした（サーバー稼働とURLを確認）: ' + ((e && e.message) || e);
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 /* ---- 食事解析モーダル ---- */
 const MEAL_JP = { breakfast: '朝', lunch: '昼', dinner: '晩' };
