@@ -1862,7 +1862,8 @@ function updateOrbsPhysics(dt, tms, w, h) {
     if (o.behavior === 'gather') {
       // v1.37: 食事登録時、中央のごはんに一時的に群がる
       if (tsec >= o.gatherUntil) {
-        o.behavior = 'idle'; o.vx = 0; o.vy = 0;
+        // v1.40: 速度を残したままidleへ渡し、下のなめらかな減速に任せる（急停止させない）
+        o.behavior = 'idle';
         o.nextDashAt = tsec + 3 + Math.random() * 6;
       } else {
         o.x += o.vx * dt; o.y += o.vy * dt;
@@ -1874,7 +1875,8 @@ function updateOrbsPhysics(dt, tms, w, h) {
     } else if (o.behavior === 'flee') {
       // v1.37: タップされた場所から逃げる。壁は跳ね返り、だんだん勢いが落ちて元の漂いに戻る
       if (tsec >= o.fleeUntil) {
-        o.behavior = 'idle'; o.vx = 0; o.vy = 0;
+        // v1.40: 速度を残したままidleへ渡し、下のなめらかな減速に任せる（急停止させない）
+        o.behavior = 'idle';
         o.nextDashAt = tsec + 2 + Math.random() * 5;
       } else {
         o.x += o.vx * dt; o.y += o.vy * dt;
@@ -1895,8 +1897,16 @@ function updateOrbsPhysics(dt, tms, w, h) {
         if (o.y < padY || o.y > h - padY) { g.vy *= -1; o.y = Math.max(padY, Math.min(h - padY, o.y)); }
       }
     } else {
-      // idle: 普段はその場で漂うだけだが、たまに素早くダッシュする
+      // idle: 普段はその場で漂うだけだが、たまに素早くダッシュする。
+      // v1.40: ダッシュ／逃げる／群がる、どの動きが終わった直後も急停止(ピタッ)させず、
+      // 残った速度をなめらかに減衰させてから静止する（「スーッ」と止まる）
       if (o.dashUntil > tsec) {
+        o.x += o.vx * dt; o.y += o.vy * dt;
+        o.x = Math.max(padX, Math.min(w - padX, o.x));
+        o.y = Math.max(padY, Math.min(h - padY, o.y));
+      } else if (Math.abs(o.vx) > 0.4 || Math.abs(o.vy) > 0.4) {
+        const decay = Math.pow(0.05, dt);  // 1秒でおよそ1/20まで、短時間で滑らかに減速
+        o.vx *= decay; o.vy *= decay;
         o.x += o.vx * dt; o.y += o.vy * dt;
         o.x = Math.max(padX, Math.min(w - padX, o.x));
         o.y = Math.max(padY, Math.min(h - padY, o.y));
