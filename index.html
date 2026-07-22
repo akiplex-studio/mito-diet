@@ -1925,6 +1925,9 @@ function mixc(c1, c2, t) {
 function drawStage(tms) {
   const cv = stage.canvas, ctx = stage.ctx;
   const w = cv.clientWidth, h = cv.clientHeight;
+  // v1.38: アプリ内タブ（食事・記録）に移動するとホームのcanvasは display:none で clientWidth/Height が 0 になる。
+  // その状態で物理更新の壁クランプが走ると全ミトが左上に潰れるため、サイズ0のフレームは丸ごとスキップして座標を保つ。
+  if (w === 0 || h === 0) { stage.lastTms = 0; return; }
   const dpr = window.devicePixelRatio || 1;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
