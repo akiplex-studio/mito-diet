@@ -167,9 +167,13 @@ app.post("/api/health-data", (req, res) => {
     }
     patch.sleepHours = rawSleep;
   } else if (req.body?.sleepRaw !== undefined) {
-    // SleepSession_duration（ミリ秒）を時間に換算して抽出
+    // SleepSession_duration（ミリ秒等）を時間に換算して抽出
     const extracted = extractSleepHoursFromRaw(req.body.sleepRaw);
     if (extracted !== null) patch.sleepHours = extracted;
+    else {
+      // 抽出できなかったら生データをログに残す（実際のキー名・型・格納場所を突き止めるため）
+      console.error("[health-data] sleepRaw を解釈できませんでした:", JSON.stringify(req.body.sleepRaw)?.slice(0, 800));
+    }
   }
   if (rawWeight !== undefined) {
     if (typeof rawWeight !== "number" || !Number.isFinite(rawWeight) || rawWeight <= 0 || rawWeight > 300) {
@@ -181,6 +185,11 @@ app.post("/api/health-data", (req, res) => {
     // Weight_weight_avg（kg）を抽出
     const extracted = extractWeightFromRaw(req.body.weightRaw);
     if (extracted !== null) patch.weight = extracted;
+  }
+  // 睡眠がどのフィールドでも取り込めなかったときは、届いた生body全体のキーを記録する
+  // （sleepRawすら送られていない＝Tasker側で睡眠が付いていないケースの切り分け用）。
+  if (patch.sleepHours === undefined) {
+    console.error("[health-data] 睡眠が取り込めませんでした。body keys:", Object.keys(req.body ?? {}));
   }
   const entry = upsertHealthData(date, patch);
   res.json({ ok: true, date, steps: entry.steps, sleepHours: entry.sleepHours, weight: entry.weight });
