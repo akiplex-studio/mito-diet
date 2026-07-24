@@ -12,3 +12,8 @@ server/node_modules/
 server/dist/
 server/.env
 server/data/
+
+# Capacitor（モバイルアプリラッパー）
+node_modules/
+# www/index.html は index.html から `npm run sync:web` で生成されるコピー。index.html を単一の正として保つため追跡しない
+www/
