@@ -414,6 +414,16 @@ nav.footer {
 .wt-legend span { display:inline-flex; align-items:center; gap:5px; }
 .wt-legend i { width:14px; height:0; border-top:2px solid var(--primary-500); display:inline-block; }
 .wt-legend i.goal { border-top:2px dashed var(--info-500); }
+/* v1.42: 体重グラフの期間切り替えタブ */
+.wt-range-tabs { display:flex; gap:var(--space-1); margin:var(--space-2) 0 0; }
+.wt-range-tabs button {
+  flex:1; padding:6px 0; font-size:12px; font-weight:600; color:var(--color-text-muted);
+  background:var(--neutral-100); border-radius:var(--radius-full); transition:background var(--duration-fast), color var(--duration-fast);
+}
+.wt-range-tabs button.active { background:var(--primary-700); color:#fff; }
+/* v1.42: 体重グラフのタップで日付・体重を表示するラベル */
+.wt-tap-label { font-size:10px; fill:#fff; font-weight:600; }
+.wt-tap-label-bg { fill:var(--primary-800); }
 
 /* ============ v1.1: 食事写真（複数枚） ============ */
 /* v1.34: 「＋」1つだけの追加口＋解析後は料理を1行ずつ表示するレイアウトに刷新 */
@@ -675,6 +685,11 @@ nav.footer {
       <!-- 体重のあゆみ -->
       <section class="card" id="weightCard">
         <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>体重のあゆみ</h2>
+        <div class="wt-range-tabs" id="wtRangeTabs">
+          <button type="button" data-range="7" class="active">1週間</button>
+          <button type="button" data-range="30">1ヶ月</button>
+          <button type="button" data-range="90">3ヶ月</button>
+        </div>
         <div id="weightBody"></div>
       </section>
     </div>
@@ -2811,17 +2826,29 @@ $('#sleepInput').addEventListener('change', e => {
 });
 
 /* ============ 体重のあゆみ（SVGグラフ） ============ */
+// v1.42: グラフの表示期間（日数）。タブで切り替える。タップした点のインデックス（ラベル表示用）
+let wtRange = 7;
+let wtTapIndex = null;
+let wtGraphMeta = null; // 直近の描画パラメータ（クリック位置→データ点の変換に使う）
 function renderWeightGraph() {
   const body = $('#weightBody');
   const pts = Object.keys(DB.days)
     .filter(d => DB.days[d] && DB.days[d].weight != null && DB.days[d].weight !== '')
     .sort()
     .map(d => ({ d, w: Number(DB.days[d].weight) }));
-  const recent = pts.slice(-30);
-  if (recent.length === 0) {
+  if (pts.length === 0) {
     body.innerHTML = `<div class="wt-empty">まだ体重の記録がありません。<br>上の「体重」に入力すると、ここに推移グラフが表示されます。</div>`;
+    wtGraphMeta = null;
     return;
   }
+  const cutoff = fmtDate(new Date(new Date(today + 'T12:00:00').getTime() - (wtRange - 1) * 86400000));
+  const recent = pts.filter(p => p.d >= cutoff);
+  if (recent.length === 0) {
+    body.innerHTML = `<div class="wt-empty">直近${wtRange === 7 ? '1週間' : wtRange === 30 ? '1ヶ月' : '3ヶ月'}の体重記録がありません。</div>`;
+    wtGraphMeta = null;
+    return;
+  }
+  if (wtTapIndex != null && wtTapIndex >= recent.length) wtTapIndex = null;
   const last = recent[recent.length - 1], first = recent[0];
   const diff = last.w - first.w;
   const dcls = diff < -0.05 ? 'down' : diff > 0.05 ? 'up' : 'flat';
@@ -2840,6 +2867,7 @@ function renderWeightGraph() {
 
   if (recent.length === 1) {
     body.innerHTML = head + `<div class="wt-empty">2日以上記録するとグラフが描かれます。</div>`;
+    wtGraphMeta = null;
     return;
   }
 
@@ -2866,18 +2894,55 @@ function renderWeightGraph() {
   if (goal != null && goal >= lo && goal <= hi) {
     goalLine = `<line x1="${padL}" y1="${ys(goal).toFixed(1)}" x2="${W - padR}" y2="${ys(goal).toFixed(1)}" stroke="#4E8098" stroke-width="1.5" stroke-dasharray="5 4"/>`;
   }
+  // v1.42: タップした点に日付・体重のラベルを表示
+  let tapLabel = '';
+  if (wtTapIndex != null) {
+    const p = recent[wtTapIndex];
+    const tx = xs(wtTapIndex), ty = ys(p.w);
+    const labelText = `${p.d.slice(5).replace('-', '/')}: ${p.w.toFixed(1)}kg`;
+    const labelW = labelText.length * 5.6 + 12;
+    const boxX = Math.min(Math.max(tx - labelW / 2, padL), W - padR - labelW);
+    const boxY = Math.max(ty - 26, 2);
+    tapLabel = `<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="5" fill="#fff" stroke="#6A994E" stroke-width="2"/>` +
+      `<rect class="wt-tap-label-bg" x="${boxX.toFixed(1)}" y="${boxY.toFixed(1)}" width="${labelW.toFixed(1)}" height="18" rx="4"/>` +
+      `<text class="wt-tap-label" x="${(boxX + labelW / 2).toFixed(1)}" y="${(boxY + 13).toFixed(1)}" text-anchor="middle">${labelText}</text>`;
+  }
   const svg = `<svg id="wtGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="体重推移グラフ">
     ${grid}
     <polygon points="${area}" fill="#D9E8C6" opacity="0.5"/>
     ${goalLine}
     <polyline points="${line}" fill="none" stroke="#6A994E" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     ${dots}
+    ${tapLabel}
   </svg>`;
   const legend = `<div class="wt-legend"><span><i></i>体重</span>${
     goal != null ? `<span><i class="goal"></i>目標 ${Number(goal).toFixed(1)}kg</span>` : ''
   }</div>`;
   body.innerHTML = head + svg + legend;
+  wtGraphMeta = { recent, padL, padR, W };
 }
+// v1.42: 期間タブ（1週間/1ヶ月/3ヶ月）
+document.querySelectorAll('#wtRangeTabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    wtRange = Number(btn.dataset.range);
+    wtTapIndex = null;
+    document.querySelectorAll('#wtRangeTabs button').forEach(b => b.classList.toggle('active', b === btn));
+    renderWeightGraph();
+  });
+});
+// v1.42: グラフをタップすると、一番近い日付・体重をラベル表示する
+$('#weightBody').addEventListener('click', e => {
+  const svgEl = e.target.closest('#wtGraph');
+  if (!svgEl || !wtGraphMeta) return;
+  const { recent, padL, padR, W } = wtGraphMeta;
+  const rect = svgEl.getBoundingClientRect();
+  const relX = (e.clientX - rect.left) / rect.width * W;
+  const span = W - padL - padR;
+  let idx = recent.length > 1 ? Math.round(((relX - padL) / span) * (recent.length - 1)) : 0;
+  idx = Math.max(0, Math.min(recent.length - 1, idx));
+  wtTapIndex = idx;
+  renderWeightGraph();
+});
 
 /* ============ きょうの栄養（v1.3：AI解析の集計と七分目目標） ============ */
 function nutBarRow(label, value, target, unit) {
