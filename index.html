@@ -2276,13 +2276,14 @@ function analyzeErrMsg(err) {
   return (err && err.message) || 'エラーが発生しました';
 }
 
-/* ---- ヘルスデータ自動連携（v1.12: Health Connect→自動化アプリ→サーバー経由 / v1.41: ネイティブAndroidはCapacitor Healthプラグインで直接取得） ---- */
-// v1.41: Capacitor Healthプラグイン（@capgo/capacitor-health）はネイティブAndroidアプリでのみ使う。
-// ブラウザ版（GitHub Pages）はHealth Connectに直接アクセスできないため、従来通りTasker→サーバー経由のまま。
+/* ---- ヘルスデータ自動連携（v1.12: Health Connect→自動化アプリ→サーバー経由 / v1.41: ネイティブAndroidはCapacitor Healthプラグインで直接取得 / v1.42: iOS(HealthKit)も対応） ---- */
+// v1.41/v1.42: Capacitor Healthプラグイン（@capgo/capacitor-health）はネイティブアプリ（Android/iOS）でのみ使う。
+// ブラウザ版（GitHub Pages）はHealth Connect/HealthKitに直接アクセスできないため、従来通りTasker→サーバー経由のまま。
 function nativeHealthPlugin() {
   const cap = window.Capacitor;
   if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return null;
-  if (cap.getPlatform() !== 'android') return null; // v1: iOSのHealthKit対応は別途
+  const platform = cap.getPlatform();
+  if (platform !== 'android' && platform !== 'ios') return null;
   return (cap.Plugins && cap.Plugins.Health) || null;
 }
 async function fetchHealthDataNative(date) {

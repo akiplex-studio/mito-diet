@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>歩数・体重・睡眠の記録を自動で取り込むために、ヘルスデータを読み取ります。</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>本アプリはヘルスデータの書き込みは行いません。</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
