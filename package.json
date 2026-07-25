@@ -4,7 +4,7 @@
   "private": true,
   "description": "ミトコンドリア・ダイエット（個人用Webアプリ）のCapacitorモバイルラッパー",
   "scripts": {
-    "sync:web": "cp index.html www/index.html",
+    "sync:web": "cp index.html www/index.html && cp privacypolicy.html www/privacypolicy.html",
     "cap:sync": "npm run sync:web && npx cap sync",
     "cap:open:ios": "npm run cap:sync && npx cap open ios",
     "cap:open:android": "npm run cap:sync && npx cap open android"
@@ -12,7 +12,8 @@
   "dependencies": {
     "@capacitor/android": "^8.4.2",
     "@capacitor/core": "^8.4.2",
-    "@capacitor/ios": "^8.4.2"
+    "@capacitor/ios": "^8.4.2",
+    "@capgo/capacitor-health": "^8.10.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.2"
