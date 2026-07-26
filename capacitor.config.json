@@ -1,5 +1,10 @@
 {
   "appId": "com.akiplex.mitodiet",
   "appName": "ミトコンドリア・ダイエット",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "SystemBars": {
+      "style": "LIGHT"
+    }
+  }
 }
