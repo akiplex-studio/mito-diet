@@ -727,7 +727,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnNotifyPermission">通知を許可する</button>
         </div>
         <div class="set-note" id="notifyStatusNote"></div>
-        <div class="set-note">指定した時刻に「今日のやること」をチェックするよう通知します。時刻を変えたら「通知を許可する」を一度押してください。（ブラウザ版はタブを開いている間のみ。アプリ版は閉じていても届きます）</div>
+        <div class="set-note">指定した時刻に、その日の「やること」をチェックするよう通知します。時刻を変えると自動で反映されます。</div>
       </div>
       <div class="set-section">
         <h4>写真解析（AI）</h4>
@@ -3499,6 +3499,7 @@ function nativeLocalNotifications() {
   return (cap.Plugins && cap.Plugins.LocalNotifications) || null;
 }
 const REMINDER_NOTIF_ID = 1001;
+const REMINDER_CHANNEL_ID = 'mito-reminder-high'; // v1.47: 重要度Highのチャンネル（画面上部にポップアップ表示するため）
 // ネイティブ: 毎日指定時刻に繰り返す通知をOSに登録する。許可が無ければ要求する。成功でtrue
 async function scheduleNativeReminder() {
   const LN = nativeLocalNotifications();
@@ -3510,12 +3511,26 @@ async function scheduleNativeReminder() {
       perm = await LN.requestPermissions();
       if (perm.display !== 'granted') return false;
     }
+    // v1.47: 重要度Highのチャンネルを作る（Androidのみ・作成済みなら無害。これでヘッドアップ通知＝画面上部のポップアップが出る）
+    if (LN.createChannel) {
+      try {
+        await LN.createChannel({
+          id: REMINDER_CHANNEL_ID,
+          name: 'やることリマインダー',
+          description: '指定時刻に今日のやることを知らせます',
+          importance: 5,   // 5=MAX（ポップアップ＋音）
+          visibility: 1,   // ロック画面にも表示
+          vibration: true,
+        });
+      } catch {}
+    }
     await LN.cancel({ notifications: [{ id: REMINDER_NOTIF_ID }] });
     await LN.schedule({
       notifications: [{
         id: REMINDER_NOTIF_ID,
         title: 'ミトコンドリア・ダイエット',
         body: '今日のやること、まだ残ってない？ミトのためにチェックしよう🌙',
+        channelId: REMINDER_CHANNEL_ID,
         schedule: { on: { hour: hh || 0, minute: mm || 0 }, repeats: true, allowWhileIdle: true },
       }],
     });
@@ -3548,10 +3563,18 @@ async function renderNotifyStatus() {
     note.textContent = 'まだ通知が許可されていません';
   }
 }
-$('#remindTime').addEventListener('change', e => {
+$('#remindTime').addEventListener('change', async e => {
   DB.reminderTime = e.target.value || '22:00';
   save();
-  scheduleTodoReminder();
+  // v1.47: 時刻を変えたら自動で反映する。ネイティブは（必要なら許可を取って）再スケジュール
+  const LN = nativeLocalNotifications();
+  if (LN) {
+    const ok = await scheduleNativeReminder();
+    toast(ok ? DB.reminderTime + ' に通知します🔔' : '通知の設定に失敗しました（端末の通知設定を確認してください）');
+    renderNotifyStatus();
+  } else {
+    scheduleTodoReminder();
+  }
 });
 $('#btnNotifyPermission').addEventListener('click', async () => {
   const LN = nativeLocalNotifications();
