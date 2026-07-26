@@ -523,6 +523,9 @@ nav.footer {
 .ana-nut { font-size:12px; color:var(--neutral-600); margin:2px 0 var(--space-2); }
 .ana-goods { margin:0 0 var(--space-2) 18px; font-size:12.5px; color:var(--success-600); line-height:1.7; }
 .ana-advice { font-size:13px; line-height:1.7; color:var(--neutral-700); background:var(--primary-50); border-radius:var(--radius-sm); padding:var(--space-2) var(--space-3); }
+/* v1.45: ミトコンドリア観点のやさしい指摘（caution）。責めないトーンなので控えめな暖色で */
+.ana-caution { margin-top:var(--space-2); font-size:12.5px; line-height:1.7; color:var(--warning-600); background:var(--warning-50, #fdf6ec); border-radius:var(--radius-sm); padding:var(--space-2) var(--space-3); display:flex; gap:6px; }
+.ana-caution::before { content:"💡"; flex:none; }
 .ana-retry { display:block; margin:var(--space-2) auto 0; font-size:11px; color:var(--color-text-muted); text-decoration:underline; padding:4px 8px; }
 
 /* ============ v1.4: 食事単位のまとめ解析 ============ */
@@ -724,7 +727,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnNotifyPermission">通知を許可する</button>
         </div>
         <div class="set-note" id="notifyStatusNote"></div>
-        <div class="set-note">指定した時刻になっても「今日やること」が残っていたら知らせます。ブラウザのタブが開いている間だけ有効です（アプリを完全に閉じていると届きません）。</div>
+        <div class="set-note">指定した時刻に「今日のやること」をチェックするよう通知します。時刻を変えたら「通知を許可する」を一度押してください。（ブラウザ版はタブを開いている間のみ。アプリ版は閉じていても届きます）</div>
       </div>
       <div class="set-section">
         <h4>写真解析（AI）</h4>
@@ -1038,112 +1041,114 @@ function countHara7Meals(rec) {
 /* ---- v1.5 ミトの一言（セリフ辞書と状況キー判定） ---- */
 /* v1.30: 達成系（walk/bodyweight/protein/hara7/juice/nosake/meditate/sugarCtrl）は
    キーをitem.idに統一し、「見ればミトが次に何をしてほしいかわかる」お願い口調に統一 */
+// v1.45: ミトの一言を「何が起きたか＋その科学」を伝える中身のあるセリフに刷新。
+// 黄金ルール: 数を増やせるのは運動だけ。食事は守る・材料、空腹/睡眠は掃除、瞑想はストレスを鎮める。
 const SPEECH = {
   walk: [
-    'また明日も歩いてくれると、ぼくらもっと元気になれるよ',
-    '次はもう少し先まで、一緒に歩いてみない？',
-    '朝の光を浴びながら、また歩いてほしいな',
-    '歩く習慣、そのまま続けてくれると嬉しいな',
-    '今日みたいに、明日もぼくらを連れ出してね',
+    '歩くと「発電所を増やせ」の号令(PGC-1α)が鳴って、ぼくらの仲間が増えるんだ',
+    'ゆっくり歩くだけでも、ぼくらの数はちゃんと増えるって研究でわかってるんだよ',
+    '朝の光を浴びて歩くと体内時計も整う。ぼくらの一日のリズムも合うんだ',
+    '息が少し弾むくらいが合図。今日もぼくらの新しい仲間が生まれたよ',
+    '歩いた分だけ、脂肪を燃やすぼくらの炉が増えるんだ。また連れ出してね',
   ],
   bodyweight: [
-    'また今度も体を動かしてほしいな、待ってるよ',
-    '次は腕立てかスクワット、どっちにする？',
-    'たまにでいいから、また負荷をかけてね',
-    '筋肉の中で、ぼくらまだまだ増えたいんだ',
-    'また汗をかいたら、教えてほしいな',
+    '筋肉はぼくらの一番の住みか。鍛えると、そこに新しい仲間が生まれるんだ',
+    'きついと感じた時こそ「増えろ」の号令が強く鳴る。今日もありがとう',
+    '脚みたいな大きい筋肉ほど、ぼくらがたくさん宿ってる。よく効いたよ',
+    '自重トレでも十分。ぼくらは負荷を感じて、数を増やしていくんだ',
+    '体を動かすと古いぼくらも新しく入れ替わる。中から若返る感じだよ',
   ],
   protein: [
-    '次のごはんにも、ちゃんとタンパク質を入れてほしいな',
-    'また肉や魚、豆をしっかり食べてね',
-    'ぼくらの材料、切らさないでくれると助かるよ',
-    '次の食事も、タンパク質を忘れないでね',
-    'こまめに補給、これからも続けてほしいな',
+    'ぼくらの体も、宿る筋肉も、タンパク質でできてる。材料が届くと安心だよ',
+    '肉・魚・卵・豆はぼくらの部品そのもの。切らすと修理ができないんだ',
+    '一度にどかっとより、朝・昼・晩に分けてくれると使いやすいな',
+    'タンパク質が足りてると、傷んだ部品もちゃんと作り直せるんだ',
+    '筋肉が保たれると、ぼくらの住みかも守られる。ありがとう',
   ],
   hara7: [
-    '次のごはんも、腹七分目でお願いね',
-    'また少し空腹の時間を作ってくれると嬉しいな',
-    '食べ過ぎず、次も七分目を意識してね',
-    'ぼくらの掃除タイム、また作ってほしいな',
-    '次の食事も、ちょっと控えめでいこうね',
+    'お腹に少し空きがあると、傷んだ仲間を掃除する時間ができるんだ',
+    '腹七分目は、ぼくらの掃除スイッチ(マイトファジー)が入る合図だよ',
+    '食べ過ぎないと、ぼくら古い部品を片づけて身軽になれるんだ',
+    '少しの空腹は、ぼくらのメンテナンスの時間。ありがとう',
+    '七分目でやめると、次のごはんまでに掃除が進むんだ',
   ],
   juice: [
-    '明日の朝も、野菜ジュースを持ってきてほしいな',
-    'また彩りのある一杯、待ってるよ',
-    '朝ごはん前、野菜をよろしくね',
-    '次の朝も、ビタミンを届けてほしいな',
-    'この調子で、また野菜を続けてね',
+    '色の濃い野菜の抗酸化パワーが、ぼくらをサビから守ってくれるんだ',
+    '緑や赤や紫の色は、ぼくらを守る成分の印。虹色だと嬉しいな',
+    '発電のときに出るサビを、野菜のビタミンが中和してくれるんだ',
+    '朝の一杯で、ぼくらの一日がサビにくくなるよ。ありがとう',
+    'ポリフェノールはぼくらの守り手なんだ。続けてくれると助かるよ',
   ],
   nosake: [
-    'たまにはこうやって、ぼくらを休ませてほしいんだ',
-    'また休肝日、作ってくれると嬉しいな',
-    '次もお酒をお休みしてくれたら助かるよ',
-    '飲まない日、これからも作ってほしいな',
-    'また今日みたいに、ゆっくり休ませてね',
+    'お酒の日はアセトアルデヒドの後始末で大変。休肝日はほっとするよ',
+    '飲まない夜は眠りが深くなって、ぼくらの掃除もはかどるんだ',
+    'お酒を分解する間、脂肪を燃やす仕事は後回しになっちゃうんだ',
+    '休肝日はぼくらの回復日。サビも溜まりにくくなるよ',
+    'たまに休ませてくれると、ぼくら長く元気に燃えられるんだ',
   ],
   meditate: [
-    'また疲れた時は、一緒に深呼吸してほしいな',
-    '次も5秒吸って8秒吐く、付き合ってね',
-    'ゆっくり呼吸する時間、また作ってほしいな',
-    'ぼくらのためにも、また息を整えてね',
-    '次も少し、呼吸を落ち着けてほしいな',
+    '長く吐く呼吸で心が静まると、ぼくらにかかるストレスの負担が減るんだ',
+    '吐く息が長いと体が落ち着く。その静けさはぼくらへの贈り物だよ',
+    '深い呼吸は、ぼくらに新鮮な酸素という薪をくべ直す行為なんだ',
+    'ストレスが続くとぼくらも疲れちゃう。ほどいてくれてありがとう',
+    '呼吸を整える時間は、火のまわりの風を鎮める時間なんだ',
   ],
   sugarCtrl: [
-    'この調子で、甘いものは控えめにしてくれると嬉しいな',
-    '次も白米は拳ひとつ分、意識してね',
-    'また糖分を抑えてくれたら、ぼくら助かるよ',
-    '次のごはんも、甘さ控えめでお願いね',
-    'この習慣、これからも続けてほしいな',
+    '甘い波が穏やかだと、ぼくら脂肪も糖もしなやかに使い分けられるんだ',
+    '糖を控えると血糖の波が落ち着いて、ぼくら疲れにくくなるよ',
+    '白米は拳ひとつ分が目安。おかずと一緒だと波がゆるやかなんだ',
+    '甘さ控えめの日は、ぼくらの調子が整いやすいんだ',
+    'この習慣が続くと、ぼくら脂肪を燃やす柔軟さを保てるよ',
   ],
   sugar: [
-    '甘いのかぁ…ぼく、ちょっと苦手なんだよね',
-    'お砂糖が多いと、ぼく少し汚れちゃうんだ',
-    '甘いものの日は、次の野菜が楽しみだなあ',
-    'ちょっとサビつきそう…でも明日でとり返せるよ',
-    'うぅ、糖分の波がきた…ちょっと休憩するね',
+    '急な血糖の波はぼくをぐったりさせる…でも次のごはんで立て直せるよ',
+    '甘いものが続くと、脂肪を燃やす切り替えがにぶくなっちゃうんだ',
+    'お砂糖が多いと、ぼく少しサビつく感じ。明日の野菜で取り返そう',
+    '血糖のジェットコースターは、ぼくちょっと苦手なんだ…',
+    'たまにはいいさ。次に色のある野菜をくれると嬉しいな',
   ],
   mealGood: [
-    'このごはん、ぼくピカピカになれるやつだ！',
-    'いい食事だね、体の中が澄んでいくよ',
-    'これはぼくらの発電がはかどるごはんだ！',
-    'うれしいなあ、こういうごはんが一番なんだ',
-    'ごちそうさま！ぼくのくすみが晴れていくよ',
+    'これはいい食事だ、体が澄んでいくよ',
+    'ぼくらが喜ぶごはんだ、ありがとう',
+    'いい栄養だね、サビから守られる感じ',
+    'このごはん、ぼくピカピカになれる',
+    'うれしいなあ、こういうのが一番だ',
   ],
   mealBad: [
-    'うぅ、ちょっと油が多いかも…',
-    'これはぼく、少し苦手な感じかなあ…',
-    'ちょっと重たいなあ…次のごはんで整えよう',
-    '揚げ物系かな…ぼく汚れやすいんだよね',
-    '大丈夫、明日の野菜で挽回できるよ',
+    'うっ、ぼく少しサビつきそう…',
+    'ちょっと重たいな、次で整えよう',
+    'これは苦手かも…明日で挽回だね',
+    '油が多いかな…次は軽めにしよう',
+    '大丈夫、次の野菜で立て直せるよ',
   ],
   tooFull: [
-    '今日はぼく、お掃除おやすみかなぁ',
-    '満タンだと、ぼくら片づけの時間がとれないんだ',
-    'ふう、消化のお手伝いでいそがしくなりそう',
-    '次のごはんを軽くすると、ぼく掃除できるよ',
-    'たまにはこんな日もあるさ、明日ととのえよう',
+    '満タンだと、掃除の時間がとれないんだ',
+    'ふう、消化のお手伝いで忙しいよ',
+    '今日はお掃除おやすみかなあ',
+    '次を軽くすると、ぼく掃除できるよ',
+    'たまにはこんな日もあるさ',
   ],
   // v1.37: 良くも悪くもない食事でも、必ずミトが何か反応するようにするための受け皿
   mealOk: [
-    'ごちそうさま！しっかり受け取ったよ',
+    'ごちそうさま、しっかり受け取ったよ',
     'ふむふむ、これはこれで悪くないね',
-    '記録ありがとう。ちゃんと見てたよ',
-    'おいしそう！ぼくの燃料にさせてもらうね',
-    'うん、まずまずかな。次のごはんも楽しみ',
+    '記録ありがとう、ちゃんと見てたよ',
+    'ぼくの燃料にさせてもらうね',
+    'うん、次のごはんも楽しみ',
   ],
   slept: [
-    '昨日の夜、いっぱいお掃除できたよ！',
-    'よく寝たね！古い部品を新しくしておいたよ',
-    '眠っている間に、体の中をきれいにしたんだ',
-    'ぐっすりの夜は、ぼくらの大掃除デーなんだ',
-    '7時間睡眠、ぼくの掃除がはかどったよ',
+    '眠っている間、ぼくらは傷んだ部品を掃除して新品に替えてたんだ',
+    '深い眠りはぼくらの整備の時間。夜のうちに一基ずつ点検したよ',
+    'ぐっすり眠ると、日中に溜まったサビをきれいに落とせるんだ',
+    '7時間眠れた夜は、ぼくらの大掃除が存分にできるよ',
+    '眠りは脳のぼくらにとって、欠かせない夜の大掃除なんだ',
   ],
   darkNight: [
-    '暗くしてくれると、ぼくぐっすり掃除できるんだ',
-    '夜の光が少ないと、眠りのホルモンが出やすいんだ',
-    'スマホおやすみ、ぼくらもそろそろ準備するね',
-    '今夜はいいお掃除ができそうだよ',
-    '暗い夜は、ぼくらのメンテナンスの合図なんだ',
+    '暗くなるとメラトニンが出て、ぼくらの夜の大掃除が始まるんだ',
+    '寝る前の強い光を避けると、深い眠りに入りやすくなるよ',
+    '部屋を暗くしてくれると、ぼくらの整備がちゃんと進むんだ',
+    '夜の暗さは、ぼくらのメンテナンス開始の合図なんだ',
+    'スマホをお休みすると、眠りのホルモンが出やすくなるよ',
   ],
 };
 // TODOチェック → 状況キー（v1.30: item.idとSPEECHキーを統一したため直接引く。無ければnull）
@@ -1517,7 +1522,8 @@ function mealModalIsOpen() {
   const m = $('#mealModal');
   return !!(m && m.classList.contains('open'));
 }
-function showBubbleText(text) {
+// v1.45: keep=true のときは自動で消さない（達成ダイアログと連動し、ダイアログを閉じるまで残す）
+function showBubbleText(text, keep) {
   if (!text) return;
   const el = $('#mitoBubble');
   if (!el) return;
@@ -1527,14 +1533,19 @@ function showBubbleText(text) {
   el.hidden = false;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(bubbleTimer);
-  bubbleTimer = setTimeout(hideBubble, 4000);
+  if (!keep) bubbleTimer = setTimeout(hideBubble, 4000);
 }
-function showBubble(key) {
+function showBubble(key, keep) {
   const lines = SPEECH[key];
   if (!lines || !lines.length) return;
   const idx = pickSpeechIndex(lines.length, speechLastIndex[key] ?? -1, Math.random());
   speechLastIndex[key] = idx;
-  showBubbleText(lines[idx]);
+  showBubbleText(lines[idx], keep);
+}
+// v1.45: 達成ダイアログの上に、消えないセリフを出す（ダイアログと同時表示・被らない位置へ）
+function showBubblePinned(key) {
+  showBubble(key, true);
+  pinBubbleAboveAchieveCard();
 }
 function hideBubble() {
   clearTimeout(bubbleTimer);
@@ -2211,7 +2222,8 @@ function analysisHTML(a) {
     `<div class="ana-dishes">${dishes}</div>` +
     `<div class="ana-nut num">約${Number(n.calories_kcal) || 0}kcal ・ たんぱく質${Number(n.protein_g) || 0}g ・ 脂質${Number(n.fat_g) || 0}g ・ 炭水化物${Number(n.carbs_g) || 0}g</div>` +
     ((a.good_points || []).length ? `<ul class="ana-goods">${a.good_points.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : '') +
-    (a.advice ? `<div class="ana-advice">${esc(a.advice)}</div>` : '');
+    (a.advice ? `<div class="ana-advice">${esc(a.advice)}</div>` : '') +
+    (a.caution ? `<div class="ana-caution">${esc(a.caution)}</div>` : ''); // v1.45: やさしい指摘（あれば）
 }
 function renderLbPanel() {
   const panel = $('#lbPanel');
@@ -3166,13 +3178,15 @@ function achieveWhyText(item) {
   whyLastIndex[item.id] = idx;
   return variants[idx];
 }
-function openAchieveDialog(item) {
+function openAchieveDialog(item, speechKey) {
   const why = achieveWhyText(item);
-  if (!why) return;
+  if (!why) { if (speechKey) mitoSpeak(speechKey); return; } // 説明が無い項目はセリフだけ上部に出す
   $('#achieveTitle').textContent = item.name;
   $('#achieveWhy').textContent = why;
   $('#achieveModal').classList.add('open');
-  pinBubbleAboveAchieveCard();
+  // v1.45: セリフはダイアログと同時に、ダイアログのすぐ上へ出す（自動では消さず、閉じるまで残す）
+  if (speechKey) showBubblePinned(speechKey);
+  else pinBubbleAboveAchieveCard();
   if (!stage.reduced) spawnBurst(30);
 }
 // v1.33: 達成ダイアログを開いている間だけ、ミトの一言をダイアログのすぐ上に固定表示する
@@ -3188,7 +3202,8 @@ function pinBubbleAboveAchieveCard() {
     bubble.style.left = Math.max(8, cardRect.left) + 'px';
     bubble.style.right = 'auto';
     bubble.style.width = cardRect.width + 'px';
-    bubble.style.top = Math.max(8, cardRect.top - bubbleH - 10) + 'px';
+    // v1.45: ダイアログと重ならないよう十分な余白（24px）を空けて上に置く
+    bubble.style.top = Math.max(8, cardRect.top - bubbleH - 24) + 'px';
   });
 }
 function resetBubblePosition() {
@@ -3201,19 +3216,23 @@ function resetBubblePosition() {
   bubble.style.top = '';
 }
 let reactionQueue = [];
-function queueReaction(item) {
-  if (!WHY_VARIANTS[item.id] && !INFO[item.id]) return; // 説明が無い項目は演出しない
-  reactionQueue.push(item);
+// v1.45: セリフキー(speechKey)を一緒に運び、ダイアログ表示時に同時に出せるようにする
+function queueReaction(item, speechKey) {
+  if (!WHY_VARIANTS[item.id] && !INFO[item.id]) {
+    if (speechKey) mitoSpeak(speechKey); // 説明ダイアログが無い項目はセリフだけ上部に出す
+    return;
+  }
+  reactionQueue.push({ item, speechKey: speechKey || null });
   if (!$('#achieveModal').classList.contains('open') && !mealModalIsOpen()) showNextReaction();
 }
 function showNextReaction() {
-  const item = reactionQueue.shift();
-  if (item) openAchieveDialog(item);
+  const r = reactionQueue.shift();
+  if (r) openAchieveDialog(r.item, r.speechKey);
 }
-// 段階1（変化量オーバーレイ）→ 3秒待って段階2（反応ダイアログ）、という一連の流れ
-function celebrateAchievement(item, beforeMito, afterMito, beforeAct, afterAct) {
+// 段階1（変化量オーバーレイ）→ 待って段階2（反応ダイアログ＋セリフを同時に）、という一連の流れ
+function celebrateAchievement(item, beforeMito, afterMito, beforeAct, afterAct, speechKey) {
   const shown = showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct);
-  setTimeout(() => queueReaction(item), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
+  setTimeout(() => queueReaction(item, speechKey), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
 }
 // 自動判定項目（プラス方向のみ・NG行動は対象外）が「未達成→達成」に変わった瞬間を検知し、
 // アプリを開く／フォアグラウンド復帰するたびにチェックする。1日1回だけ祝う。
@@ -3225,33 +3244,34 @@ function checkAutoAchievements() {
   if (!newly.length) return;
   newly.forEach(it => { rec.celebratedAuto[it.id] = true; });
   save();
-  // v1.30: 自動達成のときも、段階1オーバーレイと同時にミトの一言（お願い口調）を出す
-  newly.forEach(it => { if (SPEECH[it.id]) mitoSpeak(it.id); });
+  // v1.30/v1.45: 自動達成のミトの一言も、上部への即時表示はやめ、達成ダイアログと同時に出す
   const afterMito = computed.mito, afterAct = computed.activation;
   const beforeMito = afterMito - newly.reduce((s, it) => s + (Number(it.inc) || 0), 0);
   const beforeAct = afterAct - newly.reduce((s, it) => s + (Number(it.act) || 0), 0);
   const shown = showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct);
-  setTimeout(() => newly.forEach(it => queueReaction(it)), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
+  setTimeout(() => newly.forEach(it => queueReaction(it, SPEECH[it.id] ? it.id : null)), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
 }
 function toggleCheck(item, srcEl) {
   const rec = getRec(sel, true);
   const i = rec.checked.indexOf(item.id);
   const checking = i < 0;
   let beforeMito, beforeAct;
+  // v1.5: ミトの一言（チェックを付けたときのみ。外し時は不可）
+  // v1.45: セリフは即座に上部へ出さず、達成ダイアログと同時にダイアログの上へ出す（celebrate経由）
+  const k = checking ? speechKeyForCheck(item.id) : null;
   if (checking) {
     rec.checked.push(item.id);
     beforeMito = computed.mito; beforeAct = computed.activation;
-    // v1.5: ミトの一言（チェックを付けたときのみ。外し時は不可）
-    const k = speechKeyForCheck(item.id);
-    if (k) mitoSpeak(k);
     if (item.id === 'juice') mitoEffect('clean');
   } else {
     rec.checked.splice(i, 1);
   }
   commit();
-  // v1.26: プラスの変化があったときだけ、段階1（変化量オーバーレイ）→段階2（反応ダイアログ）の演出
+  // v1.26: プラスの変化があったときだけ、段階1（変化量オーバーレイ）→段階2（反応ダイアログ＋セリフ）の演出
   if (checking && !item.ng && (item.act > 0 || item.inc > 0)) {
-    celebrateAchievement(item, beforeMito, computed.mito, beforeAct, computed.activation);
+    celebrateAchievement(item, beforeMito, computed.mito, beforeAct, computed.activation, k);
+  } else if (checking && k) {
+    mitoSpeak(k); // ダイアログを出さない項目（変化なし等）は従来どおり上部に表示
   }
 }
 
@@ -3470,14 +3490,58 @@ $('#goalInput').addEventListener('change', e => {
   save();
   renderWeightGraph();
 });
-/* ============ v1.33: やることリマインダー ============ */
-function renderNotifyStatus() {
+/* ============ v1.33/v1.46: やることリマインダー ============ */
+// v1.46: ネイティブアプリではCapacitor Local Notificationsを使い、アプリを閉じていてもOSが決まった時刻に通知する。
+// ブラウザ版は従来どおりWeb Notification + setTimeout（タブが開いている間だけ）にフォールバックする。
+function nativeLocalNotifications() {
+  const cap = window.Capacitor;
+  if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return null;
+  return (cap.Plugins && cap.Plugins.LocalNotifications) || null;
+}
+const REMINDER_NOTIF_ID = 1001;
+// ネイティブ: 毎日指定時刻に繰り返す通知をOSに登録する。許可が無ければ要求する。成功でtrue
+async function scheduleNativeReminder() {
+  const LN = nativeLocalNotifications();
+  if (!LN) return false;
+  const [hh, mm] = (DB.reminderTime || '22:00').split(':').map(Number);
+  try {
+    let perm = await LN.checkPermissions();
+    if (perm.display !== 'granted') {
+      perm = await LN.requestPermissions();
+      if (perm.display !== 'granted') return false;
+    }
+    await LN.cancel({ notifications: [{ id: REMINDER_NOTIF_ID }] });
+    await LN.schedule({
+      notifications: [{
+        id: REMINDER_NOTIF_ID,
+        title: 'ミトコンドリア・ダイエット',
+        body: '今日のやること、まだ残ってない？ミトのためにチェックしよう🌙',
+        schedule: { on: { hour: hh || 0, minute: mm || 0 }, repeats: true, allowWhileIdle: true },
+      }],
+    });
+    return true;
+  } catch (e) {
+    console.error('[reminder] ネイティブ通知のスケジュールに失敗:', e);
+    return false;
+  }
+}
+async function renderNotifyStatus() {
   const note = $('#notifyStatusNote');
   if (!note) return;
+  const LN = nativeLocalNotifications();
+  if (LN) {
+    try {
+      const perm = await LN.checkPermissions();
+      note.textContent = perm.display === 'granted'
+        ? '通知はONです（アプリを閉じていても指定時刻に届きます）'
+        : 'まだ通知が許可されていません。「通知を許可する」を押してください';
+    } catch { note.textContent = ''; }
+    return;
+  }
   if (typeof Notification === 'undefined') {
     note.textContent = 'このブラウザは通知に対応していません（アプリ内のお知らせのみ表示します）';
   } else if (Notification.permission === 'granted') {
-    note.textContent = '通知はONです';
+    note.textContent = '通知はONです（このタブを開いている間のみ・アプリ版なら閉じていても届きます）';
   } else if (Notification.permission === 'denied') {
     note.textContent = '通知がブロックされています（ブラウザの設定から許可してください）';
   } else {
@@ -3490,11 +3554,19 @@ $('#remindTime').addEventListener('change', e => {
   scheduleTodoReminder();
 });
 $('#btnNotifyPermission').addEventListener('click', async () => {
+  const LN = nativeLocalNotifications();
+  if (LN) {
+    const ok = await scheduleNativeReminder();
+    toast(ok ? '毎日この時刻に通知します🔔' : '通知が許可されませんでした（端末の設定から許可してください）');
+    renderNotifyStatus();
+    return;
+  }
   if (typeof Notification === 'undefined') { toast('このブラウザは通知に対応していません'); return; }
   try {
     await Notification.requestPermission();
   } catch {}
   renderNotifyStatus();
+  scheduleTodoReminder();
 });
 // 手動チェック項目（inTodo）が全部済んでいるか
 function allManualTodoDone(rec) {
@@ -3514,6 +3586,13 @@ function fireTodoReminder() {
 let reminderTimer = null;
 // リマインダー時刻に向けてタイマーを（再）セットする。既に時刻を過ぎていれば即判定する
 function scheduleTodoReminder() {
+  // v1.46: ネイティブアプリはOSに毎日繰り返し通知を任せる（アプリを閉じていても届く）。
+  // 許可済みのときだけ静かに再スケジュールし、未許可なら設定画面のボタン操作を待つ。
+  const LN = nativeLocalNotifications();
+  if (LN) {
+    LN.checkPermissions().then(p => { if (p.display === 'granted') scheduleNativeReminder(); }).catch(() => {});
+    return;
+  }
   clearTimeout(reminderTimer);
   const rec = getRec(today, true);
   if (rec.reminded) return;
@@ -3586,6 +3665,7 @@ document.querySelectorAll('.modal').forEach(m => {
         m.classList.remove('open');
         if (m.id === 'mealModal') flushPendingSpeech();
         if (m.id === 'achieveModal') {
+          hideBubble(); // v1.45: セリフもダイアログと一緒に閉じる（勝手に消えない・閉じたら消える）
           resetBubblePosition();
           if (reactionQueue.length) setTimeout(showNextReaction, 350);
         }
@@ -3603,6 +3683,7 @@ document.addEventListener('click', e => {
   m.classList.remove('open');
   if (m.id === 'mealModal') flushPendingSpeech();
   if (m.id === 'achieveModal') {
+    hideBubble(); // v1.45: セリフもダイアログと一緒に閉じる
     resetBubblePosition();
     if (reactionQueue.length) setTimeout(showNextReaction, 350);
   }

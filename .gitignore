@@ -7,6 +7,9 @@ docs/
 steering/
 .DS_Store
 
+# 書籍データ・原稿など（著作物を含むため公開リポジトリに絶対に含めない）
+project_context/
+
 # バックエンド（server/）: 秘密情報・生成物・ログはコミットしない
 server/node_modules/
 server/dist/
