@@ -3,7 +3,8 @@ import cors from "cors";
 import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeMeal, BadImageError } from "./analyze.js";
-import { checkAndCountDaily, estimateCostUSD, logUsage } from "./usage.js";
+import { estimateCostUSD, logUsage } from "./usage.js";
+import { buildQuotaStore, checkAndConsume, recordCost, validateDeviceId } from "./quota.js";
 import {
   extractSleepHoursFromRaw,
   extractStepsFromRaw,
@@ -13,8 +14,12 @@ import {
 } from "./health.js";
 
 const PORT = Number(process.env.PORT || 8787);
+// v1.44: APP_SHARED_SECRET は /api/health-data 系（ヘルス連携・個人用）のみで使用。/api/analyze-meal の認証には使わない
 const SECRET = process.env.APP_SHARED_SECRET || "";
-const DAILY_LIMIT = Number(process.env.DAILY_LIMIT || 50);
+// v1.44: グローバル合算の日次上限（暴走防止）は廃止し、デバイス単位の日次上限＋グローバルコスト上限に置き換え
+const DEVICE_DAILY_LIMIT = Number(process.env.DEVICE_DAILY_LIMIT || 6);
+const GLOBAL_DAILY_COST_USD = Number(process.env.GLOBAL_DAILY_COST_USD || 1.5);
+const quotaStore = buildQuotaStore();
 const ALLOWED_ORIGINS = (
   process.env.ALLOWED_ORIGINS ||
   "https://akiplex-studio.github.io,http://localhost:8080,http://localhost:5173,capacitor://localhost,https://localhost"
@@ -33,7 +38,10 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 const app = express();
-app.use(cors({ origin: ALLOWED_ORIGINS, allowedHeaders: ["content-type", "x-app-secret"] }));
+// v1.44: x-device-id / x-tz-offset を /api/analyze-meal で使用するため許可ヘッダーに追加
+app.use(
+  cors({ origin: ALLOWED_ORIGINS, allowedHeaders: ["content-type", "x-app-secret", "x-device-id", "x-tz-offset"] })
+);
 app.use(express.json({ limit: "20mb" })); // dataURLの写真がそのまま送れるサイズ
 
 app.get("/healthz", (_req, res) => {
@@ -47,12 +55,20 @@ function secretOk(given: string | undefined): boolean {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+/** x-tz-offset ヘッダー（UTCから東向きの分。数値でない場合は0=UTC扱い）をパースする */
+function parseTzOffset(raw: string | undefined): number {
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
 app.post("/api/analyze-meal", async (req, res) => {
-  // 1. 簡易認証（共有シークレット・タイミングセーフ比較）
-  if (!secretOk(req.header("x-app-secret"))) {
-    res.status(401).json({ error: "unauthorized" });
+  // 1. デバイスIDの検証（v1.44: 共有シークレット認証を廃止し、デバイス単位の識別子に置き換え）
+  const deviceId = req.header("x-device-id");
+  if (!validateDeviceId(deviceId)) {
+    res.status(400).json({ error: "bad_device_id" });
     return;
   }
+  const offsetMin = parseTzOffset(req.header("x-tz-offset"));
 
   // 2. 入力チェック（images（複数）/ image（単枚・旧互換）/ text のいずれか必須）
   const rawImages = req.body?.images;
@@ -73,10 +89,18 @@ app.post("/api/analyze-meal", async (req, res) => {
     fullness: typeof rawFullness === "string" && rawFullness.trim() ? rawFullness.trim().slice(0, 30) : undefined,
   };
 
-  // 3. 日次上限（暴走防止）
-  const quota = checkAndCountDaily(DAILY_LIMIT);
+  // 3. 利用枠チェック（デバイス単位の日次上限＋グローバルコスト上限。暴走防止）
+  const quota = await checkAndConsume(quotaStore, deviceId, offsetMin, {
+    deviceLimit: DEVICE_DAILY_LIMIT,
+    globalCostLimitUsd: GLOBAL_DAILY_COST_USD,
+  });
   if (!quota.ok) {
-    res.status(429).json({ error: "daily_limit_reached", limit: DAILY_LIMIT });
+    if (quota.reason === "global") {
+      console.error(`[quota] グローバル日次コスト上限（$${GLOBAL_DAILY_COST_USD}）に到達しました`);
+      res.status(429).json({ error: "global_budget_reached" });
+      return;
+    }
+    res.status(429).json({ error: "device_daily_limit", remaining: 0, resetAt: quota.resetAt, limit: quota.limit });
     return;
   }
 
@@ -94,12 +118,12 @@ app.post("/api/analyze-meal", async (req, res) => {
       cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
       cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
       est_cost_usd: cost,
-      day_count: quota.count,
     });
+    await recordCost(quotaStore, offsetMin, cost);
     res.json({
       ok: true,
       analysis,
-      meta: { model, est_cost_usd: cost, today_count: quota.count, daily_limit: DAILY_LIMIT },
+      meta: { model, est_cost_usd: cost, remaining: quota.remaining, limit: quota.limit },
     });
   } catch (err) {
     // 型付き例外を具体的な順にハンドリング
@@ -231,7 +255,9 @@ app.get("/api/health-data", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`mito-meal-analyzer: http://localhost:${PORT}`);
-  console.log(`  POST /api/analyze-meal (x-app-secret 必須) / 日次上限 ${DAILY_LIMIT} 回`);
+  console.log(
+    `  POST /api/analyze-meal (x-device-id 必須) / デバイス日次上限 ${DEVICE_DAILY_LIMIT} 回・グローバル日次コスト上限 $${GLOBAL_DAILY_COST_USD}`
+  );
   console.log(`  POST/GET /api/health-data (x-app-secret 必須)`);
   console.log(`  CORS許可: ${ALLOWED_ORIGINS.join(", ")}`);
 });

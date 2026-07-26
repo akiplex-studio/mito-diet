@@ -1,6 +1,7 @@
 # Render Blueprint — 写真解析バックエンドを無料枠にデプロイする定義
 # 使い方: Renderダッシュボード → New → Blueprint → このリポジトリを選択
-# ANTHROPIC_API_KEY と APP_SHARED_SECRET は作成時にダッシュボードで入力する（sync: false）
+# ANTHROPIC_API_KEY・APP_SHARED_SECRET・UPSTASH_REDIS_REST_URL・UPSTASH_REDIS_REST_TOKEN は
+# 作成時にダッシュボードで入力する（sync: false）
 services:
   - type: web
     name: mito-meal-analyzer
@@ -16,5 +17,11 @@ services:
         sync: false
       - key: APP_SHARED_SECRET
         sync: false
-      - key: DAILY_LIMIT
-        value: "50"
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: DEVICE_DAILY_LIMIT
+        value: "6"
+      - key: GLOBAL_DAILY_COST_USD
+        value: "1.5"

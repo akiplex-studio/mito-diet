@@ -647,6 +647,8 @@ nav.footer {
       <!-- ④ 食事の写真 -->
       <section class="card">
         <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>食事の写真</h2>
+        <!-- v1.44: デバイス単位の日次利用枠の残り回数（未取得の間はhidden） -->
+        <div class="set-note" id="quotaNote" hidden></div>
         <div id="photoGrid"></div>
       </section>
 
@@ -726,20 +728,7 @@ nav.footer {
       </div>
       <div class="set-section">
         <h4>写真解析（AI）</h4>
-        <div class="set-field col">
-          <label for="anaUrl">バックエンドURL</label>
-          <input type="url" id="anaUrl" placeholder="https://mito-meal-analyzer.onrender.com">
-        </div>
-        <div class="set-field col">
-          <label for="anaSecret">シークレット（APP_SHARED_SECRET）</label>
-          <input type="password" id="anaSecret" placeholder="サーバー側と同じ値">
-        </div>
-        <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・ミトスコアを推定します。設定はこの端末内にのみ保存されます。</div>
-        <div class="set-field col" style="margin-top:var(--space-3)">
-          <button class="btn btn-secondary" id="btnHealthDebug">🩺 ヘルス同期の診断</button>
-          <textarea id="healthDebugOut" readonly hidden style="margin-top:var(--space-2);width:100%;min-height:160px;font-family:var(--font-number);font-size:11px;line-height:1.4;white-space:pre;overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px"></textarea>
-          <div class="set-note">Tasker→サーバーに<b>直近に届いたヘルスデータの生の中身</b>を表示します。睡眠が取れないとき、これをコピーして送ってください。</div>
-        </div>
+        <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・ミトスコアを推定します。</div>
       </div>
       <div class="set-section">
         <h4>からだのプロフィール（必要カロリー計算に使用）</h4>
@@ -1341,7 +1330,6 @@ function todayStr() { return fmtDate(new Date()); }
 
 function freshDB() {
   return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
-           analyze:{ url:'', secret:'' },
            profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 },
            lastExport: null, reminderTime: '22:00' };
 }
@@ -1413,7 +1401,7 @@ function migrate(d) {
   if (!('goalWeight' in d)) d.goalWeight = null;
   if (typeof d.lastExport === 'undefined') d.lastExport = null;
   if (!d.reminderTime) d.reminderTime = '22:00'; // v1.33: やることリマインダーの通知時刻
-  if (!d.analyze || typeof d.analyze !== 'object') d.analyze = { url:'', secret:'' };
+  delete d.analyze; // v1.44: 共有シークレット認証を廃止（バックエンドURL/シークレットの設定を廃止）したため、残存データを掃除
   if (!d.profile || typeof d.profile !== 'object') {
     d.profile = { heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 };
   } else {
@@ -2238,24 +2226,77 @@ function renderLbPanel() {
   panel.innerHTML = `<div class="ana-note">栄養の解析は食事ごとにまとめて行います。写真一覧の「🔍 解析」ボタンからどうぞ</div>`;
 }
 
+/* v1.44: デバイスID（利用枠の識別用。ユーザー操作なし・自動発行。mito-dataとは別キーに保存し、
+   データ初期化・エクスポート/インポートの影響を受けないようにする） */
+const DEVICE_ID_KEY = 'mito-device-id';
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem(DEVICE_ID_KEY);
+    if (id) return id;
+    id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+    return id;
+  } catch (e) {
+    // localStorage不可の環境（プライベートモード等）でも通信自体は続けられるよう、その場限りのIDを返す
+    return 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+  }
+}
+
+/* v1.44: AI解析 今日あと◯回の表示（残り回数はサーバーレスポンスから更新。未取得の間は表示しない） */
+let quotaRemaining = null;
+function renderQuotaNote() {
+  const el = $('#quotaNote');
+  if (!el) return;
+  if (quotaRemaining === null) { el.hidden = true; return; }
+  el.hidden = false;
+  el.textContent = `AI解析 今日あと${quotaRemaining}回`;
+}
+// v1.44: 将来のリワード広告用フック（残り回数にnを加算して表示を更新するだけ。広告実装はここでは行わない）
+function applyQuotaBonus(n) {
+  if (quotaRemaining === null) return;
+  quotaRemaining = Math.max(0, quotaRemaining + n);
+  renderQuotaNote();
+}
+
 /* ---- API呼び出し（共通） ---- */
+const ANALYZE_API_URL = 'https://mito-meal-analyzer.onrender.com'; // v1.44: サーバーURLは固定化（設定画面のURL入力欄は廃止）
 async function callAnalyzeAPI(bodyReq) {
-  const cfg = DB.analyze || {};
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 120000);
   try {
-    const res = await fetch(cfg.url.replace(/\/+$/, '') + '/api/analyze-meal', {
+    const res = await fetch(ANALYZE_API_URL.replace(/\/+$/, '') + '/api/analyze-meal', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-app-secret': cfg.secret },
+      headers: {
+        'content-type': 'application/json',
+        'x-device-id': getDeviceId(),
+        'x-tz-offset': String(-new Date().getTimezoneOffset()),
+      },
       body: JSON.stringify(bodyReq),
       signal: ctrl.signal,
     });
     const json = await res.json().catch(() => null);
-    if (res.status === 401) throw new Error('シークレットが一致しません（設定を確認してください）');
-    if (res.status === 429) throw new Error('今日の解析回数の上限に達しました。また明日どうぞ');
+    if (res.status === 429) {
+      quotaRemaining = 0;
+      renderQuotaNote();
+      const reason = json && json.error;
+      const msg = reason === 'device_daily_limit'
+        ? '今日の解析は使い切りました。明日また6回使えます。'
+        : reason === 'global_budget_reached'
+          ? '本日の解析枠が上限に達しました。明日また使えます。'
+          : '今日の解析回数の上限に達しました。また明日どうぞ';
+      const e = new Error(msg);
+      e.gentle = true; // v1.44: 利用枠の到達はエラーではなく穏やかな案内として扱う
+      throw e;
+    }
     // v1.6: サーバーが返す message フィールドがあれば、それをそのままエラー文言に使う
     if (!res.ok || !json || !json.ok || !json.analysis) {
       throw new Error((json && json.message) || 'サーバーでエラーが発生しました');
+    }
+    if (json.meta && typeof json.meta.remaining === 'number') {
+      quotaRemaining = json.meta.remaining;
+      renderQuotaNote();
     }
     return json.analysis;
   } finally {
@@ -2320,31 +2361,15 @@ async function fetchHealthDataNative(date) {
     return null;
   }
 }
+// v1.44: サーバー経由（Tasker→サーバー）のフォールバックは廃止し、ネイティブプラグイン経由のみに単純化
 async function fetchHealthData(date) {
-  if (nativeHealthPlugin()) return await fetchHealthDataNative(date);
-  const cfg = DB.analyze || {};
-  if (!cfg.url || !cfg.secret) return null;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const res = await fetch(cfg.url.replace(/\/+$/, '') + '/api/health-data?date=' + encodeURIComponent(date), {
-      headers: { 'x-app-secret': cfg.secret },
-      signal: ctrl.signal,
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok || !json || !json.ok) return null;
-    return { steps: json.steps, sleepHours: json.sleepHours, weight: json.weight };
-  } catch {
-    return null; // オフライン・サーバー未起動などはベストエフォートで無視（手入力は妨げない）
-  } finally {
-    clearTimeout(timer);
-  }
+  return await fetchHealthDataNative(date);
 }
 // v1.20: 「手入力した項目」だけは死守しつつ、自動取得どうしなら何度でも上書きして最新化する。
 // rec.{field}Source が 'manual' の項目だけスキップし、それ以外（未設定/'auto'）は自動で上書きする。
 // アプリを開くたび（visibilitychange含む）に呼ぶ。1日1回だけの制限は撤廃（Taskerが朝昼晩など複数回同期する想定のため）
 async function autoSyncHealthData() {
-  if (!nativeHealthPlugin() && (!DB.analyze || !DB.analyze.url || !DB.analyze.secret)) return;
+  if (!nativeHealthPlugin()) return;
   const data = await fetchHealthData(today);
   if (!data) return;
   const rec = getRec(today, true);
@@ -2364,7 +2389,7 @@ async function autoSyncHealthData() {
 // 🔄ボタン：表示中の日について明示的に取得し直す（既存値があっても上書き＝ユーザーの意図的操作）。
 // 以後その項目は自動更新の対象に戻す（手入力ロックを解除）
 async function manualSyncHealthField(field, btn) {
-  if (!nativeHealthPlugin() && (!DB.analyze || !DB.analyze.url || !DB.analyze.secret)) { toast('設定でバックエンドURL・シークレットを入力してください'); return; }
+  if (!nativeHealthPlugin()) { toast('ヘルス連携はアプリ版でのみ利用できます'); return; }
   btn.disabled = true;
   const data = await fetchHealthData(sel);
   btn.disabled = false;
@@ -2378,30 +2403,6 @@ async function manualSyncHealthField(field, btn) {
 $('#stepSyncBtn').addEventListener('click', () => manualSyncHealthField('steps', $('#stepSyncBtn')));
 $('#sleepSyncBtn').addEventListener('click', () => manualSyncHealthField('sleepHours', $('#sleepSyncBtn')));
 $('#weightSyncBtn').addEventListener('click', () => manualSyncHealthField('weight', $('#weightSyncBtn')));
-// 診断: サーバーが直近に受け取ったヘルスPOSTの生bodyを取り出して画面に表示する（睡眠が取れない原因の特定用）
-$('#btnHealthDebug').addEventListener('click', async () => {
-  const out = $('#healthDebugOut');
-  const cfg = DB.analyze || {};
-  if (!cfg.url || !cfg.secret) { toast('設定でバックエンドURL・シークレットを入力してください'); return; }
-  const btn = $('#btnHealthDebug');
-  btn.disabled = true;
-  out.hidden = false;
-  out.value = '取得中…';
-  try {
-    const res = await fetch(cfg.url.replace(/\/+$/, '') + '/api/health-debug', { headers: { 'x-app-secret': cfg.secret } });
-    const json = await res.json().catch(() => null);
-    if (!res.ok || !json) { out.value = 'エラー: ' + res.status + '（URL・シークレットを確認）'; return; }
-    if (!json.lastHealthPost) {
-      out.value = 'サーバーはまだヘルスデータのPOSTを1件も受け取っていません。\n（Taskerの送信タスクが実行されたか、送信先URL・シークレットが正しいか確認してください。サーバー再起動でも消えます）';
-      return;
-    }
-    out.value = JSON.stringify(json.lastHealthPost, null, 2);
-  } catch (e) {
-    out.value = '接続できませんでした（サーバー稼働とURLを確認）: ' + ((e && e.message) || e);
-  } finally {
-    btn.disabled = false;
-  }
-});
 
 /* ---- 食事解析モーダル ---- */
 const MEAL_JP = { breakfast: '朝', lunch: '昼', dinner: '晩' };
@@ -2527,14 +2528,6 @@ async function runMealAnalysis() {
   const meal = mealModalKey;
   const sk = mealStateKey(sel, meal);                     // 状態キー（開始時の日付|食事）
   if (mealPending[sk]) return;
-  const cfg = DB.analyze || {};
-  if (!cfg.url || !cfg.secret) {
-    toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
-    $('#mealModal').classList.remove('open');
-    flushPendingSpeech();
-    openSettings();
-    return;
-  }
   const startSel = sel;                                  // 開始時の日付を閉じ込める
   const rec = getRec(startSel, true);
   const arr = (rec.photos && rec.photos[meal]) || [];
@@ -2583,10 +2576,17 @@ async function runMealAnalysis() {
     toast('解析完了 ✨');
   } catch (err) {
     mealPending[sk] = false;
-    mealError[sk] = analyzeErrMsg(err);
-    renderPhotos();
-    if (mealModalIsOpen() && mealModalKey === meal) renderMealForm();
-    toast('解析に失敗しました');
+    // v1.44: 利用枠到達（gentle）はエラー扱いの赤表示にせず、穏やかなtoastだけで伝える
+    if (err && err.gentle) {
+      renderPhotos();
+      if (mealModalIsOpen() && mealModalKey === meal) renderMealForm();
+      toast(err.message);
+    } else {
+      mealError[sk] = analyzeErrMsg(err);
+      renderPhotos();
+      if (mealModalIsOpen() && mealModalKey === meal) renderMealForm();
+      toast('解析に失敗しました');
+    }
   }
 }
 // v1.33: 写真解析の認識ミスを手で直して、そのテキストだけで再解析する（画像は送らない）
@@ -2596,11 +2596,6 @@ async function runMealReanalysisFromText() {
   const meal = mealModalKey;
   const sk = mealStateKey(sel, meal);
   if (mealFixPending[sk]) return;
-  const cfg = DB.analyze || {};
-  if (!cfg.url || !cfg.secret) {
-    toast('設定の「写真解析（AI）」でURLとシークレットを入力してください');
-    return;
-  }
   const text = ($('#mealDishesEdit') ? $('#mealDishesEdit').value.trim() : '');
   if (text.length < 2) {
     $('#mealFixMsg').textContent = '修正後の内容を入力してください';
@@ -2639,9 +2634,15 @@ async function runMealReanalysisFromText() {
     toast('修正して再解析しました ✨');
   } catch (err) {
     mealFixPending[sk] = false;
-    mealFixError[sk] = analyzeErrMsg(err);
-    if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
-    toast('再解析に失敗しました');
+    // v1.44: 利用枠到達（gentle）はエラー扱いの赤表示にせず、穏やかなtoastだけで伝える
+    if (err && err.gentle) {
+      if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
+      toast(err.message);
+    } else {
+      mealFixError[sk] = analyzeErrMsg(err);
+      if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
+      toast('再解析に失敗しました');
+    }
   }
 }
 $('#lbDel').addEventListener('click', () => {
@@ -3438,8 +3439,6 @@ function openSettings() {
     $('#lastExportNote').textContent = 'まだ書き出していません';
   }
   $('#goalInput').value = (DB.goalWeight != null && DB.goalWeight !== '') ? DB.goalWeight : '';
-  $('#anaUrl').value = (DB.analyze && DB.analyze.url) || '';
-  $('#anaSecret').value = (DB.analyze && DB.analyze.secret) || '';
   const prof = DB.profile || {};
   $('#profHeight').value = prof.heightCm ?? '';
   $('#profAge').value = prof.age ?? '';
@@ -3465,16 +3464,6 @@ $('#profAge').addEventListener('change', e => {
 $('#profSex').addEventListener('change', e => setProfile('sex', e.target.value || null));
 $('#profActivity').addEventListener('change', e => setProfile('activity', Number(e.target.value) || 1.375));
 $('#profRatio').addEventListener('change', e => setProfile('targetRatio', Number(e.target.value) || 0.7));
-$('#anaUrl').addEventListener('change', e => {
-  DB.analyze = DB.analyze || { url:'', secret:'' };
-  DB.analyze.url = e.target.value.trim();
-  save();
-});
-$('#anaSecret').addEventListener('change', e => {
-  DB.analyze = DB.analyze || { url:'', secret:'' };
-  DB.analyze.secret = e.target.value.trim();
-  save();
-});
 $('#goalInput').addEventListener('change', e => {
   const v = e.target.value;
   DB.goalWeight = v === '' ? null : Math.round(clamp(Number(v), 0, 300) * 10) / 10;
@@ -3633,6 +3622,7 @@ function renderAll() {
   renderWeightGraph();
   renderNutrition();
   renderTodo();
+  renderQuotaNote(); // v1.44: AI解析の残り回数表示
   if (breakdownOpen) renderBreakdown();
 }
 
