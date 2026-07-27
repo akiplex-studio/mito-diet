@@ -365,16 +365,32 @@ nav.footer {
   background:#FBF3E2; padding:1px 7px; border-radius:var(--radius-full);
 }
 .pick-mech-lead { font-size:11px; color:var(--color-text-muted); margin-bottom:var(--space-3); }
-.pick-opts { display:flex; flex-wrap:wrap; gap:var(--space-2); }
-.pick-opt {
-  padding:8px 14px; border-radius:var(--radius-full); font-size:13px;
-  background:var(--neutral-50); border:1px solid var(--color-border); color:var(--neutral-700);
+/* 名前だけでは何をするのか分からないので、一行説明を添えた行リストにする */
+.pick-opts { display:flex; flex-direction:column; gap:var(--space-2); }
+.pick-row {
+  display:flex; align-items:stretch; gap:0;
+  border-radius:var(--radius-md); background:var(--neutral-50);
+  border:1px solid var(--color-border); overflow:hidden;
 }
-.pick-opt:hover { background:var(--primary-50); border-color:var(--primary-300); }
-.pick-opt.on { background:var(--primary-100); border-color:var(--primary-500); color:var(--primary-900); font-weight:700; }
+.pick-row:hover { background:var(--primary-50); border-color:var(--primary-300); }
+.pick-row.on { background:var(--primary-100); border-color:var(--primary-500); }
 /* NG項目（減点）はやることと色を分ける */
-.pick-opt.ng.on { background:#FBF3E2; border-color:var(--warning-500); color:var(--warning-600); }
-.pick-opt.locked { opacity:.5; }
+.pick-row.ng.on { background:#FBF3E2; border-color:var(--warning-500); }
+.pick-row-main {
+  flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;
+  padding:10px var(--space-3); text-align:left;
+}
+.pick-row-name { font-size:14px; font-weight:600; color:var(--neutral-800); }
+.pick-row.on .pick-row-name { color:var(--primary-900); font-weight:700; }
+.pick-row.ng.on .pick-row-name { color:var(--warning-600); }
+.pick-row-blurb { font-size:11px; color:var(--color-text-muted); line-height:1.5; }
+.pick-row-info {
+  flex:none; width:44px; display:grid; place-items:center;
+  color:var(--neutral-400); border-left:1px solid var(--color-border);
+}
+.pick-row-info:hover { color:var(--primary-800); background:var(--primary-50); }
+/* 解説は選択画面の上に重ねて開くので、前面に出す（DOM順ではpickModalより前にあるため） */
+#infoModal { z-index:55; }
 .pick-note { font-size:11px; color:var(--color-text-muted); line-height:1.7; margin-top:var(--space-2); }
 .pick-warn { font-size:12px; color:var(--danger-500); margin-top:var(--space-2); min-height:1.2em; }
 
@@ -1527,6 +1543,33 @@ const CATALOG = [
   // カタログには載せない。選んでもチェックリストに出ず混乱するだけになる。
   // 既存ユーザーのDB.itemsには残るので、過去の集計はそのまま維持される。
 ];
+
+// v1.49: 選択画面に出す一行説明。「何をするのか」が名前だけでは分からないため。
+// 詳しい機序は INFO（ⓘボタン）で読める。ここは操作の実像がすぐ分かる書き方にする。
+const BLURB = {
+  walk:         '歩数から自動で判定。まずはここから',
+  jog:          '歩くより短い時間で同じだけの刺激',
+  cycling:      '膝への衝撃が少ない。通勤に混ぜやすい',
+  swim:         '全身を使えて関節にやさしい',
+  bodyweight:   '器具なしで家でできる。腕立て・スクワットなど',
+  gymtrain:     '器具で負荷を細かく上げられる',
+  hiit:         '短時間で最も効率がいい。週2〜3回まで',
+  protein:      '体重×1.6gが目安。食事写真から自動集計',
+  hara7:        '満腹度の記録から自動で判定',
+  sleeplack:    '6時間未満だった日は減点になる',
+  nightfast:    '夕食から翌朝まで12時間あける',
+  juice:        '朝の食事写真で自動チェック',
+  colorveg:     '緑・赤・紫・橙の野菜を一品',
+  nosake:       'その日はまったく飲まない',
+  restday:      '飲む日と飲まない日を分ける',
+  lessdrink:    '飲む量を1〜2杯までにおさえる',
+  sugarCtrl:    '甘い飲料と主食を控えめに',
+  nosmoke:      '吸わない日を積み重ねる',
+  morninglight: '起きて1時間以内に5〜15分、外の光を浴びる',
+  meditate:     'タイマーつき。5秒吸って8秒吐くを20回',
+  bath:         '湯船で温まる。40度前後で10〜15分',
+  stretch:      '風呂上がりに5分、体をゆるめる',
+};
 
 function catalogById(id) { return CATALOG.find(c => c.id === id) || null; }
 function catalogByMech(mechId) { return CATALOG.filter(c => c.mech === mechId); }
@@ -3077,6 +3120,7 @@ async function addPhotoFile(file) {
     let autoMsg = '';
     if (first) {
       for (const it of DB.items) {
+        if (!isItemActiveOn(it, sel)) continue;  // v1.49: 外した項目は自動チェックしない
         if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
           rec.checked.push(it.id);
           autoMsg = `「${it.name}」を自動チェックしました`;
@@ -3131,8 +3175,10 @@ function renderInputs() {
     wSt.className = 'rec-status ok';
     wSt.textContent = `✓ タンパク質の目安 約${g}g/日（体重×1.6）`;
   }
-  const walk = DB.items.find(i => i.auto === 'steps');
-  const lack = DB.items.find(i => i.auto === 'sleepLack');
+  // v1.49: 外した項目のステータスが残らないよう、その日に有効なものだけを探す
+  const liveItems = DB.items.filter(i => isItemActiveOn(i, sel));
+  const walk = liveItems.find(i => i.auto === 'steps');
+  const lack = liveItems.find(i => i.auto === 'sleepLack');
   const stepSt = $('#stepStatus');
   if (walk) {
     const goal = walk.threshold ?? CFG.STEP_GOAL;
@@ -3163,7 +3209,7 @@ function renderInputs() {
     }
   }
   // タンパク質：食事解析の合計と体重×1.6gを比較して自動判定（写真解析＋体重の記録が前提）
-  const protein = DB.items.find(i => i.auto === 'protein');
+  const protein = DB.items.filter(i => isItemActiveOn(i, sel)).find(i => i.auto === 'protein');
   const proteinSt = $('#proteinStatus');
   if (protein) {
     if (!(Number(rec.weight) > 0)) {
@@ -3182,7 +3228,7 @@ function renderInputs() {
     }
   }
   // 腹七分目：「腹七分目くらい」と申告した食事が2食以上あれば自動達成
-  const hara7 = DB.items.find(i => i.auto === 'hara7');
+  const hara7 = DB.items.filter(i => isItemActiveOn(i, sel)).find(i => i.auto === 'hara7');
   const hara7St = $('#hara7Status');
   if (hara7) {
     const count = countHara7Meals(rec);
@@ -3453,8 +3499,11 @@ function renderTodo() {
   ptEl.className = 'num' + (pts < 0 ? ' minus' : '');
 
   // v1.15: タブ廃止・1画面2段グリッド（1段目=手動チェック、2段目=自動判定）
-  const manualItems = sortTodoItems(DB.items.filter(it => it.inTodo), rec.checked);
-  const autoItems = DB.items.filter(it => it.auto).slice().sort((a, b) => a.order - b.order);
+  // v1.49: その日に有効だった項目だけ出す。外した項目が残り続けないように、かつ
+  //        過去日を見たときは当時のやることが並ぶようにする（sel基準でフィルタする）
+  const live = DB.items.filter(it => isItemActiveOn(it, sel));
+  const manualItems = sortTodoItems(live.filter(it => it.inTodo), rec.checked);
+  const autoItems = live.filter(it => it.auto).slice().sort((a, b) => a.order - b.order);
   renderTodoCards($('#todoRowManual'), manualItems, rec, true);
   renderTodoCards($('#todoRowAuto'), autoItems, rec, false);
 }
@@ -3624,7 +3673,7 @@ function celebrateAchievement(item, beforeMito, afterMito, beforeAct, afterAct, 
 function checkAutoAchievements() {
   const rec = getRec(today, true);
   if (!rec.celebratedAuto || typeof rec.celebratedAuto !== 'object') rec.celebratedAuto = {};
-  const newly = DB.items.filter(it => it.auto && !it.ng && isItemDone(it, rec) && !rec.celebratedAuto[it.id]);
+  const newly = DB.items.filter(it => isItemActiveOn(it, today) && it.auto && !it.ng && isItemDone(it, rec) && !rec.celebratedAuto[it.id]);
   if (!newly.length) return;
   newly.forEach(it => { rec.celebratedAuto[it.id] = true; });
   save();
@@ -3664,11 +3713,28 @@ function renderPickBody() {
     wrap.className = 'pick-opts';
     for (const c of opts) {
       const on = ids.includes(c.id);
+      const row = document.createElement('div');
+      // NG項目（睡眠不足）は「やること」ではなく減点なので、同じ緑にすると誤解を招く
+      row.className = 'pick-row' + (on ? ' on' : '') + (c.ng ? ' ng' : '');
       const b = document.createElement('button');
-      // NG項目（睡眠不足）は「やること」ではなく減点なので、同じ緑チップにすると誤解を招く
-      b.className = 'pick-opt' + (on ? ' on' : '') + (c.ng ? ' ng' : '');
-      b.textContent = (c.ng ? '△ ' : '') + (c.short || c.name);
+      b.className = 'pick-row-main';
+      b.innerHTML =
+        `<span class="pick-row-name">${on ? '✓ ' : ''}${esc((c.ng ? '△ ' : '') + (c.short || c.name))}</span>` +
+        (BLURB[c.id] ? `<span class="pick-row-blurb">${esc(BLURB[c.id])}</span>` : '');
       if (c.ng) b.title = 'これは「やること」ではなく、当てはまった日に減点される項目です';
+      // 詳しい解説（なぜミトコンドリアに効くのか）はⓘから。選択と誤爆しないよう別ボタンにする
+      if (INFO[c.id]) {
+        const ib = document.createElement('button');
+        ib.className = 'pick-row-info';
+        ib.setAttribute('aria-label', `${c.short || c.name}の解説`);
+        ib.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+        ib.addEventListener('click', e => { e.stopPropagation(); openInfo(c); });
+        row.appendChild(b);
+        row.appendChild(ib);
+      } else {
+        row.appendChild(b);
+      }
+      wrap.appendChild(row);
       b.addEventListener('click', () => {
         const warn = $('#pickWarn');
         if (on) {
@@ -3689,7 +3755,6 @@ function renderPickBody() {
         commit();
         renderPickBody();
       });
-      wrap.appendChild(b);
     }
     sec.appendChild(wrap);
     body.appendChild(sec);
@@ -3938,7 +4003,7 @@ function medPhaseRun() {
   }
 }
 function medFinish() {
-  const item = DB.items.find(i => i.timer);
+  const item = DB.items.filter(i => isItemActiveOn(i, today)).find(i => i.timer);
   if (item) {
     const rec = getRec(today, true);  // 瞑想は「今」やったので今日の記録に付ける
     if (!rec.checked.includes(item.id)) rec.checked.push(item.id);
@@ -4109,7 +4174,7 @@ $('#btnNotifyPermission').addEventListener('click', async () => {
 });
 // 手動チェック項目（inTodo）が全部済んでいるか
 function allManualTodoDone(rec) {
-  const items = DB.items.filter(it => it.inTodo);
+  const items = DB.items.filter(it => isItemActiveOn(it, today) && it.inTodo);
   return items.length > 0 && items.every(it => rec.checked.includes(it.id));
 }
 function fireTodoReminder() {

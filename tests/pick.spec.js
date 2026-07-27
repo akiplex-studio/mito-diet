@@ -28,7 +28,7 @@ test('初回起動ではオンボーディングが開き、運動を選ばな�
   await expect(page.locator('#pickWarn')).toContainText('ミトコンドリアを増やす');
 
   // ひとつ選べば閉じられる
-  await page.locator('.pick-opt', { hasText: 'スイミング' }).click();
+  await page.locator('.pick-row-main', { hasText: 'スイミング' }).click();
   await page.locator('#pickDone').click();
   await expect(page.locator('#pickModal')).not.toHaveClass(/open/);
 
@@ -72,8 +72,8 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
   await expect(page.locator('#pickModal')).toHaveClass(/open/);
-  await page.locator('.pick-opt', { hasText: '禁酒' }).click();
-  await page.locator('.pick-opt', { hasText: '休肝日' }).click();
+  await page.locator('.pick-row-main', { hasText: '禁酒' }).click();
+  await page.locator('.pick-row-main', { hasText: '休肝日' }).click();
   await page.locator('#pickDone').click();
 
   const after = await page.evaluate(() => {
@@ -99,6 +99,46 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
   expect(after.休肝日が有効).toBe(true);
 });
 
+test('選び直すとホームの「今日やること」も入れ替わる', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  // 既定では禁酒がやることに出ている
+  await expect(page.locator('#todoRowManual')).toContainText('禁酒');
+  await expect(page.locator('#todoRowManual')).not.toContainText('休肝日');
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
+  await page.locator('.pick-row-main', { hasText: '禁酒' }).click();
+  await page.locator('.pick-row-main', { hasText: '休肝日' }).click();
+  await page.locator('#pickDone').click();
+
+  await page.locator('nav.footer button[data-tab="home"]').click();
+
+  // 外した項目は消え、選んだ項目が出ている
+  await expect(page.locator('#todoRowManual')).toContainText('休肝日');
+  await expect(page.locator('#todoRowManual')).not.toContainText('禁酒');
+});
+
+test('選択画面に一行説明が出て、ⓘで詳しい解説が読める', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
+
+  // 名前だけでなく、何をするのかの一行説明が添えられている
+  const hiit = page.locator('.pick-row', { hasText: 'HIIT' });
+  await expect(hiit).toContainText('短時間で最も効率がいい');
+
+  // ⓘは選択と誤爆せず、解説だけを開く
+  await hiit.locator('.pick-row-info').click();
+  await expect(page.locator('#infoModal')).toHaveClass(/open/);
+  await expect(page.locator('#infoBody')).toContainText('ミトコンドリアを増やす司令');
+  // 解説を開いただけでは選択は変わらない
+  expect(await page.evaluate(() => activePickIds())).not.toContain('hiit');
+});
+
 test('選べる数の上限を超えて選べない', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
@@ -108,7 +148,7 @@ test('選べる数の上限を超えて選べない', async ({ page }) => {
 
   // 体内時計は最大1つ。既定では朝の光が未選択なので、選んでからもう一度別を選ぼうとする
   // ここでは「増やす」枠(最大2)で試す: 既定はウォーキング＋自重トレの2つ＝上限
-  await page.locator('.pick-opt', { hasText: 'HIIT' }).click();
+  await page.locator('.pick-row-main', { hasText: 'HIIT' }).click();
   await expect(page.locator('#pickWarn')).toContainText('最大2つ');
 
   const ids = await page.evaluate(() => activePickIds());
