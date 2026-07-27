@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { skipOnboarding } = require('../tests/helpers');
 
 // スモークテスト: テスター配布前・OTA更新前に「アプリが起動するか」を一発で確認する。
 // playwright.config.js の projects により ja-JP / en-US の2ロケールで実行される。
@@ -19,6 +20,7 @@ test('ホーム画面が描画され、エラーが出ない', async ({ page }) 
     pageErrors.push(err.message);
   });
 
+  await skipOnboarding(page);
   await page.goto('/index.html');
 
   // --- ホーム画面が描画されていること（index.html に実在する要素で確認） ---

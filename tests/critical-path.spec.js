@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { skipOnboarding } = require('./helpers');
 
 // クリティカルパス: 食事を記録する → ミトくんの反応（吹き出し）が表示される、の一周が通ること。
 // playwright.config.js の projects により ja-JP / en-US の2ロケールで実行される。
@@ -45,6 +46,7 @@ test('食事を記録するとミトくんが反応する', async ({ page }) => 
     });
   });
 
+  await skipOnboarding(page);
   await page.goto('/index.html');
 
   // 1. 食事タブへ

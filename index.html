@@ -355,6 +355,29 @@ nav.footer {
   font-size:15px; font-weight:600; color:var(--neutral-800); text-align:left;
 }
 .add-choice-btn:hover { background:var(--primary-50); border-color:var(--primary-300); }
+/* v1.49: やることを選ぶ（機序ごと） */
+.pick-intro { font-size:13px; line-height:1.8; color:var(--color-text-muted); margin-bottom:var(--space-4); }
+.pick-mech { margin-bottom:var(--space-5); }
+.pick-mech-head { display:flex; align-items:baseline; gap:var(--space-2); margin-bottom:2px; }
+.pick-mech-name { font-size:15px; font-weight:700; color:var(--primary-900); }
+.pick-mech-req {
+  font-size:10px; font-weight:700; color:var(--warning-600);
+  background:#FBF3E2; padding:1px 7px; border-radius:var(--radius-full);
+}
+.pick-mech-lead { font-size:11px; color:var(--color-text-muted); margin-bottom:var(--space-3); }
+.pick-opts { display:flex; flex-wrap:wrap; gap:var(--space-2); }
+.pick-opt {
+  padding:8px 14px; border-radius:var(--radius-full); font-size:13px;
+  background:var(--neutral-50); border:1px solid var(--color-border); color:var(--neutral-700);
+}
+.pick-opt:hover { background:var(--primary-50); border-color:var(--primary-300); }
+.pick-opt.on { background:var(--primary-100); border-color:var(--primary-500); color:var(--primary-900); font-weight:700; }
+/* NG項目（減点）はやることと色を分ける */
+.pick-opt.ng.on { background:#FBF3E2; border-color:var(--warning-500); color:var(--warning-600); }
+.pick-opt.locked { opacity:.5; }
+.pick-note { font-size:11px; color:var(--color-text-muted); line-height:1.7; margin-top:var(--space-2); }
+.pick-warn { font-size:12px; color:var(--danger-500); margin-top:var(--space-2); min-height:1.2em; }
+
 /* v1.49: がんばり度の選択肢 */
 .effort-list { display:flex; flex-direction:column; gap:var(--space-2); }
 .effort-btn {
@@ -734,6 +757,14 @@ nav.footer {
 
     <!-- 設定: 他のタブと同じくmain内の1タブとして表示 -->
     <div class="tab-page" id="tabSettings" hidden>
+      <!-- v1.49: やることのカスタマイズ。生活は人によって違うので、同じ狙いの別の手段に入れ替えられる -->
+      <div class="set-section">
+        <h4>やること</h4>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnPickItems">やることを選ぶ</button>
+        </div>
+        <div class="set-note">ウォーキングを筋トレに、禁酒を休肝日に、といった入れ替えができます。選び直しても過去の記録と匹数は変わりません。</div>
+      </div>
       <div class="set-section">
         <h4>育成データ</h4>
         <div class="set-stats">
@@ -885,6 +916,22 @@ nav.footer {
     </div>
   </div>
 
+  <!-- v1.49: やることを選ぶ（機序ごとの代替選択）。設定タブと初回オンボーディングで共用する -->
+  <div class="modal" id="pickModal">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3 id="pickTitle">やることを選ぶ</h3>
+        <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <p class="pick-intro" id="pickIntro"></p>
+      <div id="pickBody"></div>
+      <div class="pick-note">選び直しても、これまでに育てた匹数と過去の記録は変わりません。</div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-primary" id="pickDone" style="flex:1">これでいく</button>
+      </div>
+    </div>
+  </div>
+
   <!-- v1.49: がんばり度の選択（運動系のみ）。食事の「食べた量の感覚」と同じ操作感に揃えている -->
   <div class="modal" id="effortModal">
     <div class="med-card" style="text-align:left">
@@ -965,12 +1012,20 @@ function isItemDone(item, rec) {
 // 匹数・活性は記録ログ全期間を毎回再生して求める設計のため、項目を差し替えると過去の推移まで
 // 変わってしまう。項目は削除せず有効期間を閉じることで、過去の集計結果を固定する。
 // どちらも未設定なら常に有効＝移行前のデータでも挙動が変わらない。
+// periods は [{from, until}] の配列（until:null は「今も有効」）。
+// 「禁酒→休肝日→また禁酒」のように出戻りがあるので、1区間では表現しきれない。
+// periods が無ければ activeFrom/activeUntil の1区間として扱う（移行前データ互換）。
+function itemPeriods(item) {
+  // periods があればそれが正。空配列は「どこでも無効」を意味する
+  //（今日追加して今日外した場合など）。periods 自体が無いときだけ旧形式にフォールバックする。
+  if (Array.isArray(item.periods)) return item.periods;
+  return [{ from: item.activeFrom || null, until: item.activeUntil || null }];
+}
 function isItemActiveOn(item, dateStr) {
   if (!item) return false;
   if (!dateStr) return true;
-  if (item.activeFrom && dateStr < item.activeFrom) return false;
-  if (item.activeUntil && dateStr > item.activeUntil) return false;
-  return true;
+  return itemPeriods(item).some(p =>
+    (!p.from || dateStr >= p.from) && (!p.until || dateStr <= p.until));
 }
 
 // v1.49: がんばり度。「腕立て5回」と「3セットみっちり」を同じ +15 で扱うのは雑なので、
@@ -1038,6 +1093,45 @@ function nextDate(dstr) {
   const t = new Date(dstr + 'T12:00:00');
   t.setDate(t.getDate() + 1);
   return fmtDate(t);
+}
+function prevDate(dstr) {
+  const t = new Date(dstr + 'T12:00:00');
+  t.setDate(t.getDate() - 1);
+  return fmtDate(t);
+}
+
+// v1.49: 項目の選び直し。過去を書き換えないよう「昨日で閉じる／今日から始める」で表現する。
+// 外した項目も配列からは消さない（過去日の集計に必要なため）。
+// jsc（ロジックテスト実行環境）には structuredClone が無いのでフォールバックする
+function deepClone(o) {
+  return typeof structuredClone === 'function' ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+}
+function pickItem(items, catalogEntry, todayStr) {
+  const ex = items.find(it => it.id === catalogEntry.id);
+  if (!ex) {
+    const it = deepClone(catalogEntry);
+    it.periods = [{ from: todayStr, until: null }];
+    items.push(it);
+    return items;
+  }
+  if (isItemActiveOn(ex, todayStr)) return items;   // 既に有効
+  const ps = itemPeriods(ex).map(p => ({ ...p }));
+  ps.push({ from: todayStr, until: null });
+  ex.periods = ps;
+  delete ex.activeFrom; delete ex.activeUntil;
+  return items;
+}
+function unpickItem(items, itemId, todayStr) {
+  const ex = items.find(it => it.id === itemId);
+  if (!ex || !isItemActiveOn(ex, todayStr)) return items;
+  const ps = itemPeriods(ex)
+    .map(p => ({ ...p }))
+    .map(p => (!p.until && (!p.from || todayStr >= p.from)) ? { ...p, until: prevDate(todayStr) } : p)
+    // 今日追加して今日外した等で空になった区間は捨てる
+    .filter(p => !(p.from && p.until && p.until < p.from));
+  ex.periods = ps;
+  delete ex.activeFrom; delete ex.activeUntil;
+  return items;
 }
 
 // 記録ログ全体から現在の状態を再計算（チェックの取り消し・過去日の修正にも整合）
@@ -1429,8 +1523,9 @@ const CATALOG = [
     inTodo:true, order:6, method:'自己申告' },
   { id:'stretch', mech:'stress', name:'ストレッチ', short:'ストレッチ', act:2, inc:0,
     inTodo:true, order:6, method:'自己申告' },
-  { id:'darknight', mech:'stress', name:'夜は暗くしてスマホを避ける', short:'夜は暗く',
-    act:2, inc:0, inTodo:false, order:6, method:'自己申告（判定曖昧のため一時停止）' },
+  // darknight（夜は暗くしてスマホを避ける）は判定が曖昧で一時停止中（inTodo:false）のため、
+  // カタログには載せない。選んでもチェックリストに出ず混乱するだけになる。
+  // 既存ユーザーのDB.itemsには残るので、過去の集計はそのまま維持される。
 ];
 
 function catalogById(id) { return CATALOG.find(c => c.id === id) || null; }
@@ -1492,6 +1587,62 @@ const INFO = {
     why:'睡眠中に、ミトコンドリアの修復や体内の掃除が進みます。6時間未満が続くと回復が追いつかず、日中のエネルギー効率も落ちてしまいます。',
     tips:'まずは就寝時間を一定に。寝る前のスマホ・カフェインを控えめに。'
   },
+
+  /* --- v1.49: 追加した選択肢。知識ベースの黄金ルールを守り、
+         「数を増やす」と書いてよいのは運動だけ。食事・入浴・瞑想は
+         「守る・支える・整える」の言い回しに寄せている --- */
+  jog: {
+    why:'走ると心臓と筋肉により強い司令が届き、ミトコンドリアが新しく作られます。歩くより短い時間で同じだけの刺激を届けられます。',
+    tips:'会話ができるくらいの速さで十分です。歩く・走るを交互にするだけでも立派な有酸素運動になります。'
+  },
+  cycling: {
+    why:'ペダルをこぎ続けると、脚の筋肉で酸素を使う量が増え、ミトコンドリアを増やす司令が出ます。膝への衝撃が少ないのが利点です。',
+    tips:'平坦な道を淡々とより、ゆるい上り坂を混ぜるほうが刺激が入ります。通勤に混ぜられると続けやすいです。'
+  },
+  swim: {
+    why:'全身を使って酸素をたくさん消費するので、ミトコンドリアを増やす司令が全身に届きます。関節への負担が少ないのも特徴です。',
+    tips:'泳ぎ続けられなくても大丈夫。歩くだけの水中ウォーキングでも水の抵抗がしっかり負荷になります。'
+  },
+  gymtrain: {
+    why:'器具を使うと負荷を細かく上げられるので、筋肉という「発電所の宿り場」を広げやすくなります。筋肉が増えるほど、宿れるミトコンドリアの総量も増えます。',
+    tips:'押す・引く・脚・体幹の4方向をひと通り。同じ部位は中1〜2日あけると回復が間に合います。'
+  },
+  hiit: {
+    why:'短時間で全力を出すと、ミトコンドリアを増やす司令が非常に強く出ます。研究では、同じ時間あたりの効率がゆっくりした持久運動の2〜3倍とされています。',
+    tips:'20秒全力・10秒休みを繰り返します。刺激が強いので週2〜3回、中1〜2日あけて。持病のある方は主治医に相談してから。'
+  },
+  nightfast: {
+    why:'食べない時間が続くと、体は傷んだミトコンドリアを片づける掃除モードに入りやすくなります。数が増えるわけではなく、質を整える時間です。',
+    tips:'夕食から翌朝まで12時間ほどあくのが目安。夜食をやめるだけで自然に届きます。極端な絶食は逆効果です。'
+  },
+  colorveg: {
+    why:'色の濃い野菜に含まれる抗酸化成分が、エネルギーを作るときに出る活性酸素（サビ）からミトコンドリアを守ります。',
+    tips:'皿の上が虹色になるほど良いとされます。緑・赤・紫・橙を意識して一品足すだけで十分です。'
+  },
+  restday: {
+    why:'お酒を分解するときに出るアセトアルデヒドがミトコンドリアを傷つけます。飲まない日をつくると、その日は分解に追われず修復にまわれます。',
+    tips:'まずは週2日から。曜日を決めてしまうほうが迷わず続きます。'
+  },
+  lessdrink: {
+    why:'量を減らすだけでも、ミトコンドリアが受けるダメージと、分解に追われて脂肪燃焼が後回しになる時間を減らせます。',
+    tips:'1〜2杯までを目安に。合間に水を挟むとペースが落ちて自然に減ります。寝る直前の一杯は睡眠の質を下げるので避けたいところ。'
+  },
+  nosmoke: {
+    why:'たばこは活性酸素を大量に発生させてミトコンドリアのDNAを傷つけ、一酸化炭素が酸素の運搬も邪魔します。エネルギーを作る材料と現場の両方が痛みます。',
+    tips:'吸いたくなる場面（コーヒー・飲み会・休憩）を先に把握しておくと切り抜けやすくなります。'
+  },
+  morninglight: {
+    why:'朝の光が体内時計を合わせます。ミトコンドリアの働きや修復は一日のリズムに従って増減するので、時計が合うと代謝のリズムも整います。',
+    tips:'起きて1時間以内に5〜15分。窓ぎわでも構いません。曇りの日でも屋外の光は室内よりずっと強いです。'
+  },
+  bath: {
+    why:'湯船で体を温めると、熱に反応してタンパク質を守る仕組みが働きます。運動に似た穏やかな刺激として、ミトコンドリアの質を保つのを助けます。',
+    tips:'40度前後で10〜15分が目安。熱すぎる湯や長湯は負担になるので避けましょう。'
+  },
+  stretch: {
+    why:'ミトコンドリアを直接増やす作用は確かめられていませんが、体をゆるめて自律神経が整うと、慢性的なストレスによる消耗を減らせます。',
+    tips:'風呂上がりに5分。伸ばしている部位を意識して、息を止めずにゆっくり。'
+  },
 };
 
 // v1.26: 達成の反応ダイアログ（段階2）用。INFO.whyより短く、複数パターンを持たせて毎回同じにならないようにする
@@ -1545,7 +1696,8 @@ const STORE_KEY = 'mito-data';
 function todayStr() { return fmtDate(new Date()); }
 
 function freshDB() {
-  return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, goalWeight:null,
+  // v1.49: 新規ユーザーは初回にやることを選ぶ（onboarded:false）。既存ユーザーには出さない（migrate参照）
+  return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, onboarded:false, goalWeight:null,
            profile:{ heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 },
            lastExport: null, reminderTime: '22:00' };
 }
@@ -1612,6 +1764,12 @@ function migrate(d) {
       if (it && it.id === 'juice' && !it.effect) {
         it.effect = 'clean';
       }
+      // v1.49: 既存項目には mech が無い。設定画面で機序ごとに並べるためカタログから補う
+      //（act/inc は絶対に触らない。触ると過去の匹数まで変わってしまうため）
+      if (it && !it.mech) {
+        const c = catalogById(it.id);
+        if (c) it.mech = c.mech;
+      }
     });
     // v1.27: 既存ユーザーのDB.itemsにsugarCtrlが無ければ新規追加する
     if (!d.items.some(it => it && it.id === 'sugarCtrl')) {
@@ -1644,6 +1802,11 @@ function migrate(d) {
     if (!rec.mealAnalysis || typeof rec.mealAnalysis !== 'object') {
       rec.mealAnalysis = { breakfast:null, lunch:null, dinner:null };
     }
+  }
+  // v1.49: オンボーディング（やることを選ぶ画面）は新規ユーザーだけに出す。
+  // 既に使っている人に初回設定を突きつけないよう、記録が1日でもあれば済み扱いにする。
+  if (d.onboarded === undefined) {
+    d.onboarded = Object.keys(d.days || {}).length > 0;
   }
   d.version = 5;
   return d;
@@ -3472,6 +3635,84 @@ function checkAutoAchievements() {
   const shown = showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct);
   setTimeout(() => newly.forEach(it => queueReaction(it, SPEECH[it.id] ? it.id : null)), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
 }
+/* ---- v1.49: やることを選ぶ（機序ごとの代替選択） ----
+   「項目のON/OFF」ではなく「同じ狙いの別の手段」を選ばせる。
+   資料の黄金ルールにより運動枠だけは外せない（数を増やせるのは運動だけのため）。 */
+function activePickIds() {
+  return DB.items.filter(it => isItemActiveOn(it, today)).map(it => it.id);
+}
+function pickedInMech(mechId, ids) {
+  return catalogByMech(mechId).filter(c => ids.includes(c.id));
+}
+function renderPickBody() {
+  const ids = activePickIds();
+  const body = $('#pickBody');
+  body.innerHTML = '';
+  for (const m of MECHANISMS) {
+    const opts = catalogByMech(m.id);
+    if (!opts.length) continue;
+    const picked = pickedInMech(m.id, ids);
+    const sec = document.createElement('div');
+    sec.className = 'pick-mech';
+    sec.innerHTML =
+      `<div class="pick-mech-head">` +
+        `<span class="pick-mech-name">${esc(m.name)}</span>` +
+        (m.required ? `<span class="pick-mech-req">はずせない</span>` : '') +
+      `</div>` +
+      `<div class="pick-mech-lead">${esc(m.lead)}　えらべる数：最大${m.max}</div>`;
+    const wrap = document.createElement('div');
+    wrap.className = 'pick-opts';
+    for (const c of opts) {
+      const on = ids.includes(c.id);
+      const b = document.createElement('button');
+      // NG項目（睡眠不足）は「やること」ではなく減点なので、同じ緑チップにすると誤解を招く
+      b.className = 'pick-opt' + (on ? ' on' : '') + (c.ng ? ' ng' : '');
+      b.textContent = (c.ng ? '△ ' : '') + (c.short || c.name);
+      if (c.ng) b.title = 'これは「やること」ではなく、当てはまった日に減点される項目です';
+      b.addEventListener('click', () => {
+        const warn = $('#pickWarn');
+        if (on) {
+          // 必須枠の最後の1つは外させない
+          if (m.required && picked.length <= (m.min || 1)) {
+            warn.textContent = `「${m.name}」は最低${m.min || 1}つ選んでください。${m.lead}からです。`;
+            return;
+          }
+          unpickItem(DB.items, c.id, today);
+        } else {
+          if (picked.length >= m.max) {
+            warn.textContent = `「${m.name}」で選べるのは最大${m.max}つまでです。他をはずしてから選んでください。`;
+            return;
+          }
+          pickItem(DB.items, c, today);
+        }
+        warn.textContent = '';
+        commit();
+        renderPickBody();
+      });
+      wrap.appendChild(b);
+    }
+    sec.appendChild(wrap);
+    body.appendChild(sec);
+  }
+  let warn = $('#pickWarn');
+  if (!warn) {
+    warn = document.createElement('div');
+    warn.className = 'pick-warn';
+    warn.id = 'pickWarn';
+    body.parentNode.insertBefore(warn, body.nextSibling);
+  }
+}
+function openPick(isOnboarding) {
+  $('#pickTitle').textContent = isOnboarding ? 'あなたに合わせて選ぶ' : 'やることを選ぶ';
+  $('#pickIntro').textContent = isOnboarding
+    ? 'ミトコンドリアを育てるやり方は一つではありません。続けられそうなものを選んでください。あとから何度でも変えられます。'
+    : '同じ狙いなら、やり方は入れ替えられます。生活に合うものを選んでください。';
+  // オンボーディング中は「閉じる」で逃げられないようにする（何も選ばれていない状態を防ぐ）
+  $('#pickModal').querySelector('.sheet-close').style.display = isOnboarding ? 'none' : '';
+  renderPickBody();
+  $('#pickModal').classList.add('open');
+}
+
 /* ---- v1.49: がんばり度の選択 ----
    「腕立て5回」と「3セットみっちり」を同じ匹数で扱うのは雑なので、運動系はその日の
    がんばり具合を選んでもらう。歩数から自動で決まる項目（effortFrom）は聞かない。 */
@@ -3872,6 +4113,9 @@ function allManualTodoDone(rec) {
   return items.length > 0 && items.every(it => rec.checked.includes(it.id));
 }
 function fireTodoReminder() {
+  // v1.49: やることを選び終える前に「まだ残ってるよ」と言っても意味がないので黙っておく
+  //（reminded を立てる前に抜けるので、選び終えたあとの本来のリマインドは生きる）
+  if (!DB.onboarded) return;
   const rec = getRec(today, true);
   if (rec.reminded || allManualTodoDone(rec)) return;
   rec.reminded = true;
@@ -3992,6 +4236,22 @@ $('#calPrev').addEventListener('click', () => { weekOffset--; renderCalendar(); 
 $('#calNext').addEventListener('click', () => { weekOffset++; renderCalendar(); });
 $('#selBannerBack').addEventListener('click', () => { sel = today; weekOffset = 0; renderAll(); });
 
+/* ============ v1.49: やることを選ぶ ============ */
+$('#btnPickItems').addEventListener('click', () => openPick(false));
+$('#pickDone').addEventListener('click', () => {
+  // 必須枠が空のまま閉じさせない（運動が無いとミトコンドリアは増えないため）
+  const ids = activePickIds();
+  const missing = MECHANISMS.filter(m => m.required && pickedInMech(m.id, ids).length < (m.min || 1));
+  if (missing.length) {
+    $('#pickWarn').textContent = `「${missing[0].name}」から最低1つ選んでください。`;
+    return;
+  }
+  DB.onboarded = true;
+  commit();
+  $('#pickModal').classList.remove('open');
+  $('#pickModal').querySelector('.sheet-close').style.display = '';
+});
+
 /* ============ 全体描画・初期化 ============ */
 function renderAll() {
   renderHeader();
@@ -4038,6 +4298,8 @@ stage.canvas.addEventListener('click', e => {
 recompute();
 save();
 renderAll();
+// v1.49: 初回だけ「やることを選ぶ」を出す。既存ユーザーには出ない（migrateでonboarded済みにしている）
+if (!DB.onboarded) openPick(true);
 autoSyncHealthData();
 checkAutoAchievements();
 scheduleTodoReminder();

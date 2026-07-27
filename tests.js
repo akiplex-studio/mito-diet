@@ -323,5 +323,70 @@ const afterEnd = computeState({
 // 7/4は加点されないので、活性は回帰のみ（7/3時点から50へ30%戻る）
 eq('終了後はチェックしても加点されない', afterEnd.activation, regress(beforeSwap.activation));
 
+/* --- v1.49: 選び直し（pickItem / unpickItem / 複数区間） --- */
+eq('prevDate', prevDate('2026-07-01'), '2026-06-30');
+eq('prevDate 年またぎ', prevDate('2027-01-01'), '2026-12-31');
+
+// periods が無ければ activeFrom/activeUntil の1区間として扱う（移行前データ互換）
+eq('itemPeriods 既定は1区間',
+  itemPeriods({ activeFrom:'2026-07-01', activeUntil:null }), [{ from:'2026-07-01', until:null }]);
+
+// 出戻り（禁酒→休肝日→また禁酒）を複数区間で表現できる
+const comeback = { id:'nosake', periods:[
+  { from:'2026-07-01', until:'2026-07-05' },
+  { from:'2026-07-10', until:null },
+] };
+eq('複数区間 1つ目の中',   isItemActiveOn(comeback, '2026-07-03'), true);
+eq('複数区間 すき間',      isItemActiveOn(comeback, '2026-07-07'), false);
+eq('複数区間 2つ目の中',   isItemActiveOn(comeback, '2026-07-11'), true);
+
+// 外すと「昨日まで有効」になる＝過去は残り、今日から効かない
+const items1 = [{ id:'nosake', act:3, inc:0, periods:[{ from:'2026-07-01', until:null }] }];
+unpickItem(items1, 'nosake', '2026-07-10');
+eq('外した項目は配列から消えない', items1.length, 1);
+eq('外しても前日までは有効', isItemActiveOn(items1[0], '2026-07-09'), true);
+eq('外した当日から無効',     isItemActiveOn(items1[0], '2026-07-10'), false);
+
+// 選ぶと今日から有効になる（過去には遡らない）
+const items2 = [];
+pickItem(items2, { id:'restday', act:2, inc:0 }, '2026-07-10');
+eq('選んだ項目が追加される', items2.length, 1);
+eq('選ぶ前日は無効', isItemActiveOn(items2[0], '2026-07-09'), false);
+eq('選んだ当日から有効', isItemActiveOn(items2[0], '2026-07-10'), true);
+
+// 選び直し（外して→また選ぶ）で、すき間だけが無効になる
+const items3 = [{ id:'nosake', act:3, inc:0, periods:[{ from:'2026-07-01', until:null }] }];
+unpickItem(items3, 'nosake', '2026-07-05');
+pickItem(items3, { id:'nosake', act:3, inc:0 }, '2026-07-20');
+eq('出戻り 最初の期間は有効', isItemActiveOn(items3[0], '2026-07-03'), true);
+eq('出戻り すき間は無効',     isItemActiveOn(items3[0], '2026-07-10'), false);
+eq('出戻り 再開後は有効',     isItemActiveOn(items3[0], '2026-07-21'), true);
+
+// 今日追加して今日外す＝空区間は残さない
+const items4 = [];
+pickItem(items4, { id:'bath', act:2, inc:0 }, '2026-07-10');
+unpickItem(items4, 'bath', '2026-07-10');
+eq('同日に追加＆解除しても有効にならない', isItemActiveOn(items4[0], '2026-07-10'), false);
+eq('同日に追加＆解除で空区間を残さない', items4[0].periods.length, 0);
+
+// 既に有効なものを選び直しても区間は増えない
+const items5 = [{ id:'juice', act:2, inc:0.1, periods:[{ from:'2026-07-01', until:null }] }];
+pickItem(items5, { id:'juice', act:2, inc:0.1 }, '2026-07-10');
+eq('有効な項目を再選択しても区間は増えない', items5[0].periods.length, 1);
+
+/* --- v1.49: 選び直しても過去の集計が変わらないこと（設計の本丸） --- */
+const swapDays = {
+  '2026-07-01': { checked:['nosake'] },
+  '2026-07-02': { checked:['nosake'] },
+};
+const swapItems = [{ id:'nosake', act:20, inc:3, periods:[{ from:'2026-07-01', until:null }] }];
+const swapBefore = computeState({ startDate:'2026-07-01', items:swapItems, days:swapDays }, '2026-07-02');
+// 7/3に禁酒をやめて休肝日へ
+unpickItem(swapItems, 'nosake', '2026-07-03');
+pickItem(swapItems, { id:'restday', act:15, inc:2 }, '2026-07-03');
+const swapAfter = computeState({ startDate:'2026-07-01', items:swapItems, days:swapDays }, '2026-07-02');
+eq('入れ替え後も過去の活性が同じ', swapAfter.activation, swapBefore.activation);
+eq('入れ替え後も過去の匹数が同じ', swapAfter.mito, swapBefore.mito);
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);
