@@ -388,5 +388,57 @@ const swapAfter = computeState({ startDate:'2026-07-01', items:swapItems, days:s
 eq('入れ替え後も過去の活性が同じ', swapAfter.activation, swapBefore.activation);
 eq('入れ替え後も過去の匹数が同じ', swapAfter.mito, swapBefore.mito);
 
+/* --- v1.50: 強度（しきい値）も期間ごとに持つ --- */
+// 目標歩数を上げても、過去は当時の基準で判定されること
+const thItems = [{ id:'walk', act:2, inc:1, auto:'steps', threshold:3000,
+                   periods:[{ from:'2026-07-01', until:null }] }];
+const thDays = { '2026-07-01': { steps:3500 }, '2026-07-02': { steps:3500 } };
+const thBefore = computeState({ startDate:'2026-07-01', items:thItems, days:thDays }, '2026-07-02');
+setItemThreshold(thItems, 'walk', 10000, '2026-07-03');
+const thAfter = computeState({ startDate:'2026-07-01', items:thItems, days:thDays }, '2026-07-02');
+eq('目標を上げても過去の匹数が変わらない', thAfter.mito, thBefore.mito);
+eq('目標を上げても過去の活性が変わらない', thAfter.activation, thBefore.activation);
+eq('項目の現在値は新しい基準', thItems[0].threshold, 10000);
+eq('閉じた期間に当時の基準が焼き付く', thItems[0].periods[0].threshold, 3000);
+
+// itemForDate はその日の基準を返す
+eq('itemForDate 過去は旧基準', itemForDate(thItems[0], '2026-07-02').threshold, 3000);
+eq('itemForDate 今日は新基準', itemForDate(thItems[0], '2026-07-03').threshold, 10000);
+eq('itemForDate 無効な日はnull', itemForDate(thItems[0], '2026-06-30'), null);
+
+// 新しい基準は変更日から効く（3,500歩は10,000歩の目標では未達成）
+const thDays2 = { '2026-07-01': { steps:3500 }, '2026-07-03': { steps:3500 } };
+const thState = computeState({ startDate:'2026-07-01', items:thItems, days:thDays2 }, '2026-07-03');
+eq('変更後は新基準で判定される（3500歩では未達成）',
+  evalDay({ steps:3500 }, thItems, '2026-07-03').actSum, 0);
+eq('変更前は旧基準で判定される（3500歩で達成）',
+  evalDay({ steps:3500 }, thItems, '2026-07-01').actSum, 2);
+
+// 同じ日に2回変えても期間が増えない
+setItemThreshold(thItems, 'walk', 8000, '2026-07-03');
+eq('同日に変え直しても期間は増えない', thItems[0].periods.length, 2);
+eq('同日の変更は上書きされる', itemForDate(thItems[0], '2026-07-03').threshold, 8000);
+
+/* --- v1.50: 食べたものを記録する（自動判定） --- */
+eq('mealRec 記録ゼロ', countMealRecords({}), 0);
+eq('mealRec 写真1食', countMealRecords({ photos:{ breakfast:[{data:'x'}], lunch:[], dinner:[] } }), 1);
+eq('mealRec ことばの記録も1食',
+  countMealRecords({ mealAnalysis:{ breakfast:{ fullness:'普通' }, lunch:null, dinner:null } }), 1);
+eq('mealRec 写真とことばの重複は1食',
+  countMealRecords({ photos:{ breakfast:[{data:'x'}], lunch:[], dinner:[] },
+                     mealAnalysis:{ breakfast:{ fullness:'普通' }, lunch:null, dinner:null } }), 1);
+const mrItem = { id:'mealrec', act:2, inc:0, auto:'mealRec', threshold:2 };
+eq('mealRec 1食では未達成', isItemDone(mrItem, { photos:{ breakfast:[{data:'x'}], lunch:[], dinner:[] } }), false);
+eq('mealRec 2食で達成',
+  isItemDone(mrItem, { photos:{ breakfast:[{data:'x'}], lunch:[{data:'y'}], dinner:[] } }), true);
+
+/* --- v1.50: 睡眠は本人が選んだ必要時間を下回った日が減点 --- */
+const slp = { id:'sleeplack', act:-8, inc:0, auto:'sleepLack', threshold:8 };
+eq('睡眠 8時間必要な人の7時間は減点', isItemDone(slp, { sleepHours:7 }), true);
+eq('睡眠 8時間必要な人の8時間はセーフ', isItemDone(slp, { sleepHours:8 }), false);
+const slp5 = { id:'sleeplack', act:-8, inc:0, auto:'sleepLack', threshold:5 };
+eq('睡眠 5時間で足りる人の5.5時間はセーフ', isItemDone(slp5, { sleepHours:5.5 }), false);
+eq('睡眠 未記録は減点しない', isItemDone(slp5, { sleepHours:null }), false);
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);

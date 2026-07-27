@@ -357,6 +357,14 @@ nav.footer {
 .add-choice-btn:hover { background:var(--primary-50); border-color:var(--primary-300); }
 /* v1.49: やることを選ぶ（機序ごと） */
 .pick-intro { font-size:13px; line-height:1.8; color:var(--color-text-muted); margin-bottom:var(--space-4); }
+.pick-section-head { margin:var(--space-5) 0 var(--space-3); padding-top:var(--space-4); border-top:2px solid var(--primary-100); }
+.pick-section-head:first-child { margin-top:0; padding-top:0; border-top:none; }
+.pick-section-name { font-size:17px; font-weight:700; color:var(--primary-900); }
+.pick-section-lead { font-size:12px; color:var(--color-text-muted); line-height:1.7; margin-top:2px; }
+.pick-mech-fixed {
+  font-size:10px; font-weight:700; color:var(--color-text-muted);
+  background:var(--neutral-100); padding:1px 7px; border-radius:var(--radius-full);
+}
 .pick-mech { margin-bottom:var(--space-5); }
 .pick-mech-head { display:flex; align-items:baseline; gap:var(--space-2); margin-bottom:2px; }
 .pick-mech-name { font-size:15px; font-weight:700; color:var(--primary-900); }
@@ -1008,10 +1016,17 @@ function isItemDone(item, rec) {
     return Number(rec.steps || 0) >= (item.threshold ?? CFG.STEP_GOAL);
   }
   if (item.auto === 'sleepLack') {
+    // v1.50: 必要睡眠時間は個人差が大きい（5時間で足りる人も8時間要る人もいる）ので、
+    // 一律6時間ではなく本人が選んだ時間を下回った日を減点にする
     const h = rec.sleepHours;
     if (h === null || h === undefined || h === '') return false;
     const n = Number(h);
     return n > 0 && n < (item.threshold ?? CFG.SLEEP_LACK);
+  }
+  if (item.auto === 'mealRec') {
+    // v1.50: 食べたものを記録すること自体をやることにする。
+    // タンパク質と腹七分目の自動判定はこれが前提なので、土台として外せない扱いにする
+    return countMealRecords(rec) >= (item.threshold ?? 2);
   }
   if (item.auto === 'protein') {
     const w = Number(rec.weight);
@@ -1037,11 +1052,46 @@ function itemPeriods(item) {
   if (Array.isArray(item.periods)) return item.periods;
   return [{ from: item.activeFrom || null, until: item.activeUntil || null }];
 }
+function periodOn(item, dateStr) {
+  return itemPeriods(item).find(p =>
+    (!p.from || dateStr >= p.from) && (!p.until || dateStr <= p.until)) || null;
+}
 function isItemActiveOn(item, dateStr) {
   if (!item) return false;
   if (!dateStr) return true;
-  return itemPeriods(item).some(p =>
-    (!p.from || dateStr >= p.from) && (!p.until || dateStr <= p.until));
+  return !!periodOn(item, dateStr);
+}
+
+// v1.50: しきい値（歩数の目標・必要睡眠時間など）も期間ごとに持つ。
+// 目標を8,000歩に上げた瞬間に、過去の3,000歩の日が未達成に化けるのを防ぐため。
+// 期間にthresholdが無ければ項目の値をそのまま使う（移行前データ互換）。
+function itemForDate(item, dateStr) {
+  if (!dateStr) return item;
+  const p = periodOn(item, dateStr);
+  if (!p) return null;
+  if (p.threshold === undefined || p.threshold === null) return item;
+  return Object.assign({}, item, { threshold: p.threshold });
+}
+
+// v1.50: 強度（しきい値）の変更。今日から新しい基準にし、昨日までは前の基準のまま残す
+function setItemThreshold(items, itemId, threshold, todayStr) {
+  const ex = items.find(it => it.id === itemId);
+  if (!ex) return items;
+  const ps = itemPeriods(ex).map(p => ({ ...p }));
+  const cur = ps.find(p => (!p.from || todayStr >= p.from) && !p.until);
+  if (!cur) { ps.push({ from: todayStr, until: null, threshold }); }
+  else if (cur.from === todayStr) { cur.threshold = threshold; }   // 今日始めた期間なら上書き
+  else {
+    // 閉じる期間に「当時の基準」を焼き付けてから閉じる。
+    // これを忘れると、項目側の threshold を更新した瞬間に過去の判定まで新しい基準に化ける
+    if (cur.threshold === undefined || cur.threshold === null) cur.threshold = ex.threshold;
+    cur.until = prevDate(todayStr);
+    ps.push({ from: todayStr, until: null, threshold });
+  }
+  ex.periods = ps;
+  ex.threshold = threshold;   // 表示用の現在値
+  delete ex.activeFrom; delete ex.activeUntil;
+  return items;
 }
 
 // v1.49: がんばり度。「腕立て5回」と「3セットみっちり」を同じ +15 で扱うのは雑なので、
@@ -1075,8 +1125,10 @@ function itemEffect(item, rec) {
 // dateStr を渡すと、その日に有効だった項目だけを集計する（省略時は全項目＝従来どおり）
 function evalDay(rec, items, dateStr) {
   let actSum = 0, incSum = 0;
-  for (const it of items) {
-    if (!isItemActiveOn(it, dateStr)) continue;
+  for (const raw of items) {
+    // v1.50: その日に有効だったしきい値で判定する（目標を変えても過去が化けない）
+    const it = itemForDate(raw, dateStr);
+    if (!it) continue;
     if (isItemDone(it, rec)) {
       const eff = itemEffect(it, rec);
       actSum += eff.act;
@@ -1235,6 +1287,13 @@ const HARA7_OK_FULLNESS = ['腹七分目くらい', '軽め'];
 function countHara7Meals(rec) {
   const mas = (rec && rec.mealAnalysis) || {};
   return ['breakfast', 'lunch', 'dinner'].filter(m => mas[m] && HARA7_OK_FULLNESS.includes(mas[m].fullness)).length;
+}
+// v1.50: 記録できた食事の数（写真でも、ことばでの記録でも1食とみなす）
+function countMealRecords(rec) {
+  const ph = (rec && rec.photos) || {};
+  const mas = (rec && rec.mealAnalysis) || {};
+  return ['breakfast', 'lunch', 'dinner']
+    .filter(m => (Array.isArray(ph[m]) && ph[m].length > 0) || mas[m]).length;
 }
 
 /* ---- v1.5 ミトの一言（セリフ辞書と状況キー判定） ---- */
@@ -1431,13 +1490,32 @@ function backupNudge(db, todayStr) {
    ・食事の役割は「質を整える・守る・支える」であって数を増やすことではない
    → biogenesis（運動）枠だけは required。他の枠は手段の差し替えが効く。
    ============================================================ */
+// v1.50: 画面は「機序」ではなく「操作の性質」で3段に分ける。
+// 自動判定の項目は やる/やらない を選ぶものではなく「自分の基準を決める」ものなので、
+// 手で選ぶ習慣と同じ扱いにしていたのが実態に合っていなかった。
+//   section 'exercise' … 運動（匹数が増えるのはここだけ・任意・複数可）
+//   section 'habit'    … その他のやること（任意）
+//   section 'auto'     … 自動で判定（外せない・基準だけ決める）
 const MECHANISMS = [
-  { id:'biogenesis', name:'ミトコンドリアを増やす', lead:'数を増やせるのは運動だけ',           required:true, min:1, max:2 },
-  { id:'material',   name:'材料を届ける',           lead:'司令が出ても材料がなければ作れない', max:1 },
-  { id:'cleanup',    name:'質を整える・掃除する',   lead:'傷んだミトコンドリアを片づける',     max:2 },
-  { id:'protect',    name:'サビから守る',           lead:'活性酸素のダメージを減らす',         max:3 },
-  { id:'clock',      name:'体内時計を合わせる',     lead:'一日のリズムを整える',               max:1 },
-  { id:'stress',     name:'ストレスをおろす',       lead:'慢性ストレスの負荷を下げる',         max:1 },
+  { id:'biogenesis', section:'exercise', name:'運動',               lead:'ミトコンドリアの数を増やせるのは運動だけ。いくつ選んでもかまいません', max:4 },
+  { id:'protect',    section:'habit',    name:'サビから守る',       lead:'活性酸素のダメージを減らす',   max:3 },
+  { id:'cleanup',    section:'habit',    name:'質を整える・掃除する', lead:'傷んだミトコンドリアを片づける', max:2 },
+  { id:'clock',      section:'habit',    name:'体内時計を合わせる', lead:'一日のリズムを整える',         max:1 },
+  { id:'stress',     section:'habit',    name:'ストレスをおろす',   lead:'慢性ストレスの負荷を下げる',   max:1 },
+];
+
+// 自動で判定するもの（外せない）。やる/やらないではなく、自分に合う基準を選ぶ
+const AUTO_ITEMS = [
+  { id:'mealrec',   name:'食べたものを記録する', unit:'',
+    lead:'これが土台。記録するとタンパク質と腹七分目が自動で判定されます' },
+  { id:'walk',      name:'歩く',                 unit:'歩',
+    lead:'生活によって歩く量は全然ちがうので、自分に合う目標を選んでください' },
+  { id:'protein',   name:'タンパク質',           unit:'',
+    lead:'食事の記録から自動で集計されます' },
+  { id:'hara7',     name:'腹七分目',             unit:'',
+    lead:'食事の記録の「食べた量の感覚」から自動で判定されます' },
+  { id:'sleeplack', name:'睡眠',                 unit:'',
+    lead:'必要な睡眠時間は人によってちがいます。下回った日は減点になります' },
 ];
 
 // がんばり度の段階（5段階）。匹数だけを変え、活性(act)は項目ごとに固定のままにする。
@@ -1478,9 +1556,17 @@ const HIIT_EFFORTS = [
 
 const CATALOG = [
   /* --- A. 増やす（運動）。この枠だけは外せない --- */
-  { id:'walk', mech:'biogenesis', name:'ウォーキング', short:'ウォーキング', act:2, inc:0.5,
+  // v1.50: 歩数は自動で取れるので外せない枠に移した。ただし生活で歩く量が全然ちがう
+  // （自宅勤務なら3,000歩でも頑張り、通勤があれば5,000歩は自然に歩く）ので目標を選べる
+  { id:'walk', kind:'auto', mech:'biogenesis', name:'歩く', short:'ウォーキング', act:2, inc:0.5,
     auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2, isDefault:true,
-    efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）' },
+    efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）',
+    thresholds:[
+      { value:3000,  label:'3,000歩',  hint:'自宅勤務など、あまり歩かない生活' },
+      { value:5000,  label:'5,000歩',  hint:'買い物や送り迎えで少し歩く' },
+      { value:8000,  label:'8,000歩',  hint:'通勤がある。しっかり歩きたい' },
+      { value:10000, label:'10,000歩', hint:'意識して歩く習慣がある' },
+    ] },
   { id:'jog', mech:'biogenesis', name:'ジョギング', short:'ジョギング', act:4, inc:1,
     auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2,
     efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）' },
@@ -1497,18 +1583,43 @@ const CATALOG = [
     method:'自己申告（週2〜3回・中1〜2日あける）' },
 
   /* --- D. 材料。Aの前提条件 --- */
-  { id:'protein', mech:'material', name:'タンパク質をしっかり（体重×1.6g）', short:'タンパク質',
+  { id:'protein', kind:'auto', mech:'material', name:'タンパク質をしっかり', short:'タンパク質',
     act:4, inc:0.3, auto:'protein', threshold:1.6, inTodo:false, order:3, isDefault:true,
-    method:'写真（自動判定）' },
+    method:'食事の記録から自動判定',
+    thresholds:[
+      { value:1.2, label:'体重×1.2g', hint:'まずは無理なく。高齢の方や少食の方' },
+      { value:1.6, label:'体重×1.6g', hint:'標準。運動する人はここが目安' },
+      { value:2.0, label:'体重×2.0g', hint:'しっかり筋肉をつけたい' },
+    ] },
 
   /* --- B. 掃除・質の管理 --- */
-  { id:'hara7', mech:'cleanup', name:'腹七分目を守る', short:'腹七分目', act:3, inc:0.3,
-    auto:'hara7', threshold:2, inTodo:false, order:3, isDefault:true, method:'満腹度（自動集計・2食以上）' },
-  { id:'sleeplack', mech:'cleanup', name:'睡眠6時間未満', short:'睡眠不足', act:-8, inc:0,
+  { id:'hara7', kind:'auto', mech:'cleanup', name:'腹七分目を守る', short:'腹七分目', act:3, inc:0.3,
+    auto:'hara7', threshold:2, inTodo:false, order:3, isDefault:true, method:'食事の記録から自動判定',
+    thresholds:[
+      { value:1, label:'1食', hint:'まずは1食だけ意識する' },
+      { value:2, label:'2食', hint:'標準。3食のうち2食を腹七分目に' },
+      { value:3, label:'3食', hint:'毎食きっちり' },
+    ] },
+  { id:'sleeplack', kind:'auto', mech:'cleanup', name:'睡眠', short:'睡眠不足', act:-8, inc:0,
     auto:'sleepLack', threshold:6, inTodo:false, order:91, ng:true, isDefault:true,
-    method:'睡眠ログ（自動集計）' },
-  { id:'nightfast', mech:'cleanup', name:'夕食から翌朝まで12時間あける', short:'夜間空白',
+    method:'睡眠ログ（自動集計）',
+    thresholds:[
+      { value:5, label:'5時間', hint:'短くても平気なほう' },
+      { value:6, label:'6時間', hint:'標準' },
+      { value:7, label:'7時間', hint:'しっかり寝たい' },
+      { value:8, label:'8時間', hint:'8時間は寝ないと調子が出ない' },
+    ] },
+  { id:'nightfast', mech:'cleanup', name:'夜食べない', short:'夜食べない',
     act:3, inc:0, inTodo:true, order:5, method:'自己申告' },
+  // v1.50: 記録すること自体をやることにする。タンパク質・腹七分目はこれが前提なので土台扱い
+  { id:'mealrec', kind:'auto', mech:'material', name:'食べたものを記録する', short:'食事の記録',
+    act:2, inc:0, auto:'mealRec', threshold:2, inTodo:false, order:0, isDefault:true,
+    method:'写真かことばで記録すると自動でチェック',
+    thresholds:[
+      { value:1, label:'1食', hint:'まずは1食から' },
+      { value:2, label:'2食', hint:'標準。朝と夜など' },
+      { value:3, label:'3食', hint:'毎食きちんと残す' },
+    ] },
 
   /* --- C. 守る（抗酸化） --- */
   { id:'juice', mech:'protect', name:'野菜ジュース', short:'野菜ジュース', act:2, inc:0.1,
@@ -1547,17 +1658,18 @@ const CATALOG = [
 // v1.49: 選択画面に出す一行説明。「何をするのか」が名前だけでは分からないため。
 // 詳しい機序は INFO（ⓘボタン）で読める。ここは操作の実像がすぐ分かる書き方にする。
 const BLURB = {
-  walk:         '歩数から自動で判定。まずはここから',
+  walk:         '歩数から自動で判定',
   jog:          '歩くより短い時間で同じだけの刺激',
   cycling:      '膝への衝撃が少ない。通勤に混ぜやすい',
   swim:         '全身を使えて関節にやさしい',
   bodyweight:   '器具なしで家でできる。腕立て・スクワットなど',
   gymtrain:     '器具で負荷を細かく上げられる',
   hiit:         '短時間で最も効率がいい。週2〜3回まで',
-  protein:      '体重×1.6gが目安。食事写真から自動集計',
+  protein:      '食事の記録から自動で集計',
   hara7:        '満腹度の記録から自動で判定',
-  sleeplack:    '6時間未満だった日は減点になる',
-  nightfast:    '夕食から翌朝まで12時間あける',
+  sleeplack:    '選んだ時間を下回った日は減点になる',
+  mealrec:      '写真かことばで残すと自動でチェック',
+  nightfast:    '夕食のあとは、翌朝まで何も食べない',
   juice:        '朝の食事写真で自動チェック',
   colorveg:     '緑・赤・紫・橙の野菜を一品',
   nosake:       'その日はまったく飲まない',
@@ -1572,7 +1684,9 @@ const BLURB = {
 };
 
 function catalogById(id) { return CATALOG.find(c => c.id === id) || null; }
-function catalogByMech(mechId) { return CATALOG.filter(c => c.mech === mechId); }
+// 手で選ぶ項目だけ（自動判定の項目は AUTO_ITEMS 側で別に扱う）
+function catalogByMech(mechId) { return CATALOG.filter(c => c.mech === mechId && c.kind !== 'auto'); }
+function autoCatalog() { return AUTO_ITEMS.map(a => Object.assign({}, a, catalogById(a.id))).filter(a => a.id); }
 
 // v1.49: 新規ユーザーの初期セットはカタログの isDefault から生成する。
 // 既存ユーザーの DB.items はそのまま（migrate は act/inc を上書きしない）ので、
@@ -3687,28 +3801,108 @@ function checkAutoAchievements() {
 /* ---- v1.49: やることを選ぶ（機序ごとの代替選択） ----
    「項目のON/OFF」ではなく「同じ狙いの別の手段」を選ばせる。
    資料の黄金ルールにより運動枠だけは外せない（数を増やせるのは運動だけのため）。 */
+// v1.50: 自動判定の項目は外せない枠なので、無ければ補う（既存ユーザーには mealrec が無い）
+function ensureAutoItems() {
+  let added = false;
+  for (const a of AUTO_ITEMS) {
+    if (DB.items.some(it => it.id === a.id && isItemActiveOn(it, today))) continue;
+    const c = catalogById(a.id);
+    if (!c) continue;
+    pickItem(DB.items, c, today);
+    added = true;
+  }
+  if (added) commit();
+  return added;
+}
 function activePickIds() {
   return DB.items.filter(it => isItemActiveOn(it, today)).map(it => it.id);
 }
 function pickedInMech(mechId, ids) {
   return catalogByMech(mechId).filter(c => ids.includes(c.id));
 }
+// v1.50: 自動判定の項目は「やる/やらない」ではなく「自分の基準を決める」ので、
+// トグルではなく強度の選択肢を並べる。外すことはできない。
+function renderAutoSection(body) {
+  const head = document.createElement('div');
+  head.className = 'pick-section-head';
+  head.innerHTML =
+    `<div class="pick-section-name">自動で判定するもの</div>` +
+    `<div class="pick-section-lead">記録から自動で判定します。外せませんが、自分に合う基準を選べます。</div>`;
+  body.appendChild(head);
+
+  for (const a of autoCatalog()) {
+    const cur = DB.items.find(it => it.id === a.id);
+    const curVal = cur ? Number(cur.threshold) : Number(a.threshold);
+    const sec = document.createElement('div');
+    sec.className = 'pick-mech';
+    sec.innerHTML =
+      `<div class="pick-mech-head"><span class="pick-mech-name">${esc(a.name)}</span>` +
+        `<span class="pick-mech-fixed">外せない</span></div>` +
+      `<div class="pick-mech-lead">${esc(a.lead)}</div>`;
+    const wrap = document.createElement('div');
+    wrap.className = 'pick-opts';
+    for (const t of (a.thresholds || [])) {
+      const on = Number(t.value) === curVal;
+      const row = document.createElement('div');
+      row.className = 'pick-row' + (on ? ' on' : '');
+      const b = document.createElement('button');
+      b.className = 'pick-row-main';
+      b.innerHTML =
+        `<span class="pick-row-name">${on ? '✓ ' : ''}${esc(t.label)}</span>` +
+        (t.hint ? `<span class="pick-row-blurb">${esc(t.hint)}</span>` : '');
+      b.addEventListener('click', () => {
+        // 自動判定の項目が未所持なら足してから基準を決める（外せない枠なので必ず存在させる）
+        if (!DB.items.find(it => it.id === a.id)) {
+          const c = catalogById(a.id);
+          if (c) pickItem(DB.items, c, today);
+        }
+        setItemThreshold(DB.items, a.id, Number(t.value), today);
+        commit();
+        renderPickBody();
+      });
+      row.appendChild(b);
+      if (INFO[a.id]) {
+        const ib = document.createElement('button');
+        ib.className = 'pick-row-info';
+        ib.setAttribute('aria-label', `${a.name}の解説`);
+        ib.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+        ib.addEventListener('click', e => { e.stopPropagation(); openInfo(catalogById(a.id) || a); });
+        row.appendChild(ib);
+      }
+      wrap.appendChild(row);
+    }
+    sec.appendChild(wrap);
+    body.appendChild(sec);
+  }
+}
+
 function renderPickBody() {
   const ids = activePickIds();
   const body = $('#pickBody');
   body.innerHTML = '';
+  let lastSection = null;
   for (const m of MECHANISMS) {
     const opts = catalogByMech(m.id);
     if (!opts.length) continue;
+    // セクション（運動 / その他のやること）の見出しは切り替わり目で1度だけ出す
+    if (m.section !== lastSection) {
+      lastSection = m.section;
+      const sh = document.createElement('div');
+      sh.className = 'pick-section-head';
+      sh.innerHTML = m.section === 'exercise'
+        ? `<div class="pick-section-name">運動</div>` +
+          `<div class="pick-section-lead">ミトコンドリアの数を増やせるのは運動だけ。続けられそうなものを、いくつでも。</div>`
+        : `<div class="pick-section-name">そのほかのやること</div>` +
+          `<div class="pick-section-lead">どれも任意です。生活に合うものだけ選んでください。</div>`;
+      body.appendChild(sh);
+    }
     const picked = pickedInMech(m.id, ids);
     const sec = document.createElement('div');
     sec.className = 'pick-mech';
     sec.innerHTML =
-      `<div class="pick-mech-head">` +
-        `<span class="pick-mech-name">${esc(m.name)}</span>` +
-        (m.required ? `<span class="pick-mech-req">はずせない</span>` : '') +
-      `</div>` +
-      `<div class="pick-mech-lead">${esc(m.lead)}　えらべる数：最大${m.max}</div>`;
+      (m.section === 'exercise' ? '' :
+        `<div class="pick-mech-head"><span class="pick-mech-name">${esc(m.name)}</span></div>` +
+        `<div class="pick-mech-lead">${esc(m.lead)}　えらべる数：最大${m.max}</div>`);
     const wrap = document.createElement('div');
     wrap.className = 'pick-opts';
     for (const c of opts) {
@@ -3738,11 +3932,6 @@ function renderPickBody() {
       b.addEventListener('click', () => {
         const warn = $('#pickWarn');
         if (on) {
-          // 必須枠の最後の1つは外させない
-          if (m.required && picked.length <= (m.min || 1)) {
-            warn.textContent = `「${m.name}」は最低${m.min || 1}つ選んでください。${m.lead}からです。`;
-            return;
-          }
           unpickItem(DB.items, c.id, today);
         } else {
           if (picked.length >= m.max) {
@@ -3759,6 +3948,7 @@ function renderPickBody() {
     sec.appendChild(wrap);
     body.appendChild(sec);
   }
+  renderAutoSection(body);   // v1.50: 自動判定は最後にまとめて出す
   let warn = $('#pickWarn');
   if (!warn) {
     warn = document.createElement('div');
@@ -4304,13 +4494,9 @@ $('#selBannerBack').addEventListener('click', () => { sel = today; weekOffset = 
 /* ============ v1.49: やることを選ぶ ============ */
 $('#btnPickItems').addEventListener('click', () => openPick(false));
 $('#pickDone').addEventListener('click', () => {
-  // 必須枠が空のまま閉じさせない（運動が無いとミトコンドリアは増えないため）
-  const ids = activePickIds();
-  const missing = MECHANISMS.filter(m => m.required && pickedInMech(m.id, ids).length < (m.min || 1));
-  if (missing.length) {
-    $('#pickWarn').textContent = `「${missing[0].name}」から最低1つ選んでください。`;
-    return;
-  }
+  // v1.50: 運動は任意になった（歩数が自動で取れるので、歩くだけでも成立するため）。
+  // 自動判定の項目は外せない枠なので、欠けていれば黙って補ってから閉じる
+  ensureAutoItems();
   DB.onboarded = true;
   commit();
   $('#pickModal').classList.remove('open');
@@ -4363,6 +4549,8 @@ stage.canvas.addEventListener('click', e => {
 recompute();
 save();
 renderAll();
+// v1.50: 自動判定の項目（食事の記録など）は外せない枠なので、既存ユーザーにも足りない分を補う
+ensureAutoItems();
 // v1.49: 初回だけ「やることを選ぶ」を出す。既存ユーザーには出ない（migrateでonboarded済みにしている）
 if (!DB.onboarded) openPick(true);
 autoSyncHealthData();
