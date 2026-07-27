@@ -355,6 +355,23 @@ nav.footer {
   font-size:15px; font-weight:600; color:var(--neutral-800); text-align:left;
 }
 .add-choice-btn:hover { background:var(--primary-50); border-color:var(--primary-300); }
+/* v1.49: がんばり度の選択肢 */
+.effort-list { display:flex; flex-direction:column; gap:var(--space-2); }
+.effort-btn {
+  width:100%; padding:var(--space-3) var(--space-4); border-radius:var(--radius-md);
+  background:var(--neutral-50); border:1px solid var(--color-border);
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); text-align:left;
+}
+.effort-btn:hover { background:var(--primary-50); border-color:var(--primary-300); }
+.effort-btn.on { background:var(--primary-100); border-color:var(--primary-300); }
+.effort-main { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.effort-name { font-size:15px; font-weight:600; color:var(--neutral-800); }
+.effort-hint { font-size:11px; color:var(--color-text-muted); }
+.effort-inc {
+  flex:none; font-family:var(--font-number); font-size:13px; font-weight:700;
+  color:var(--primary-800); background:var(--primary-50);
+  padding:2px 10px; border-radius:var(--radius-full);
+}
 .set-section { background:var(--color-surface); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-4); box-shadow:var(--shadow-sm); }
 .set-section h4 { font-size:13px; font-weight:700; color:var(--color-text-muted); margin-bottom:var(--space-3); }
 .set-stats { display:flex; gap:var(--space-5); margin-bottom:var(--space-3); }
@@ -868,6 +885,17 @@ nav.footer {
     </div>
   </div>
 
+  <!-- v1.49: がんばり度の選択（運動系のみ）。食事の「食べた量の感覚」と同じ操作感に揃えている -->
+  <div class="modal" id="effortModal">
+    <div class="med-card" style="text-align:left">
+      <div class="sheet-head">
+        <h3 id="effortTitle">どのくらいやった？</h3>
+        <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="effort-list" id="effortList"></div>
+    </div>
+  </div>
+
   <!-- v1.26: 達成の瞬間の反応ダイアログ（段階2）。中央ポップアップ、数値は段階1のchange-overlayで見せるためここでは出さない -->
   <div class="modal" id="achieveModal">
     <div class="achieve-card">
@@ -909,9 +937,12 @@ function regress(act) { return Math.round(act + (CFG.ACT_START - act) * CFG.REGR
 
 // その項目がその日「達成」かどうか（自動判定含む）
 function isItemDone(item, rec) {
+  // v1.33: 万歩計の数値が実態と合わないことがあるため、手動チェックでも達成扱いにできる
+  // v1.49: これを auto==='steps' 限定から汎用化した。歩数で判定できない種目（スイミング等）を
+  //        自動判定枠に置けるようにするため。manualFallback が無い項目の挙動は変わらない。
+  if (item.auto && item.manualFallback && (rec.checked || []).includes(item.id)) return true;
   if (item.auto === 'steps') {
-    // v1.33: 万歩計の数値が実態と合わないことがあるため、手動チェックでも達成扱いにできる
-    return Number(rec.steps || 0) >= (item.threshold ?? CFG.STEP_GOAL) || (rec.checked || []).includes(item.id);
+    return Number(rec.steps || 0) >= (item.threshold ?? CFG.STEP_GOAL);
   }
   if (item.auto === 'sleepLack') {
     const h = rec.sleepHours;
@@ -930,13 +961,55 @@ function isItemDone(item, rec) {
   return (rec.checked || []).includes(item.id);
 }
 
+// v1.49: 項目がその日に有効だったか（activeFrom/activeUntil は 'YYYY-MM-DD'・どちらも境界を含む）
+// 匹数・活性は記録ログ全期間を毎回再生して求める設計のため、項目を差し替えると過去の推移まで
+// 変わってしまう。項目は削除せず有効期間を閉じることで、過去の集計結果を固定する。
+// どちらも未設定なら常に有効＝移行前のデータでも挙動が変わらない。
+function isItemActiveOn(item, dateStr) {
+  if (!item) return false;
+  if (!dateStr) return true;
+  if (item.activeFrom && dateStr < item.activeFrom) return false;
+  if (item.activeUntil && dateStr > item.activeUntil) return false;
+  return true;
+}
+
+// v1.49: がんばり度。「腕立て5回」と「3セットみっちり」を同じ +15 で扱うのは雑なので、
+// 運動系の項目は5段階のがんばり度で匹数の伸びを変える。
+// efforts を持たない項目（禁酒・野菜ジュース等＝達成か未達成かの二択）は従来どおり。
+// 段階の決め方は2通り: 歩数などデータから自動で決まるもの（effortFrom）と、本人が選ぶもの。
+function effortIndexFor(item, rec) {
+  const list = item.efforts;
+  if (!list || !list.length) return -1;
+  if (item.effortFrom === 'steps') {
+    const s = Number((rec && rec.steps) || 0);
+    let idx = 0;  // 手動チェック等でしきい値に届かない場合は最小段階として扱う
+    list.forEach((e, i) => { if (s >= (e.min ?? 0)) idx = i; });
+    return idx;
+  }
+  const n = Number(((rec && rec.effort) || {})[item.id]);
+  if (Number.isInteger(n) && n >= 0 && n < list.length) return n;
+  return item.defaultEffort ?? 2;  // 未記録なら「ふつう」
+}
+
+// 項目のその日の効果値（act/inc）。がんばり度があればそれを優先する
+function itemEffect(item, rec) {
+  const base = { act: Number(item.act) || 0, inc: Number(item.inc) || 0 };
+  const idx = effortIndexFor(item, rec);
+  const e = idx >= 0 && item.efforts ? item.efforts[idx] : null;
+  if (!e) return base;
+  return { act: e.act ?? base.act, inc: e.inc ?? base.inc };
+}
+
 // 1日ぶんの集計：活性スコア合計・匹数増加合計・カレンダー表示pt
-function evalDay(rec, items) {
+// dateStr を渡すと、その日に有効だった項目だけを集計する（省略時は全項目＝従来どおり）
+function evalDay(rec, items, dateStr) {
   let actSum = 0, incSum = 0;
   for (const it of items) {
+    if (!isItemActiveOn(it, dateStr)) continue;
     if (isItemDone(it, rec)) {
-      actSum += Number(it.act) || 0;
-      incSum += Number(it.inc) || 0;
+      const eff = itemEffect(it, rec);
+      actSum += eff.act;
+      incSum += eff.inc;
     }
   }
   return { actSum, incSum, points: actSum };
@@ -983,7 +1056,7 @@ function computeState(db, todayStr) {
     if (++guard > 4000) break;  // データ破損時の暴走防止（約11年分）
     if (d !== first) act = regress(act);
     const rec = (db.days && db.days[d]) || {};
-    const ev = evalDay(rec, items);
+    const ev = evalDay(rec, items, d);
     act = clamp(act + clamp(ev.actSum, -CFG.DAY_DELTA_CAP, CFG.DAY_DELTA_CAP), 0, 100);
     mito = mitoStep(mito, peak, act, ev.incSum);
     peak = Math.max(peak, mito);
@@ -1236,19 +1309,141 @@ function backupNudge(db, todayStr) {
 /* @logic-end */
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
-const DEFAULT_ITEMS = [
-  { id:'juice',      cat:'食事',      name:'野菜ジュース',                            short:'野菜ジュース', pri:'',  act:2,  inc:0.1, order:1,  inTodo:true,  method:'写真',                 timing:'朝起きてから', autoPhoto:'breakfast' },
-  { id:'walk',       cat:'運動',      name:'ウォーキング 3,000歩（朝の光も兼ねる）',   short:'ウォーキング', pri:'S', act:2,  inc:1,   order:2,  inTodo:false, auto:'steps',  threshold:3000, method:'万歩計（自動集計・手動チェックも可）', timing:'—', manualFallback:true },
-  { id:'protein',    cat:'食事',      name:'タンパク質をしっかり（体重×1.6g）',       short:'タンパク質',   pri:'S', act:4,  inc:0.3, order:3,  inTodo:false, auto:'protein', threshold:1.6, method:'写真（自動判定）',     timing:'夜寝る前' },
-  { id:'hara7',      cat:'食事',      name:'腹七分目を守る',                          short:'腹七分目',     pri:'S', act:3,  inc:0.3, order:3,  inTodo:false, auto:'hara7', threshold:2, method:'満腹度（自動集計・2食以上）', timing:'夜寝る前' },
-  { id:'bodyweight', cat:'運動',      name:'自重トレ（腕立て・スクワット等）',        short:'自重トレ',     pri:'S', act:6,  inc:15,  order:4,  inTodo:true,  method:'自己申告',             timing:'帰る前' },
-  { id:'nosake',     cat:'食事',      name:'禁酒',                                    short:'禁酒',         pri:'B', act:3,  inc:0,   order:5,  inTodo:true,  method:'自己申告',             timing:'夜寝る前' },
-  { id:'darknight',  cat:'睡眠・生活', name:'夜は暗くしてスマホを避ける',              short:'夜は暗く',     pri:'S', act:2,  inc:0,   order:6,  inTodo:false, method:'自己申告（判定曖昧のため一時停止）', timing:'夜' },
-  { id:'meditate',   cat:'睡眠・生活', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）',        short:'呼吸瞑想',     pri:'A', act:2,  inc:0.1, order:6,  inTodo:true,  method:'瞑想タイマー',         timing:'終わってから', timer:true },
-  { id:'sugar',      cat:'NG行動',    name:'砂糖・甘い飲料・お菓子をとった',           short:'砂糖NG',       pri:'',  act:-3, inc:0,   order:90, inTodo:false, ng:true, method:'自己申告（廃止・sugarCtrlに統合）', timing:'寝る前' },
-  { id:'sugarCtrl',  cat:'食事',      name:'糖分に気を付ける', short:'糖分', pri:'B', act:1, inc:0, order:5, inTodo:true, method:'自己申告', timing:'寝る前' },
-  { id:'sleeplack',  cat:'NG行動',    name:'睡眠6時間未満',                           short:'睡眠不足',     pri:'',  act:-8, inc:0,   order:91, inTodo:false, ng:true, auto:'sleepLack', threshold:6, method:'睡眠ログ（自動集計）', timing:'翌朝' },
+/* ============================================================
+   v1.49: 機序スロットとカタログ
+   人によって生活が違う（歩きたい人／筋トレはしない人、酒をやめたい人／やめない人、
+   瞑想をやりたい人／やりたくない人）ので、やることを選べるようにする。
+   ただし選ばせ方は「項目のON/OFF」ではなく「作用機序ごとの代替手段」にする。
+   そうしないと「お酒はやめないが代わりに別のことをする」に応えられないため。
+
+   知識ベース§0の黄金ルール（docs/食事解析_ミトコンドリア知識ベース.md）が設計の背骨:
+   ・ミトコンドリアの「数」を増やせるのは運動だけ
+   ・食事の役割は「質を整える・守る・支える」であって数を増やすことではない
+   → biogenesis（運動）枠だけは required。他の枠は手段の差し替えが効く。
+   ============================================================ */
+const MECHANISMS = [
+  { id:'biogenesis', name:'ミトコンドリアを増やす', lead:'数を増やせるのは運動だけ',           required:true, min:1, max:2 },
+  { id:'material',   name:'材料を届ける',           lead:'司令が出ても材料がなければ作れない', max:1 },
+  { id:'cleanup',    name:'質を整える・掃除する',   lead:'傷んだミトコンドリアを片づける',     max:2 },
+  { id:'protect',    name:'サビから守る',           lead:'活性酸素のダメージを減らす',         max:3 },
+  { id:'clock',      name:'体内時計を合わせる',     lead:'一日のリズムを整える',               max:1 },
+  { id:'stress',     name:'ストレスをおろす',       lead:'慢性ストレスの負荷を下げる',         max:1 },
 ];
+
+// がんばり度の段階（5段階）。匹数だけを変え、活性(act)は項目ごとに固定のままにする。
+// 数値の根拠: 111匹→上限5000匹を2〜3年で到達する想定。ふつうの良い日で約7.8匹/日、
+// 7割稼働の平均5.5匹/日 → 約2.4年。毎日「追い込んだ」でも11.8匹/日なので青天井にならない。
+const STRENGTH_EFFORTS = [
+  { label:'ちょっとだけ', hint:'1種目・数回',                 inc:1 },
+  { label:'軽め',         hint:'1〜2種目・各10回',            inc:2 },
+  { label:'ふつう',       hint:'2〜3種目・各10〜15回',        inc:4 },
+  { label:'しっかり',     hint:'3種目・各2〜3セット',         inc:6 },
+  { label:'追い込んだ',   hint:'4種目・各3セット、または高負荷', inc:8 },
+];
+// 有酸素（時間で申告するタイプ）
+const CARDIO_EFFORTS = [
+  { label:'10分',  inc:0.5 },
+  { label:'20分',  inc:1 },
+  { label:'30分',  inc:1.5 },
+  { label:'45分',  inc:2 },
+  { label:'60分以上', inc:3 },
+];
+// 歩数は本人に聞かず、記録された歩数から自動で段階が決まる
+const WALK_EFFORTS = [
+  { label:'3,000歩',  min:3000,  inc:0.5 },
+  { label:'5,000歩',  min:5000,  inc:1 },
+  { label:'8,000歩',  min:8000,  inc:1.5 },
+  { label:'10,000歩', min:10000, inc:2 },
+  { label:'15,000歩', min:15000, inc:3 },
+];
+// HIITは時間あたり効率が持久の2〜3倍（論文レビューのメタ回帰）。ただし回復に中1〜2日要るので
+// 毎日やる前提の値にはしない
+const HIIT_EFFORTS = [
+  { label:'2本',   inc:2 },
+  { label:'4本',   inc:3.5 },
+  { label:'6本',   inc:5 },
+  { label:'8本',   inc:6.5 },
+  { label:'タバタ完走', inc:8 },
+];
+
+const CATALOG = [
+  /* --- A. 増やす（運動）。この枠だけは外せない --- */
+  { id:'walk', mech:'biogenesis', name:'ウォーキング', short:'ウォーキング', act:2, inc:0.5,
+    auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2, isDefault:true,
+    efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）' },
+  { id:'jog', mech:'biogenesis', name:'ジョギング', short:'ジョギング', act:4, inc:1,
+    auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2,
+    efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）' },
+  { id:'cycling', mech:'biogenesis', name:'サイクリング', short:'サイクリング', act:4, inc:1,
+    inTodo:true, order:2, efforts:CARDIO_EFFORTS, method:'自己申告（歩数では測れないため）' },
+  { id:'swim', mech:'biogenesis', name:'スイミング', short:'スイミング', act:4, inc:1,
+    inTodo:true, order:2, efforts:CARDIO_EFFORTS, method:'自己申告（歩数では測れないため）' },
+  { id:'bodyweight', mech:'biogenesis', name:'自重トレ（腕立て・スクワット等）', short:'自重トレ',
+    act:6, inc:4, inTodo:true, order:4, isDefault:true, efforts:STRENGTH_EFFORTS, method:'自己申告' },
+  { id:'gymtrain', mech:'biogenesis', name:'筋トレ（ジム・器具あり）', short:'筋トレ',
+    act:6, inc:4, inTodo:true, order:4, efforts:STRENGTH_EFFORTS, method:'自己申告' },
+  { id:'hiit', mech:'biogenesis', name:'HIIT（20秒全力・10秒休み）', short:'HIIT',
+    act:6, inc:3.5, inTodo:true, order:4, efforts:HIIT_EFFORTS,
+    method:'自己申告（週2〜3回・中1〜2日あける）' },
+
+  /* --- D. 材料。Aの前提条件 --- */
+  { id:'protein', mech:'material', name:'タンパク質をしっかり（体重×1.6g）', short:'タンパク質',
+    act:4, inc:0.3, auto:'protein', threshold:1.6, inTodo:false, order:3, isDefault:true,
+    method:'写真（自動判定）' },
+
+  /* --- B. 掃除・質の管理 --- */
+  { id:'hara7', mech:'cleanup', name:'腹七分目を守る', short:'腹七分目', act:3, inc:0.3,
+    auto:'hara7', threshold:2, inTodo:false, order:3, isDefault:true, method:'満腹度（自動集計・2食以上）' },
+  { id:'sleeplack', mech:'cleanup', name:'睡眠6時間未満', short:'睡眠不足', act:-8, inc:0,
+    auto:'sleepLack', threshold:6, inTodo:false, order:91, ng:true, isDefault:true,
+    method:'睡眠ログ（自動集計）' },
+  { id:'nightfast', mech:'cleanup', name:'夕食から翌朝まで12時間あける', short:'夜間空白',
+    act:3, inc:0, inTodo:true, order:5, method:'自己申告' },
+
+  /* --- C. 守る（抗酸化） --- */
+  { id:'juice', mech:'protect', name:'野菜ジュース', short:'野菜ジュース', act:2, inc:0.1,
+    inTodo:true, order:1, isDefault:true, autoPhoto:'breakfast', effect:'clean', method:'写真' },
+  { id:'colorveg', mech:'protect', name:'色の濃い野菜を一品', short:'色野菜', act:2, inc:0.1,
+    inTodo:true, order:1, autoPhoto:'breakfast', effect:'clean', method:'写真' },
+  { id:'nosake', mech:'protect', name:'禁酒', short:'禁酒', act:3, inc:0,
+    inTodo:true, order:5, isDefault:true, method:'自己申告' },
+  // 「どうしても飲む人」向け。完全禁酒より効果は控えめにする
+  { id:'restday', mech:'protect', name:'休肝日をつくる', short:'休肝日', act:2, inc:0,
+    inTodo:true, order:5, method:'自己申告' },
+  { id:'lessdrink', mech:'protect', name:'お酒を控えめにする（1〜2杯まで）', short:'お酒控えめ',
+    act:1, inc:0, inTodo:true, order:5, method:'自己申告' },
+  { id:'sugarCtrl', mech:'protect', name:'糖分に気を付ける', short:'糖分', act:1, inc:0,
+    inTodo:true, order:5, isDefault:true, method:'自己申告' },
+  { id:'nosmoke', mech:'protect', name:'禁煙', short:'禁煙', act:3, inc:0,
+    inTodo:true, order:5, method:'自己申告' },
+
+  /* --- E. 体内時計。従来は walk の名前に同梱されていたのを独立させた --- */
+  { id:'morninglight', mech:'clock', name:'朝の光を浴びる', short:'朝の光', act:2, inc:0,
+    inTodo:true, order:1, method:'自己申告' },
+
+  /* --- F. ストレス --- */
+  { id:'meditate', mech:'stress', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）', short:'呼吸瞑想',
+    act:2, inc:0.1, inTodo:true, order:6, isDefault:true, timer:true, method:'瞑想タイマー' },
+  // 入浴は本来「熱ショックタンパク質」＝別機序だが、枠を増やしすぎないのでストレス枠に置く
+  { id:'bath', mech:'stress', name:'湯船につかる', short:'入浴', act:2, inc:0,
+    inTodo:true, order:6, method:'自己申告' },
+  { id:'stretch', mech:'stress', name:'ストレッチ', short:'ストレッチ', act:2, inc:0,
+    inTodo:true, order:6, method:'自己申告' },
+  { id:'darknight', mech:'stress', name:'夜は暗くしてスマホを避ける', short:'夜は暗く',
+    act:2, inc:0, inTodo:false, order:6, method:'自己申告（判定曖昧のため一時停止）' },
+];
+
+function catalogById(id) { return CATALOG.find(c => c.id === id) || null; }
+function catalogByMech(mechId) { return CATALOG.filter(c => c.mech === mechId); }
+
+// v1.49: 新規ユーザーの初期セットはカタログの isDefault から生成する。
+// 既存ユーザーの DB.items はそのまま（migrate は act/inc を上書きしない）ので、
+// 平井さんの育成データ・過去の匹数推移は一切変わらない。
+// 旧 DEFAULT_ITEMS にあった cat/pri/timing は実装のどこからも参照されていないデッドフィールドだったため、
+// カタログには持ち込まなかった（機序の分類は mech が担う）。
+// 廃止済みの 'sugar' も新規ユーザーには不要なのでカタログには入れていない
+//（既存ユーザーの履歴用に DB.items 側には残り、migrate も DEFAULT_ITEMS を参照せず処理する）。
+const DEFAULT_ITEMS = CATALOG.filter(c => c.isDefault).map(c => structuredClone(c));
 
 /* ============ ミト解説（TODO項目ごと・教育コンテンツ） ============ */
 // 一般的な健康情報。医療上の助言ではない（infoModalに注記を表示）
@@ -1412,6 +1607,11 @@ function migrate(d) {
         it.manualFallback = true;
         it.method = '万歩計（自動集計・手動チェックも可）';
       }
+      // v1.49: チェック時の演出を項目データ駆動にしたので、既存ユーザーのjuiceにもeffectを補う
+      //（無いと野菜ジュースのクリーン演出が出なくなる）
+      if (it && it.id === 'juice' && !it.effect) {
+        it.effect = 'clean';
+      }
     });
     // v1.27: 既存ユーザーのDB.itemsにsugarCtrlが無ければ新規追加する
     if (!d.items.some(it => it && it.id === 'sugarCtrl')) {
@@ -1483,6 +1683,7 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 
 function emptyRec() {
   return { checked:[], steps:null, sleepHours:null, weight:null,
+           effort:{},  // v1.49: 項目id → がんばり度の段階(0〜4)
            photos:{breakfast:[],lunch:[],dinner:[]},
            mealAnalysis:{breakfast:null,lunch:null,dinner:null} };
 }
@@ -2716,9 +2917,11 @@ async function addPhotoFile(file) {
         if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
           rec.checked.push(it.id);
           autoMsg = `「${it.name}」を自動チェックしました`;
-          // v1.5: 朝写真で野菜ジュースが自動チェックされたときのミトの一言・演出
-          mitoSpeak('juice');
-          mitoEffect('clean');
+          // v1.5: 写真で自動チェックされたときのミトの一言・演出
+          // v1.49: 'juice' 直書きをやめ、項目自身のidと effect から引くようにした
+          //        （mitoSpeak は SPEECH に無いキーなら何もしないので、解説の無い項目でも安全）
+          mitoSpeak(it.id);
+          if (it.effect) mitoEffect(it.effect);
         }
       }
     }
@@ -2773,7 +2976,9 @@ function renderInputs() {
     const steps = Number(rec.steps || 0);
     if (steps >= goal) {
       stepSt.className = 'rec-status ok';
-      stepSt.textContent = `✓ ${walk.name} 達成（活+${walk.act}・+${walk.inc}匹）`;
+      // v1.49: 歩数が多いほど匹数が増える（がんばり度）ので、その日の実効値を出す
+      const we = itemEffect(walk, rec);
+      stepSt.textContent = `✓ ${walk.name} 達成（活+${we.act}・+${we.inc}匹）`;
     } else {
       stepSt.className = 'rec-status wait';
       stepSt.textContent = `${goal.toLocaleString()}歩で達成（あと${(goal - steps).toLocaleString()}歩）`;
@@ -3267,7 +3472,51 @@ function checkAutoAchievements() {
   const shown = showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct);
   setTimeout(() => newly.forEach(it => queueReaction(it, SPEECH[it.id] ? it.id : null)), shown ? ACHIEVE_DIALOG_DELAY_MS : 0);
 }
+/* ---- v1.49: がんばり度の選択 ----
+   「腕立て5回」と「3セットみっちり」を同じ匹数で扱うのは雑なので、運動系はその日の
+   がんばり具合を選んでもらう。歩数から自動で決まる項目（effortFrom）は聞かない。 */
+function needsEffortPick(item) {
+  return !!(item && item.efforts && item.efforts.length && !item.effortFrom);
+}
+function openEffortPick(item, onPick) {
+  const rec = getRec(sel, true);
+  const cur = (rec.effort || {})[item.id];
+  $('#effortTitle').textContent = `${item.short || item.name}：どのくらいやった？`;
+  const list = $('#effortList');
+  list.innerHTML = '';
+  item.efforts.forEach((e, idx) => {
+    const b = document.createElement('button');
+    b.className = 'effort-btn' + (Number(cur) === idx ? ' on' : '');
+    b.innerHTML =
+      `<span class="effort-main">` +
+        `<span class="effort-name">${esc(e.label)}</span>` +
+        (e.hint ? `<span class="effort-hint">${esc(e.hint)}</span>` : '') +
+      `</span>` +
+      `<span class="effort-inc">+${e.inc}匹</span>`;
+    b.addEventListener('click', () => {
+      const r = getRec(sel, true);
+      if (!r.effort) r.effort = {};
+      r.effort[item.id] = idx;
+      $('#effortModal').classList.remove('open');
+      onPick();
+    });
+    list.appendChild(b);
+  });
+  $('#effortModal').classList.add('open');
+}
+
 function toggleCheck(item, srcEl) {
+  // v1.49: がんばり度が要る項目は、先に段階を選んでからチェックを確定する
+  //（外すときは聞かない。既にチェック済みならタップは解除の意味になるため）
+  const recNow = getRec(sel, true);
+  if (needsEffortPick(item) && recNow.checked.indexOf(item.id) < 0) {
+    openEffortPick(item, () => applyCheck(item, srcEl));
+    return;
+  }
+  applyCheck(item, srcEl);
+}
+
+function applyCheck(item, srcEl) {
   const rec = getRec(sel, true);
   const i = rec.checked.indexOf(item.id);
   const checking = i < 0;
@@ -3278,13 +3527,15 @@ function toggleCheck(item, srcEl) {
   if (checking) {
     rec.checked.push(item.id);
     beforeMito = computed.mito; beforeAct = computed.activation;
-    if (item.id === 'juice') mitoEffect('clean');
+    if (item.effect) mitoEffect(item.effect);  // v1.49: 'juice' 直書きから項目データ駆動に
   } else {
     rec.checked.splice(i, 1);
   }
   commit();
   // v1.26: プラスの変化があったときだけ、段階1（変化量オーバーレイ）→段階2（反応ダイアログ＋セリフ）の演出
-  if (checking && !item.ng && (item.act > 0 || item.inc > 0)) {
+  // v1.49: がんばり度がある項目は素の inc ではなくその日の実効値で判定する
+  const eff = itemEffect(item, rec);
+  if (checking && !item.ng && (eff.act > 0 || eff.inc > 0)) {
     celebrateAchievement(item, beforeMito, computed.mito, beforeAct, computed.activation, k);
   } else if (checking && k) {
     mitoSpeak(k); // ダイアログを出さない項目（変化なし等）は従来どおり上部に表示
@@ -3307,7 +3558,7 @@ function dayContributions(dateStr) {
     const actBefore = (d === firstD) ? act : regress(act);
     const mitoBefore = mito, peakBefore = peak;
     const rec = DB.days[d] || {};
-    const ev = evalDay(rec, items);
+    const ev = evalDay(rec, items, d);
     act = clamp(actBefore + clamp(ev.actSum, -CFG.DAY_DELTA_CAP, CFG.DAY_DELTA_CAP), 0, 100);
     mito = mitoStep(mito, peak, act, ev.incSum);
     peak = Math.max(peak, mito);
@@ -3318,6 +3569,7 @@ function dayContributions(dateStr) {
       const memory = (base + ev.incSum) > 0 && mitoBefore <= peakBefore / 2;
       const actItems = [], mitoItems = [];
       for (const it of items) {
+        if (!isItemActiveOn(it, d)) continue;  // v1.49: その日に有効だった項目だけ内訳に出す
         if (isItemDone(it, rec)) {
           if (Number(it.act)) actItems.push({ name:it.name, v:Number(it.act) });
           if (Number(it.inc)) mitoItems.push({ name:it.name, v:Number(it.inc) });
@@ -3374,7 +3626,14 @@ function openInfo(item) {
   const info = INFO[item.id];
   if (!info) return;
   $('#infoTitle').textContent = item.name;
-  const scoreTxt = `活${item.act > 0 ? '+' : ''}${item.act}` + (item.inc ? `　+${item.inc}匹` : '');
+  // v1.49: がんばり度がある項目は固定値ではなく幅で見せる（例「活+6　+1〜8匹」）
+  let incTxt = item.inc ? `　+${item.inc}匹` : '';
+  if (item.efforts && item.efforts.length) {
+    const incs = item.efforts.map(e => Number(e.inc) || 0);
+    const lo = Math.min(...incs), hi = Math.max(...incs);
+    incTxt = hi > 0 ? `　+${lo}〜${hi}匹` : '';
+  }
+  const scoreTxt = `活${item.act > 0 ? '+' : ''}${item.act}` + incTxt;
   $('#infoBody').innerHTML =
     `<div class="info-score">${esc(scoreTxt)}</div>` +
     `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.34 6.34-.7-.7"/><path d="M2 12h4"/><circle cx="12" cy="14" r="4"/></svg>なぜミトコンドリアに効くの？</div><p>${esc(info.why)}</p></div>` +

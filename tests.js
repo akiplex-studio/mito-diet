@@ -196,5 +196,132 @@ eq('backupNudge 6日経過は促さない',
 eq('backupNudge 7日経過は促す',
   backupNudge({ days: { a:1, b:1, c:1 }, lastExport:'2026-07-04' }, '2026-07-11'), { kind:'stale', days:7 });
 
+/* --- v1.49: がんばり度（5段階） --- */
+const strengthEfforts = [
+  { label:'ちょっとだけ', inc:1 }, { label:'軽め', inc:2 }, { label:'ふつう', inc:4 },
+  { label:'しっかり', inc:6 }, { label:'追い込んだ', inc:8 },
+];
+const bw = { id:'bw', act:6, inc:4, efforts:strengthEfforts };
+
+// efforts を持たない項目は従来どおり（既存ユーザーの項目が変わらないことの担保）
+eq('effort 無し項目は素の値', itemEffect({ id:'x', act:6, inc:15 }, { checked:['x'] }), { act:6, inc:15 });
+eq('effort 無し項目は段階-1', effortIndexFor({ id:'x', act:6, inc:15 }, {}), -1);
+
+// 本人が選んだ段階が効く
+eq('effort ちょっとだけ', itemEffect(bw, { effort:{ bw:0 } }), { act:6, inc:1 });
+eq('effort ふつう',       itemEffect(bw, { effort:{ bw:2 } }), { act:6, inc:4 });
+eq('effort 追い込んだ',   itemEffect(bw, { effort:{ bw:4 } }), { act:6, inc:8 });
+// 活性は段階によらず一定（匹数だけを変える設計）
+eq('effort 活性は段階で変わらない',
+  itemEffect(bw, { effort:{ bw:0 } }).act, itemEffect(bw, { effort:{ bw:4 } }).act);
+
+// 未記録・不正値は「ふつう」に寄せる
+eq('effort 未記録はふつう',   itemEffect(bw, {}), { act:6, inc:4 });
+eq('effort 範囲外はふつう',   itemEffect(bw, { effort:{ bw:99 } }), { act:6, inc:4 });
+eq('effort 文字列はふつう',   itemEffect(bw, { effort:{ bw:'つよい' } }), { act:6, inc:4 });
+
+// 歩数はデータから段階が決まる（本人に聞かない）
+const walkEfforts = [
+  { label:'3,000歩', min:3000, inc:0.5 }, { label:'5,000歩', min:5000, inc:1 },
+  { label:'8,000歩', min:8000, inc:1.5 }, { label:'10,000歩', min:10000, inc:2 },
+  { label:'15,000歩', min:15000, inc:3 },
+];
+const wk = { id:'wk', act:2, inc:0.5, auto:'steps', threshold:3000, manualFallback:true,
+             efforts:walkEfforts, effortFrom:'steps' };
+eq('effort 歩数3000は最小段階', itemEffect(wk, { steps:3000 }).inc, 0.5);
+eq('effort 歩数8000',          itemEffect(wk, { steps:8000 }).inc, 1.5);
+eq('effort 歩数20000は最大段階', itemEffect(wk, { steps:20000 }).inc, 3);
+// 手動チェック（歩数0）でも最小段階として扱う＝申告だけで満額もらえてしまわない
+eq('effort 手動チェックは最小段階', itemEffect(wk, { steps:0, checked:['wk'] }).inc, 0.5);
+
+// evalDay ががんばり度を反映する
+eq('evalDay がんばり度を反映',
+  evalDay({ checked:['bw'], effort:{ bw:4 } }, [bw]), { actSum:6, incSum:8, points:6 });
+eq('evalDay がんばり度ちょっとだけ',
+  evalDay({ checked:['bw'], effort:{ bw:0 } }, [bw]), { actSum:6, incSum:1, points:6 });
+
+/* --- v1.49: manualFallback の汎用化（auto==='steps' 限定をやめた） --- */
+// 歩数はしきい値でこれまでどおり自動達成
+eq('manualFallback steps しきい値で達成',
+  isItemDone({ id:'w', auto:'steps', threshold:3000, manualFallback:true }, { steps:3000 }), true);
+// 歩数が足りなくても、manualFallback があれば手動チェックで達成にできる
+eq('manualFallback steps 手動チェックで達成',
+  isItemDone({ id:'w', auto:'steps', threshold:3000, manualFallback:true }, { steps:0, checked:['w'] }), true);
+// 歩数で判定できない種目（スイミング等）も manualFallback だけで達成にできる
+eq('manualFallback 自動判定できない種目も手動で達成',
+  isItemDone({ id:'swim', auto:'minutes', manualFallback:true }, { checked:['swim'] }), true);
+// manualFallback が無い自動判定項目は、手動チェックしても達成にならない（タンパク質・腹七分目など）
+eq('manualFallback 無しは手動チェックでも達成しない',
+  isItemDone({ id:'protein', auto:'protein', threshold:1.6 }, { checked:['protein'], weight:60 }), false);
+// 手動項目（autoなし）は従来どおりチェックだけで達成
+eq('manualFallback 手動項目は従来どおり',
+  isItemDone({ id:'m' }, { checked:['m'] }), true);
+
+/* --- v1.49: 項目の有効期間（activeFrom / activeUntil） --- */
+// 未設定なら常に有効（＝移行前のデータで挙動が変わらないことの担保）
+eq('active 未設定は常に有効', isItemActiveOn({ id:'x' }, '2026-07-01'), true);
+eq('active 日付未指定なら有効', isItemActiveOn({ id:'x', activeFrom:'2026-07-05' }, undefined), true);
+eq('active itemがnullなら無効', isItemActiveOn(null, '2026-07-01'), false);
+
+// activeFrom は境界を含む
+eq('active from 前日は無効', isItemActiveOn({ activeFrom:'2026-07-05' }, '2026-07-04'), false);
+eq('active from 当日は有効', isItemActiveOn({ activeFrom:'2026-07-05' }, '2026-07-05'), true);
+eq('active from 翌日は有効', isItemActiveOn({ activeFrom:'2026-07-05' }, '2026-07-06'), true);
+
+// activeUntil も境界を含む
+eq('active until 当日は有効', isItemActiveOn({ activeUntil:'2026-07-05' }, '2026-07-05'), true);
+eq('active until 翌日は無効', isItemActiveOn({ activeUntil:'2026-07-05' }, '2026-07-06'), false);
+
+// 期間の両端を持つ場合
+const spanItem = { activeFrom:'2026-07-05', activeUntil:'2026-07-07' };
+eq('active span 開始前', isItemActiveOn(spanItem, '2026-07-04'), false);
+eq('active span 期間内', isItemActiveOn(spanItem, '2026-07-06'), true);
+eq('active span 終了後', isItemActiveOn(spanItem, '2026-07-08'), false);
+
+// evalDay が有効期間でフィルタする
+const datedItems = [
+  { id:'old', act:5, inc:2, activeUntil:'2026-07-05' },   // 7/5で終了
+  { id:'new', act:3, inc:1, activeFrom:'2026-07-06' },    // 7/6から開始
+];
+const bothChecked = { checked:['old', 'new'] };
+eq('evalDay 日付なしは全項目（従来どおり）',
+  evalDay(bothChecked, datedItems), { actSum:8, incSum:3, points:8 });
+eq('evalDay 切替前は旧項目だけ',
+  evalDay(bothChecked, datedItems, '2026-07-05'), { actSum:5, incSum:2, points:5 });
+eq('evalDay 切替後は新項目だけ',
+  evalDay(bothChecked, datedItems, '2026-07-06'), { actSum:3, incSum:1, points:3 });
+
+/* --- v1.49: 項目を差し替えても過去の匹数・活性が変わらないこと（本丸の回帰テスト） --- */
+// 7/1〜7/3 は old をチェックして育てた記録
+const histDays = {
+  '2026-07-01': { checked:['old'] },
+  '2026-07-02': { checked:['old'] },
+  '2026-07-03': { checked:['old'] },
+};
+// 差し替え前: old だけが存在
+const beforeSwap = computeState(
+  { startDate:'2026-07-01', items:[{ id:'old', act:20, inc:3 }], days:histDays }, '2026-07-03');
+// 差し替え後: 7/3で old を終了させ、7/4から new を開始（過去日の定義は変えない）
+const afterSwap = computeState({
+  startDate:'2026-07-01',
+  items:[
+    { id:'old', act:20, inc:3, activeUntil:'2026-07-03' },
+    { id:'new', act:20, inc:3, activeFrom:'2026-07-04' },
+  ],
+  days: histDays,
+}, '2026-07-03');
+eq('差し替えても過去の活性が変わらない', afterSwap.activation, beforeSwap.activation);
+eq('差し替えても過去の匹数が変わらない', afterSwap.mito, beforeSwap.mito);
+eq('差し替えても過去のピークが変わらない', afterSwap.peak, beforeSwap.peak);
+
+// 有効期間を閉じた項目は、その後の日には効かない
+const afterEnd = computeState({
+  startDate:'2026-07-01',
+  items:[{ id:'old', act:20, inc:3, activeUntil:'2026-07-03' }],
+  days: { ...histDays, '2026-07-04': { checked:['old'] } },
+}, '2026-07-04');
+// 7/4は加点されないので、活性は回帰のみ（7/3時点から50へ30%戻る）
+eq('終了後はチェックしても加点されない', afterEnd.activation, regress(beforeSwap.activation));
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);
