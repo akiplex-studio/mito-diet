@@ -1213,6 +1213,23 @@ function nextDate(dstr) {
   t.setDate(t.getDate() + 1);
   return fmtDate(t);
 }
+/* v1.52: ヘルスデータの体重サンプルから「その日に測った値」を選ぶ。
+   ・その日に測っていなければ null（前の日の値を持ち越さない）。
+     持ち越すと、測っていない日にも体重が入って、グラフもタンパク質の目安も嘘になる。
+   ・同じ日に複数回あれば最後に測った値を採る。
+   ・並び順はプラグイン任せにせず、ここで最新を選び直す
+     （readSamplesはlimitと降順指定を併用すると窓のいちばん古い記録を返すことがある）。 */
+function pickWeightForDate(samples, dateStr) {
+  if (!Array.isArray(samples)) return null;
+  let best = null, bestT = -Infinity;
+  for (const s of samples) {
+    if (!s || typeof s.value !== 'number' || !s.startDate) continue;
+    const t = new Date(s.startDate);
+    if (isNaN(t.getTime()) || fmtDate(t) !== dateStr) continue;
+    if (t.getTime() >= bestT) { bestT = t.getTime(); best = s; }
+  }
+  return best ? Math.round(best.value * 10) / 10 : null;
+}
 function prevDate(dstr) {
   const t = new Date(dstr + 'T12:00:00');
   t.setDate(t.getDate() - 1);
@@ -2941,14 +2958,16 @@ async function fetchHealthDataNative(date) {
     // 睡眠は「その日の朝までの夜」を対象にする（前日12:00〜当日12:00）
     const nightStart = new Date(date + 'T12:00:00'); nightStart.setDate(nightStart.getDate() - 1);
     const nightEnd = new Date(date + 'T12:00:00');
-    // 体重は直近の記録を採用（履歴アクセス権限なしのデフォルト上限=約30日に収まるよう29日分だけ遡る）
-    const weightLookbackStart = new Date(dayEnd.getTime() - 29 * 24 * 3600 * 1000);
+    // v1.52: 体重は「その日に測った記録」だけを見る。以前は直近29日から最新1件を採っていたが、
+    // readSamplesにlimit:1と降順を同時に渡すと窓のいちばん古い記録が返り、
+    // 6/30の値(78.5)が毎日の体重として入り続けていた。窓はその日だけにして、選ぶのはこちらでやる
+    const weightStart = dayStart;
 
     const [stepsRes, sleepRes, weightRes] = await Promise.all([
       Health.queryAggregated({ dataType: 'steps', startDate: dayStart.toISOString(), endDate: dayEnd.toISOString(), bucket: 'day', aggregation: 'sum' }).catch(() => null),
       // v1.41: sleepはqueryAggregated非対応（プラグイン側の制約）。readSamplesでセッションを個別取得して合算する
       Health.readSamples({ dataType: 'sleep', startDate: nightStart.toISOString(), endDate: nightEnd.toISOString(), limit: 100, ascending: true }).catch(() => null),
-      Health.readSamples({ dataType: 'weight', startDate: weightLookbackStart.toISOString(), endDate: dayEnd.toISOString(), limit: 1, ascending: false }).catch(() => null),
+      Health.readSamples({ dataType: 'weight', startDate: weightStart.toISOString(), endDate: dayEnd.toISOString(), limit: 50, ascending: false }).catch(() => null),
     ]);
 
     const steps = stepsRes && stepsRes.samples && stepsRes.samples.length
@@ -2958,9 +2977,7 @@ async function fetchHealthDataNative(date) {
       ? sleepRes.samples.reduce((sum, s) => sum + (s.value || 0), 0)
       : null;
     const sleepHours = sleepMinutes != null ? Math.round((sleepMinutes / 60) * 10) / 10 : null;
-    const weight = weightRes && weightRes.samples && weightRes.samples.length
-      ? Math.round(weightRes.samples[0].value * 10) / 10
-      : null;
+    const weight = pickWeightForDate(weightRes && weightRes.samples, date);
 
     if (steps == null && sleepHours == null && weight == null) return null;
     return { steps, sleepHours, weight };

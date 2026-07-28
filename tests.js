@@ -440,5 +440,26 @@ const slp5 = { id:'sleeplack', act:-8, inc:0, auto:'sleepLack', threshold:5 };
 eq('睡眠 5時間で足りる人の5.5時間はセーフ', isItemDone(slp5, { sleepHours:5.5 }), false);
 eq('睡眠 未記録は減点しない', isItemDone(slp5, { sleepHours:null }), false);
 
+/* --- v1.52: 体重は「その日に測った値」だけを採る（前の日の値を持ち越さない） ---
+   実機で起きた不具合: readSamplesにlimit:1と降順を同時に渡すと窓のいちばん古い記録が返り、
+   6/30の78.5が毎日の体重として入り続けていた。並べ替えはプラグイン任せにしない。 */
+// サンプルの時刻はUTC文字列で来る。どのタイムゾーンで走らせても同じ結果になるよう、
+// 「その土地の朝7時台」をローカル時刻から組み立てる（ヘルスデータは瞬間で届き、日付は現地で決まる）
+const at = (y, m, d, hh, mm) => new Date(y, m - 1, d, hh, mm).toISOString();
+const wSamples = [
+  { value: 78.5,  startDate: at(2026, 7,  1, 7, 51) },  // 古い記録（別の日）
+  { value: 80.2,  startDate: at(2026, 7, 27, 7, 52) },
+  { value: 79.7,  startDate: at(2026, 7, 28, 7, 38) },
+];
+eq('体重 その日に測った値を採る', pickWeightForDate(wSamples, '2026-07-28'), 79.7);
+eq('体重 別の日の値は採らない', pickWeightForDate(wSamples, '2026-07-27'), 80.2);
+eq('体重 測っていない日はnull', pickWeightForDate(wSamples, '2026-07-25'), null);
+eq('体重 並び順が古い順でも最新を選ぶ',
+  pickWeightForDate([{ value: 70.1, startDate: at(2026, 7, 28, 8, 10) },
+                     { value: 70.9, startDate: at(2026, 7, 28, 21, 0) }], '2026-07-28'), 70.9);
+eq('体重 サンプルなしはnull', pickWeightForDate([], '2026-07-28'), null);
+eq('体重 配列でなくてもnull', pickWeightForDate(null, '2026-07-28'), null);
+eq('体重 値が数値でない行は無視', pickWeightForDate([{ value:'x', startDate: at(2026, 7, 28, 9, 0) }], '2026-07-28'), null);
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);
