@@ -42,4 +42,15 @@
          正確なアラームを使う。USE_EXACT_ALARMはユーザー許可不要で付与される（リマインダー機能が主目的のため妥当）。
          ※Play Store申請時はUSE_EXACT_ALARMの用途申告が必要になる可能性あり。要確認 -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- v1.51: 「📷 カメラで撮影」（input capture）でカメラが起動しない不具合の修正。
+         Android11以降のパッケージ可視性制限により、<queries>が無いと Capacitor 内部の
+         resolveActivity(ACTION_IMAGE_CAPTURE) が null を返し、カメラを開かず
+         ファイルピッカーへフォールバックしてしまう。CAMERA権限はあえて宣言しない
+         （宣言すると実行時の許可ダイアログが必要になる。撮影インテント自体は権限不要） -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
 </manifest>

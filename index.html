@@ -92,10 +92,15 @@ header {
   padding-top:calc(var(--space-3) + env(safe-area-inset-top));
 }
 .hdr-inner { max-width:560px; margin:0 auto; }
-.hdr-brand { display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-2); font-size:11px; color:var(--color-text-muted); letter-spacing:.06em; }
+/* v1.51: アプリ名を消したので、日付だけを左端に置く */
+.hdr-brand { display:flex; align-items:baseline; gap:var(--space-2); font-size:12px; color:var(--color-text-muted); letter-spacing:.06em; }
 .hdr-date { font-weight:600; white-space:nowrap; }
 .hdr-row { display:flex; align-items:center; gap:var(--space-4); }
 .mito-hdr-row { margin-bottom:var(--space-3); }
+/* v1.51: 左上に匹数、その下に今日の歩数 */
+.hdr-left { display:flex; flex-direction:column; align-items:flex-start; gap:3px; }
+.hdr-steps { display:flex; align-items:baseline; gap:3px; white-space:nowrap; font-size:11px; color:var(--color-text-muted); }
+.hdr-steps b { font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:15px; font-weight:700; color:var(--primary-800); }
 .hdr-count { display:flex; align-items:baseline; gap:2px; white-space:nowrap; }
 .hdr-count .mito-num { font-family:var(--font-number); font-variant-numeric:tabular-nums; font-size:32px; font-weight:700; line-height:1; color:var(--primary-800); }
 .hdr-count .mito-unit { font-size:13px; color:var(--color-text-muted); font-weight:500; }
@@ -214,6 +219,23 @@ header {
   border-right:7px solid var(--color-surface);
 }
 .tab-page[hidden] { display:none; }
+/* v1.51: 端末のアスペクト比（縦長・横長）でデイリーミッションの位置が変わってしまうのを直す。
+   ミトの表示エリアだけを可変（flex:1）にして、ホーム全体をちょうど1画面に収める。
+   使える高さ（--home-avail）は、セーフエリアやヘッダー高が端末で変わるためJSのlayoutHome()が入れる。
+   ※ #tabHome はid指定なので、非表示中に .tab-page[hidden] より強くならないよう :not([hidden]) を付ける */
+#tabHome:not([hidden]) { display:flex; flex-direction:column; min-height:var(--home-avail, auto); }
+#tabHome .mito-stage { flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
+/* min-heightは「画面が短い端末でミトが潰れきらない」下限。これを大きくすると、
+   代わりにデイリーミッションが画面下からあふれてスクロールが必要になる */
+#tabHome .mito-canvas-wrap { flex:1 1 auto; min-height:140px; }
+#tabHome #mitoCanvas { height:100%; }
+#tabHome #todoCard { flex:0 0 auto; }
+/* 画面の短い端末（iPhone SE 等）では、ミッションのカードを詰めて1画面に収める */
+@media (max-height: 720px) {
+  #tabHome #todoCard { padding:var(--space-4); }
+  #tabHome .todo-card { height:68px; gap:4px; }
+  #tabHome .todo-row-label { margin:var(--space-2) 0 2px; }
+}
 @keyframes mito-bubble-in {
   from { opacity:0; transform:translateY(-6px) scale(.96); }
   to   { opacity:1; transform:translateY(0) scale(1); }
@@ -299,6 +321,9 @@ header {
 /* 自動判定カード: クリック不可なので押せる見た目を消す（manual-ok＝手動チェックも可な項目は例外） */
 .todo-card.auto { border-style:dashed; cursor:default; }
 .todo-card.auto .tc-check { border-style:dashed; }
+/* v1.51: 自動判定の未達成は丸を出さない（達成したらレ点が現れる）。場所だけ確保して並びを崩さない */
+/* .todo-card.ng .tc-check の枠色より後ろ・同じ強さで打ち消す（NG項目でも丸を出さない） */
+.todo-card .tc-check.blank { border-color:transparent; background:none; }
 .todo-card.auto.manual-ok { cursor:pointer; }
 .tc-timer, .tc-info {
   position:absolute; top:2px; width:20px; height:20px;
@@ -365,16 +390,34 @@ nav.footer {
   font-size:10px; font-weight:700; color:var(--color-text-muted);
   background:var(--neutral-100); padding:1px 7px; border-radius:var(--radius-full);
 }
-.pick-mech { margin-bottom:var(--space-5); }
-.pick-mech-head { display:flex; align-items:baseline; gap:var(--space-2); margin-bottom:2px; }
+/* v1.51: 項目が多く一覧が長すぎたので、枠ごとに折りたたむ（初期状態はすべて閉じる） */
+.pick-mech {
+  margin-bottom:var(--space-2);
+  border:1px solid var(--color-border); border-radius:var(--radius-md);
+  background:var(--color-surface); overflow:hidden;
+}
+.pick-mech-toggle {
+  width:100%; display:flex; align-items:center; gap:var(--space-3);
+  padding:var(--space-3); text-align:left;
+}
+.pick-mech-toggle:hover { background:var(--primary-50); }
+.pick-mech-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.pick-mech-head { display:flex; align-items:baseline; gap:var(--space-2); }
 .pick-mech-name { font-size:15px; font-weight:700; color:var(--primary-900); }
 .pick-mech-req {
   font-size:10px; font-weight:700; color:var(--warning-600);
   background:#FBF3E2; padding:1px 7px; border-radius:var(--radius-full);
 }
-.pick-mech-lead { font-size:11px; color:var(--color-text-muted); margin-bottom:var(--space-3); }
+.pick-mech-lead { font-size:11px; color:var(--color-text-muted); line-height:1.5; }
+/* たたんだままでも「いま選んでいるもの」が分かるようにする */
+.pick-mech-cur { font-size:12px; font-weight:700; color:var(--primary-800); margin-top:2px; }
+.pick-mech-cur.none { font-weight:500; color:var(--color-text-muted); }
+.pick-chevron { flex:none; color:var(--neutral-400); transition:transform var(--duration-fast) var(--ease-standard); }
+.pick-mech.open .pick-chevron { transform:rotate(180deg); }
 /* 名前だけでは何をするのか分からないので、一行説明を添えた行リストにする */
-.pick-opts { display:flex; flex-direction:column; gap:var(--space-2); }
+.pick-opts { display:flex; flex-direction:column; gap:var(--space-2); padding:0 var(--space-3) var(--space-3); }
+/* [hidden]はUAスタイルの優先度が最低で上のdisplay:flexに負けるため、打ち消しを必ず併記する */
+.pick-opts[hidden] { display:none; }
 .pick-row {
   display:flex; align-items:stretch; gap:0;
   border-radius:var(--radius-md); background:var(--neutral-50);
@@ -675,7 +718,8 @@ nav.footer {
   <!-- ① ヘッダー -->
   <header>
     <div class="hdr-inner">
-      <div class="hdr-brand"><span>ミトコンドリア・ダイエット</span><span class="hdr-date" id="hdrDate"></span></div>
+      <!-- v1.51: アプリ名の表示をやめ、日付（年月）を左上に置く -->
+      <div class="hdr-brand"><span class="hdr-date" id="hdrDate"></span></div>
       <!-- v1.21: 週カレンダーはタブ共通のヘッダーへ移動（食事/記録タブでも日付選択できるように） -->
       <div class="cal-row">
         <button id="calPrev" class="cal-arrow" aria-label="前の週"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
@@ -690,12 +734,16 @@ nav.footer {
   </header>
 
   <main>
-    <!-- ホーム: 週カレンダー・ミトコンドリア表示・今日やること -->
+    <!-- ホーム: 週カレンダー・ミトコンドリア表示・デイリーミッション -->
     <div class="tab-page" id="tabHome">
       <!-- ③ ミトコンドリア表示（匹数・活性ゲージ・今日のミト知識を一言だけ添える） -->
       <section class="card mito-stage">
         <div class="hdr-row mito-hdr-row">
-          <div class="hdr-count"><span class="mito-num" id="hdrCount">1</span><span class="mito-unit">匹</span></div>
+          <!-- v1.51: 匹数の下に、その日の歩数を出す（歩くことが匹数に直結するので目に入る位置に置く） -->
+          <div class="hdr-left">
+            <div class="hdr-count"><span class="mito-num" id="hdrCount">1</span><span class="mito-unit">匹</span></div>
+            <div class="hdr-steps">歩数<b class="num" id="hdrSteps">—</b>歩</div>
+          </div>
           <div class="hdr-gauge">
             <div class="gauge-label"><span>活性ゲージ<span class="hdr-mood" id="hdrMood"></span></span><span><b id="hdrAct">50</b>/100</span></div>
             <div class="gauge-bar"><div class="gauge-fill" id="hdrGauge"></div></div>
@@ -711,9 +759,9 @@ nav.footer {
         </div>
       </section>
 
-      <!-- ⑤ 今日やること -->
+      <!-- ⑤ デイリーミッション（v1.51: 「やること」から呼び名を変更） -->
       <section class="card" id="todoCard">
-        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>今日やること</h2>
+        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>デイリーミッション</h2>
         <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
           <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
           <span><b class="num" id="dayPt">+0</b> pt</span>
@@ -781,13 +829,13 @@ nav.footer {
 
     <!-- 設定: 他のタブと同じくmain内の1タブとして表示 -->
     <div class="tab-page" id="tabSettings" hidden>
-      <!-- v1.49: やることのカスタマイズ。生活は人によって違うので、同じ狙いの別の手段に入れ替えられる -->
+      <!-- v1.49: デイリーミッションのカスタマイズ。生活は人によって違うので、同じ狙いの別の手段に入れ替えられる -->
       <div class="set-section">
-        <h4>やること</h4>
+        <h4>デイリーミッション</h4>
         <div class="btn-row">
-          <button class="btn btn-secondary" id="btnPickItems">やることを選ぶ</button>
+          <button class="btn btn-secondary" id="btnPickItems">デイリーミッションを選ぶ</button>
         </div>
-        <div class="set-note">ウォーキングを筋トレに、禁酒を休肝日に、といった入れ替えができます。選び直しても過去の記録と匹数は変わりません。</div>
+        <div class="set-note">自重トレを筋トレに、禁酒を休肝日に、といった入れ替えができます。選び直しても過去の記録と匹数は変わりません。</div>
       </div>
       <div class="set-section">
         <h4>育成データ</h4>
@@ -806,7 +854,7 @@ nav.footer {
         <div class="set-note" id="lastExportNote"></div>
       </div>
       <div class="set-section">
-        <h4>やることリマインダー</h4>
+        <h4>デイリーミッションのリマインダー</h4>
         <div class="set-field">
           <label for="remindTime">通知する時刻</label>
           <input type="time" id="remindTime" value="22:00">
@@ -815,7 +863,7 @@ nav.footer {
           <button class="btn btn-secondary" id="btnNotifyPermission">通知を許可する</button>
         </div>
         <div class="set-note" id="notifyStatusNote"></div>
-        <div class="set-note">指定した時刻に、その日の「やること」をチェックするよう通知します。時刻を変えると自動で反映されます。</div>
+        <div class="set-note">指定した時刻に、その日のデイリーミッションをチェックするよう通知します。時刻を変えると自動で反映されます。</div>
       </div>
       <div class="set-section">
         <h4>写真解析（AI）</h4>
@@ -940,11 +988,11 @@ nav.footer {
     </div>
   </div>
 
-  <!-- v1.49: やることを選ぶ（機序ごとの代替選択）。設定タブと初回オンボーディングで共用する -->
+  <!-- v1.49: デイリーミッションを選ぶ（機序ごとの代替選択）。設定タブと初回オンボーディングで共用する -->
   <div class="modal" id="pickModal">
     <div class="sheet">
       <div class="sheet-head">
-        <h3 id="pickTitle">やることを選ぶ</h3>
+        <h3 id="pickTitle">デイリーミッションを選ぶ</h3>
         <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
       <p class="pick-intro" id="pickIntro"></p>
@@ -1558,7 +1606,8 @@ const CATALOG = [
   /* --- A. 増やす（運動）。この枠だけは外せない --- */
   // v1.50: 歩数は自動で取れるので外せない枠に移した。ただし生活で歩く量が全然ちがう
   // （自宅勤務なら3,000歩でも頑張り、通勤があれば5,000歩は自然に歩く）ので目標を選べる
-  { id:'walk', kind:'auto', mech:'biogenesis', name:'歩く', short:'ウォーキング', act:2, inc:0.5,
+  // v1.51: ホームでの表示名は「ウォーキング」ではなく「歩数」（自動集計される数値だと分かるように）
+  { id:'walk', kind:'auto', mech:'biogenesis', name:'歩く', short:'歩数', act:2, inc:0.5,
     auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2, isDefault:true,
     efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）',
     thresholds:[
@@ -1916,6 +1965,10 @@ function migrate(d) {
         it.manualFallback = true;
         it.method = '万歩計（自動集計・手動チェックも可）';
       }
+      // v1.51: ホームの表示名を「ウォーキング」→「歩数」に変更（保存済みitemsには自動反映されないため）
+      if (it && it.id === 'walk' && it.short === 'ウォーキング') {
+        it.short = '歩数';
+      }
       // v1.49: チェック時の演出を項目データ駆動にしたので、既存ユーザーのjuiceにもeffectを補う
       //（無いと野菜ジュースのクリーン演出が出なくなる）
       if (it && it.id === 'juice' && !it.effect) {
@@ -2128,6 +2181,9 @@ $('#mitoBubble').addEventListener('click', hideBubble);
 /* ============ ① ヘッダー ============ */
 function renderHeader() {
   $('#hdrCount').textContent = Math.floor(computed.mito).toLocaleString();
+  // v1.51: 選択中の日の歩数（未入力なら「—」）
+  const st = getRec(sel, false).steps;
+  $('#hdrSteps').textContent = (st == null || st === '') ? '—' : Number(st).toLocaleString();
   $('#hdrAct').textContent = computed.activation;
   $('#hdrMood').textContent = moodName(computed.activation);
   const g = $('#hdrGauge');
@@ -3636,8 +3692,11 @@ function renderTodoCards(container, items, rec, interactive) {
     const card = document.createElement('div');
     card.dataset.id = it.id;
     card.className = 'todo-card' + (done ? ' done' : '') + (it.ng ? ' ng' : '') + (interactive ? '' : ' auto') + (!interactive && it.manualFallback ? ' manual-ok' : '');
+    // v1.51: 自動判定は自分でチェックするものではないので、未達成のうちは空の丸を出さない
+    //（枠だけ透明にして場所は取らせ、手動カードと高さ・位置を揃える）
+    const blankCheck = !interactive && !done;
     card.innerHTML =
-      `<span class="tc-check">${done ? '✓' : ''}</span>` +
+      `<span class="tc-check${blankCheck ? ' blank' : ''}">${done ? '✓' : ''}</span>` +
       `<span class="tc-name">${esc(it.short || it.name)}</span>`;
     if (clickable) {
       card.setAttribute('role', 'button');
@@ -3820,6 +3879,43 @@ function activePickIds() {
 function pickedInMech(mechId, ids) {
   return catalogByMech(mechId).filter(c => ids.includes(c.id));
 }
+
+/* ---- v1.51: 選択画面の折りたたみ ----
+   項目を増やした結果いちどに全部並べると長すぎて見通せないので、枠ごとにたたむ。
+   たたんだ状態でも「名前・ひとこと説明・いま選んでいるもの」は見えるようにして、
+   開いたときだけ選択肢が出るようにする。開閉状態は再描画をまたいで保つ
+   （選ぶたびに renderPickBody() が走るので、Setで持っていないと毎回閉じてしまう）。 */
+const pickOpen = new Set();
+const CHEVRON_SVG = '<svg class="pick-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+// key: 開閉状態の記憶キー / name: 見出し / lead: ひとこと説明 / summary: 今の設定 / badge: 「外せない」等
+function makePickBlock(body, key, name, lead, summary, badge) {
+  const open = pickOpen.has(key);
+  const sec = document.createElement('div');
+  sec.className = 'pick-mech' + (open ? ' open' : '');
+  const head = document.createElement('button');
+  head.type = 'button';
+  head.className = 'pick-mech-toggle';
+  head.setAttribute('aria-expanded', open ? 'true' : 'false');
+  head.innerHTML =
+    `<span class="pick-mech-main">` +
+      `<span class="pick-mech-head"><span class="pick-mech-name">${esc(name)}</span>` +
+        (badge ? `<span class="pick-mech-fixed">${esc(badge)}</span>` : '') +
+      `</span>` +
+      (lead ? `<span class="pick-mech-lead">${esc(lead)}</span>` : '') +
+      `<span class="pick-mech-cur${summary.on ? '' : ' none'}">${esc(summary.text)}</span>` +
+    `</span>` + CHEVRON_SVG;
+  head.addEventListener('click', () => {
+    if (pickOpen.has(key)) pickOpen.delete(key); else pickOpen.add(key);
+    renderPickBody();
+  });
+  const wrap = document.createElement('div');
+  wrap.className = 'pick-opts';
+  wrap.hidden = !open;
+  sec.appendChild(head);
+  sec.appendChild(wrap);
+  body.appendChild(sec);
+  return wrap;
+}
 // v1.50: 自動判定の項目は「やる/やらない」ではなく「自分の基準を決める」ので、
 // トグルではなく強度の選択肢を並べる。外すことはできない。
 function renderAutoSection(body) {
@@ -3833,14 +3929,10 @@ function renderAutoSection(body) {
   for (const a of autoCatalog()) {
     const cur = DB.items.find(it => it.id === a.id);
     const curVal = cur ? Number(cur.threshold) : Number(a.threshold);
-    const sec = document.createElement('div');
-    sec.className = 'pick-mech';
-    sec.innerHTML =
-      `<div class="pick-mech-head"><span class="pick-mech-name">${esc(a.name)}</span>` +
-        `<span class="pick-mech-fixed">外せない</span></div>` +
-      `<div class="pick-mech-lead">${esc(a.lead)}</div>`;
-    const wrap = document.createElement('div');
-    wrap.className = 'pick-opts';
+    // たたんだ状態でも今の基準（例「5,000歩」）が見えるようにする
+    const curT = (a.thresholds || []).find(t => Number(t.value) === curVal);
+    const wrap = makePickBlock(body, 'auto:' + a.id, a.name, a.lead,
+      { on: true, text: '今の基準：' + (curT ? curT.label : String(curVal)) }, '外せない');
     for (const t of (a.thresholds || [])) {
       const on = Number(t.value) === curVal;
       const row = document.createElement('div');
@@ -3871,8 +3963,6 @@ function renderAutoSection(body) {
       }
       wrap.appendChild(row);
     }
-    sec.appendChild(wrap);
-    body.appendChild(sec);
   }
 }
 
@@ -3884,27 +3974,28 @@ function renderPickBody() {
   for (const m of MECHANISMS) {
     const opts = catalogByMech(m.id);
     if (!opts.length) continue;
-    // セクション（運動 / その他のやること）の見出しは切り替わり目で1度だけ出す
+    // セクション（そのほかのミッション）の見出しは切り替わり目で1度だけ出す。
+    // v1.51: 運動セクションは枠が1つだけなので、見出しを二重に出さず折りたたみブロックの見出しに寄せる
     if (m.section !== lastSection) {
       lastSection = m.section;
-      const sh = document.createElement('div');
-      sh.className = 'pick-section-head';
-      sh.innerHTML = m.section === 'exercise'
-        ? `<div class="pick-section-name">運動</div>` +
-          `<div class="pick-section-lead">ミトコンドリアの数を増やせるのは運動だけ。続けられそうなものを、いくつでも。</div>`
-        : `<div class="pick-section-name">そのほかのやること</div>` +
+      if (m.section !== 'exercise') {
+        const sh = document.createElement('div');
+        sh.className = 'pick-section-head';
+        sh.innerHTML =
+          `<div class="pick-section-name">そのほかのミッション</div>` +
           `<div class="pick-section-lead">どれも任意です。生活に合うものだけ選んでください。</div>`;
-      body.appendChild(sh);
+        body.appendChild(sh);
+      }
     }
     const picked = pickedInMech(m.id, ids);
-    const sec = document.createElement('div');
-    sec.className = 'pick-mech';
-    sec.innerHTML =
-      (m.section === 'exercise' ? '' :
-        `<div class="pick-mech-head"><span class="pick-mech-name">${esc(m.name)}</span></div>` +
-        `<div class="pick-mech-lead">${esc(m.lead)}　えらべる数：最大${m.max}</div>`);
-    const wrap = document.createElement('div');
-    wrap.className = 'pick-opts';
+    // v1.51: たたんだ状態でも「いま何を選んでいるか」が見えるようにする
+    const summary = picked.length
+      ? { on: true,  text: '選択中：' + picked.map(c => c.short || c.name).join('・') }
+      : { on: false, text: '選んでいません' };
+    const lead = m.section === 'exercise'
+      ? 'ミトコンドリアの数を増やせるのは運動だけ。続けられそうなものを、いくつでも（最大' + m.max + '）'
+      : m.lead + '　えらべる数：最大' + m.max;
+    const wrap = makePickBlock(body, 'mech:' + m.id, m.name, lead, summary, null);
     for (const c of opts) {
       const on = ids.includes(c.id);
       const row = document.createElement('div');
@@ -3915,7 +4006,7 @@ function renderPickBody() {
       b.innerHTML =
         `<span class="pick-row-name">${on ? '✓ ' : ''}${esc((c.ng ? '△ ' : '') + (c.short || c.name))}</span>` +
         (BLURB[c.id] ? `<span class="pick-row-blurb">${esc(BLURB[c.id])}</span>` : '');
-      if (c.ng) b.title = 'これは「やること」ではなく、当てはまった日に減点される項目です';
+      if (c.ng) b.title = 'これはミッションではなく、当てはまった日に減点される項目です';
       // 詳しい解説（なぜミトコンドリアに効くのか）はⓘから。選択と誤爆しないよう別ボタンにする
       if (INFO[c.id]) {
         const ib = document.createElement('button');
@@ -3945,8 +4036,6 @@ function renderPickBody() {
         renderPickBody();
       });
     }
-    sec.appendChild(wrap);
-    body.appendChild(sec);
   }
   renderAutoSection(body);   // v1.50: 自動判定は最後にまとめて出す
   let warn = $('#pickWarn');
@@ -3958,12 +4047,16 @@ function renderPickBody() {
   }
 }
 function openPick(isOnboarding) {
-  $('#pickTitle').textContent = isOnboarding ? 'あなたに合わせて選ぶ' : 'やることを選ぶ';
+  $('#pickTitle').textContent = isOnboarding ? 'あなたに合わせて選ぶ' : 'デイリーミッションを選ぶ';
   $('#pickIntro').textContent = isOnboarding
     ? 'ミトコンドリアを育てるやり方は一つではありません。続けられそうなものを選んでください。あとから何度でも変えられます。'
     : '同じ狙いなら、やり方は入れ替えられます。生活に合うものを選んでください。';
   // オンボーディング中は「閉じる」で逃げられないようにする（何も選ばれていない状態を防ぐ）
   $('#pickModal').querySelector('.sheet-close').style.display = isOnboarding ? 'none' : '';
+  // v1.51: 開くたびに全部たたんだ状態から始める。ただし初回設定だけは、
+  // 何も開いていない画面を突きつけないよう「運動」だけ開いておく
+  pickOpen.clear();
+  if (isOnboarding) pickOpen.add('mech:biogenesis');
   renderPickBody();
   $('#pickModal').classList.add('open');
 }
@@ -4261,7 +4354,7 @@ $('#goalInput').addEventListener('change', e => {
   save();
   renderWeightGraph();
 });
-/* ============ v1.33/v1.46: やることリマインダー ============ */
+/* ============ v1.33/v1.46: デイリーミッションのリマインダー ============ */
 // v1.46: ネイティブアプリではCapacitor Local Notificationsを使い、アプリを閉じていてもOSが決まった時刻に通知する。
 // ブラウザ版は従来どおりWeb Notification + setTimeout（タブが開いている間だけ）にフォールバックする。
 function nativeLocalNotifications() {
@@ -4287,8 +4380,8 @@ async function scheduleNativeReminder() {
       try {
         await LN.createChannel({
           id: REMINDER_CHANNEL_ID,
-          name: 'やることリマインダー',
-          description: '指定時刻に今日のやることを知らせます',
+          name: 'デイリーミッションのリマインダー',
+          description: '指定時刻に今日のデイリーミッションを知らせます',
           importance: 5,   // 5=MAX（ポップアップ＋音）
           visibility: 1,   // ロック画面にも表示
           vibration: true,
@@ -4300,7 +4393,7 @@ async function scheduleNativeReminder() {
       notifications: [{
         id: REMINDER_NOTIF_ID,
         title: 'ミトコンドリア・ダイエット',
-        body: '今日のやること、まだ残ってない？ミトのためにチェックしよう🌙',
+        body: '今日のデイリーミッション、まだ残ってない？ミトのためにチェックしよう🌙',
         channelId: REMINDER_CHANNEL_ID,
         schedule: { on: { hour: hh || 0, minute: mm || 0 }, repeats: true, allowWhileIdle: true },
       }],
@@ -4368,16 +4461,16 @@ function allManualTodoDone(rec) {
   return items.length > 0 && items.every(it => rec.checked.includes(it.id));
 }
 function fireTodoReminder() {
-  // v1.49: やることを選び終える前に「まだ残ってるよ」と言っても意味がないので黙っておく
+  // v1.49: デイリーミッションを選び終える前に「まだ残ってるよ」と言っても意味がないので黙っておく
   //（reminded を立てる前に抜けるので、選び終えたあとの本来のリマインドは生きる）
   if (!DB.onboarded) return;
   const rec = getRec(today, true);
   if (rec.reminded || allManualTodoDone(rec)) return;
   rec.reminded = true;
   save();
-  toast('今日のやること、まだ残ってるよ🌙 忘れずにチェックしよう');
+  toast('今日のデイリーミッション、まだ残ってるよ🌙 忘れずにチェックしよう');
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    try { new Notification('ミトコンドリア・ダイエット', { body: '今日のやることをチェックし忘れていませんか？' }); } catch {}
+    try { new Notification('ミトコンドリア・ダイエット', { body: '今日のデイリーミッションをチェックし忘れていませんか？' }); } catch {}
   }
 }
 let reminderTimer = null;
@@ -4504,6 +4597,18 @@ $('#pickDone').addEventListener('click', () => {
 });
 
 /* ============ 全体描画・初期化 ============ */
+// v1.51: ヘッダーの高さ（セーフエリア・週カレンダー・日付バナーで変わる）と、
+// フッター分に確保してある #app の下パディングを画面高から引き、ホームが使える高さを渡す。
+// これで端末のアスペクト比が違っても、デイリーミッションは常に画面の一番下に来る。
+function layoutHome() {
+  const hd = document.querySelector('header');
+  const app = $('#app');
+  if (!hd || !app) return;
+  const pad = parseFloat(getComputedStyle(app).paddingBottom) || 0;
+  const avail = Math.max(320, Math.round(window.innerHeight - hd.getBoundingClientRect().height - pad));
+  document.documentElement.style.setProperty('--home-avail', avail + 'px');
+}
+
 function renderAll() {
   renderHeader();
   renderCalendar();
@@ -4514,6 +4619,7 @@ function renderAll() {
   renderTodo();
   renderQuotaNote(); // v1.44: AI解析の残り回数表示
   if (breakdownOpen) renderBreakdown();
+  layoutHome();      // v1.51: 日付バナーの出入りでヘッダー高が変わるので、描画のたびに測り直す
 }
 
 // 日付が変わったら（開きっぱなし・翌日再訪）今日を取り直す
@@ -4534,10 +4640,12 @@ document.addEventListener('visibilitychange', () => {
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   stage.plannedCount = -1;
+  layoutHome();  // v1.51: 画面回転・ソフトキーボードで高さが変わるので測り直す
   if (stage.reduced) drawStage(0);
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(renderWeightGraph, 150);  // グラフのSVGを幅に追従
 });
+window.addEventListener('orientationchange', () => setTimeout(layoutHome, 200));
 
 stage.canvas = $('#mitoCanvas');
 stage.ctx = stage.canvas.getContext('2d');

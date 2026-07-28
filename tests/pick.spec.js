@@ -1,8 +1,8 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { skipOnboarding } = require('./helpers');
+const { skipOnboarding, expandAllPick } = require('./helpers');
 
-// v1.49: やることの選び直し（機序ごとの代替選択）とオンボーディング。
+// v1.49: デイリーミッションの選び直し（機序ごとの代替選択）とオンボーディング。
 //
 // 一番大事なのは「選び直しても過去の育成結果が変わらない」こと。
 // このアプリは匹数・活性を記録ログ全期間から毎回再計算するので、素朴に項目を
@@ -15,12 +15,12 @@ test('初回起動ではオンボーディングが開き、3つの区分で表�
   // 逃げ道（閉じるボタン）は隠れている
   await expect(page.locator('#pickModal .sheet-close')).toBeHidden();
 
-  // 運動 / そのほかのやること / 自動で判定するもの の3区分
+  // v1.51: 運動は折りたたみブロックの見出し、残り2区分はセクション見出しで出る
+  await expect(page.locator('.pick-mech-name').first()).toHaveText('運動');
   const heads = page.locator('.pick-section-name');
-  await expect(heads).toHaveCount(3);
-  await expect(heads.nth(0)).toHaveText('運動');
-  await expect(heads.nth(1)).toHaveText('そのほかのやること');
-  await expect(heads.nth(2)).toHaveText('自動で判定するもの');
+  await expect(heads).toHaveCount(2);
+  await expect(heads.nth(0)).toHaveText('そのほかのミッション');
+  await expect(heads.nth(1)).toHaveText('自動で判定するもの');
 
   // 運動を選ばなくても閉じられる（歩数が自動で取れるため任意になった）
   await page.evaluate(() => {
@@ -37,6 +37,7 @@ test('自動判定の項目は外せず、強度だけを選べる', async ({ pa
   await page.goto('/index.html');
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
 
   // 歩数の目標を8,000歩に変える
   await page.locator('.pick-row-main', { hasText: '8,000歩' }).click();
@@ -64,6 +65,7 @@ test('目標歩数を上げても、過去の達成が取り消されない', as
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
   await page.locator('.pick-row-main', { hasText: '10,000歩' }).click();
 
   const after = await page.evaluate(() => ({
@@ -111,6 +113,7 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
   await expect(page.locator('#pickModal')).toHaveClass(/open/);
+  await expandAllPick(page);
   await page.locator('.pick-row-main', { hasText: '禁酒' }).click();
   await page.locator('.pick-row-main', { hasText: '休肝日' }).click();
   await page.locator('#pickDone').click();
@@ -138,16 +141,17 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
   expect(after.休肝日が有効).toBe(true);
 });
 
-test('選び直すとホームの「今日やること」も入れ替わる', async ({ page }) => {
+test('選び直すとホームのデイリーミッションも入れ替わる', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
 
-  // 既定では禁酒がやることに出ている
+  // 既定では禁酒がミッションに出ている
   await expect(page.locator('#todoRowManual')).toContainText('禁酒');
   await expect(page.locator('#todoRowManual')).not.toContainText('休肝日');
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
   await page.locator('.pick-row-main', { hasText: '禁酒' }).click();
   await page.locator('.pick-row-main', { hasText: '休肝日' }).click();
   await page.locator('#pickDone').click();
@@ -165,6 +169,7 @@ test('選択画面に一行説明が出て、ⓘで詳しい解説が読める',
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
 
   // 名前だけでなく、何をするのかの一行説明が添えられている
   const hiit = page.locator('.pick-row', { hasText: 'HIIT' });
@@ -184,6 +189,7 @@ test('選べる数の上限を超えて選べない', async ({ page }) => {
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
 
   // ストレス枠は最大1つ。既定で呼吸瞑想が選ばれているので、入浴は選べないはず
   await page.locator('.pick-row-main', { hasText: '入浴' }).click();
@@ -191,4 +197,27 @@ test('選べる数の上限を超えて選べない', async ({ page }) => {
 
   const ids = await page.evaluate(() => activePickIds());
   expect(ids).not.toContain('bath');
+});
+
+test('選択画面は折りたたまれて開き、開いた枠は選んでも閉じない', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
+
+  // 最初はどの枠も閉じている（選択肢は出ていない）
+  await expect(page.locator('#pickBody .pick-opts:not([hidden])')).toHaveCount(0);
+  // たたんだままでも「いま選んでいるもの」は見える
+  const stress = page.locator('.pick-mech', { hasText: 'ストレスをおろす' });
+  await expect(stress.locator('.pick-mech-cur')).toContainText('呼吸瞑想');
+
+  // 開くと選択肢が出る
+  await stress.locator('.pick-mech-toggle').click();
+  await expect(stress.locator('.pick-opts')).toBeVisible();
+
+  // 選び直し（＝renderPickBodyでの作り直し）をしても開いたまま
+  await stress.locator('.pick-row-main', { hasText: '呼吸瞑想' }).click();
+  await expect(stress.locator('.pick-opts')).toBeVisible();
+  await expect(stress.locator('.pick-mech-cur')).toHaveText('選んでいません');
 });

@@ -28,4 +28,20 @@ async function skipOnboarding(page) {
   });
 }
 
-module.exports = { skipOnboarding };
+/**
+ * v1.51: 選択画面（デイリーミッションを選ぶ）は枠ごとに折りたたまれていて、
+ * 初期状態では選択肢が出ていない。選択肢を操作するテストは先にこれで全部開く。
+ * @param {import('@playwright/test').Page} page
+ */
+async function expandAllPick(page) {
+  await page.evaluate(() => {
+    // @ts-ignore アプリ側のグローバル
+    MECHANISMS.forEach(m => pickOpen.add('mech:' + m.id));
+    // @ts-ignore
+    autoCatalog().forEach(a => pickOpen.add('auto:' + a.id));
+    // @ts-ignore
+    renderPickBody();
+  });
+}
+
+module.exports = { skipOnboarding, expandAllPick };
