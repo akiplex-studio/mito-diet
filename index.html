@@ -228,7 +228,10 @@ header {
 /* min-heightは「画面が短い端末でミトが潰れきらない」下限。これを大きくすると、
    代わりにデイリーミッションが画面下からあふれてスクロールが必要になる */
 #tabHome .mito-canvas-wrap { flex:1 1 auto; min-height:140px; }
-#tabHome #mitoCanvas { height:100%; }
+/* canvasは高さをinset:0で親から取る。height:100%だと（flexで伸びた親に対して）解決されず
+   canvas固有の縦横比のまま残り、下半分が空いてしまう。width/heightをautoにするのも不可
+   （drawStageが毎フレーム描画バッファを実寸に合わせるため、自動サイズだと無限に膨らむ） */
+#tabHome #mitoCanvas { position:absolute; inset:0; width:100%; height:100%; }
 #tabHome #todoCard { flex:0 0 auto; }
 /* 画面の短い端末（iPhone SE 等）では、ミッションのカードを詰めて1画面に収める */
 @media (max-height: 720px) {
