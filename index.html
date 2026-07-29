@@ -188,6 +188,18 @@ header {
   display:flex; align-items:stretch; gap:10px;
 }
 .mito-bubble[hidden] { display:none; }
+/* v1.54: 達成時のセリフは画面の中央に浮かせる（上部だとミトの群れに紛れて見落とす）。
+   入場アニメは専用にする。共通の keyframes は transform を上書きするので中央がずれるため */
+.mito-bubble.centered {
+  position:fixed; top:50%; left:50%; right:auto;
+  transform:translate(-50%, -50%);
+  width:min(92vw, 520px); z-index:60;
+}
+.mito-bubble.centered.show { animation:mito-bubble-in-center var(--duration-slow) var(--ease-standard); }
+@keyframes mito-bubble-in-center {
+  from { opacity:0; transform:translate(-50%, -50%) scale(.94); }
+  to   { opacity:1; transform:translate(-50%, -50%) scale(1); }
+}
 .mito-bubble.show {
   animation:mito-bubble-in var(--duration-slow) var(--ease-standard);
 }
@@ -2277,6 +2289,7 @@ function showBubbleText(text, keep) {
   const faceImg = $('#mitoBubbleFaceImg');
   if (faceImg && !faceImg.src) faceImg.src = MITO_IMG_SRC;
   $('#mitoBubbleText').textContent = text;
+  el.classList.remove('centered');   // v1.54: 前回の中央表示を持ち越さない
   el.hidden = false;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(bubbleTimer);
@@ -2297,7 +2310,17 @@ function showBubblePinned(key) {
 function hideBubble() {
   clearTimeout(bubbleTimer);
   const el = $('#mitoBubble');
-  if (el) { el.hidden = true; el.classList.remove('show'); }
+  if (el) { el.hidden = true; el.classList.remove('show'); el.classList.remove('centered'); }
+}
+// v1.54: 達成したときのセリフは画面の中央に出す。
+// 上部（ミト表示エリアの頭）だと群れに紛れて見落とすうえ、押したカードから視線が遠い
+function mitoSpeakCentered(key) {
+  if (sel !== today) return;
+  if (!SPEECH[key]) return;
+  if (mealModalIsOpen()) { bubblePendingKey = key; return; }
+  showBubble(key);
+  const el = $('#mitoBubble');
+  if (el) el.classList.add('centered');
 }
 // ミトのセリフを出す。過去日の編集では出さない／食事解析モーダルが開いている間は保留する
 function mitoSpeak(key) {
@@ -3454,7 +3477,7 @@ async function addPhotoFile(file) {
           // v1.5: 写真で自動チェックされたときのミトの一言・演出
           // v1.49: 'juice' 直書きをやめ、項目自身のidと effect から引くようにした
           //        （mitoSpeak は SPEECH に無いキーなら何もしないので、解説の無い項目でも安全）
-          mitoSpeak(it.id);
+          mitoSpeakCentered(it.id);
           if (it.effect) mitoEffect(it.effect);
         }
       }
@@ -3941,10 +3964,10 @@ function achieveWhyText(item) {
 }
 function openAchieveDialog(item, speechKey) {
   const why = achieveWhyText(item);
-  if (!why) { if (speechKey) mitoSpeak(speechKey); return; } // 説明が無い項目はセリフだけ上部に出す
+  if (!why) { if (speechKey) mitoSpeakCentered(speechKey); return; } // 説明が無い項目はセリフだけ出す
   // v1.53: セリフとチップスを両方出すと文字が多くて読まれないので、どちらか片方だけにする。
   // セリフが用意されている項目のときだけ、コインの裏表で選ぶ
-  if (speechKey && Math.random() < 0.5) { mitoSpeak(speechKey); return; }
+  if (speechKey && Math.random() < 0.5) { mitoSpeakCentered(speechKey); return; }
   // チップスは「重要な1行（太字・大きめ）＋本文」。全部読まなくても要点が分かるようにする
   const bar = why.indexOf('||');
   $('#achieveTitle').textContent = bar >= 0 ? why.slice(0, bar) : item.name;
@@ -3984,7 +4007,7 @@ let reactionQueue = [];
 // v1.45: セリフキー(speechKey)を一緒に運び、ダイアログ表示時に同時に出せるようにする
 function queueReaction(item, speechKey) {
   if (!WHY_VARIANTS[item.id] && !INFO[item.id]) {
-    if (speechKey) mitoSpeak(speechKey); // 説明ダイアログが無い項目はセリフだけ上部に出す
+    if (speechKey) mitoSpeakCentered(speechKey); // 説明ダイアログが無い項目はセリフだけ出す
     return;
   }
   reactionQueue.push({ item, speechKey: speechKey || null });
@@ -4377,7 +4400,7 @@ function applyCheck(item, srcEl) {
   if (checking && !item.ng && (eff.act > 0 || eff.inc > 0)) {
     celebrateAchievement(item, beforeMito, computed.mito, beforeAct, computed.activation, k);
   } else if (checking && k) {
-    mitoSpeak(k); // ダイアログを出さない項目（変化なし等）は従来どおり上部に表示
+    mitoSpeakCentered(k); // ダイアログを出さない項目（変化なし等）もセリフは中央に出す
   }
 }
 

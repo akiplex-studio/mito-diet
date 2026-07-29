@@ -351,3 +351,25 @@ test('ホームのカードにⓘは出ず、見出しの「編集」から選�
   await row.locator('.pick-row-info').click();
   await expect(page.locator('#infoModal')).toHaveClass(/open/);
 });
+
+test('達成のセリフは画面の中央に出る', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  // セリフ側の分岐に必ず入るよう、乱数を固定してからチェックする
+  await page.evaluate(() => { Math.random = () => 0.1; });
+  await page.locator('#todoRowManual .todo-card', { hasText: '糖分' }).click();
+  await page.waitForTimeout(1600);
+
+  const box = await page.evaluate(() => {
+    const el = document.querySelector('#mitoBubble');
+    if (el.hidden) return null;
+    const r = el.getBoundingClientRect();
+    return { centered: el.classList.contains('centered'),
+             midY: Math.round(r.top + r.height / 2), viewportH: window.innerHeight };
+  });
+  expect(box).not.toBeNull();
+  expect(box.centered).toBe(true);
+  // 画面のおおむね中央（上下10%以内）に出ている
+  expect(Math.abs(box.midY - box.viewportH / 2)).toBeLessThan(box.viewportH * 0.1);
+});
