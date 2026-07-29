@@ -328,6 +328,16 @@ header {
 /* .todo-card.ng .tc-check の枠色より後ろ・同じ強さで打ち消す（NG項目でも丸を出さない） */
 .todo-card .tc-check.blank { border-color:transparent; background:none; }
 .todo-card.auto.manual-ok { cursor:pointer; }
+/* v1.54: 見出しの右端に置く「編集」。チェックと離れた位置なので誤タップしない */
+.todo-h2 { justify-content:flex-start; }
+.todo-edit {
+  margin-left:auto; display:flex; align-items:center; gap:4px;
+  padding:5px 12px; border-radius:var(--radius-full);
+  border:1px solid var(--color-border); background:var(--color-surface);
+  font-size:12px; font-weight:600; color:var(--primary-800); letter-spacing:0;
+}
+.todo-edit:hover { background:var(--primary-50); border-color:var(--primary-300); }
+.todo-edit svg { color:var(--primary-600); }
 .tc-timer, .tc-info {
   position:absolute; top:2px; width:20px; height:20px;
   border-radius:var(--radius-full); display:grid; place-items:center;
@@ -766,7 +776,13 @@ nav.footer {
 
       <!-- ⑤ デイリーミッション（v1.51: 「やること」から呼び名を変更） -->
       <section class="card" id="todoCard">
-        <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>デイリーミッション</h2>
+        <!-- v1.54: 見出しの右に「編集」。カード上のⓘを外した代わりに、
+             ここから選択画面（解説つき）へ入れるようにする -->
+        <h2 class="todo-h2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20a9 9 0 1 1 9-9"/><path d="m9 11 3 3L22 4"/></svg>デイリーミッション
+          <button type="button" class="todo-edit" id="btnEditMissions">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>編集
+          </button>
+        </h2>
         <div class="todo-summary" id="ptSummary" role="button" tabindex="0">
           <span class="pt-toggle" id="ptToggle">獲得ポイント <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
           <span><b class="num" id="dayPt">+0</b> pt</span>
@@ -1858,6 +1874,11 @@ const INFO = {
   walk: {
     why:'早歩きなどの有酸素運動をすると、筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これが PGC-1α（ミトコンドリアを新しく作る司令塔）のスイッチを押し、ミトコンドリアの“数”が増えていきます。朝に歩けば光で体内時計も整い、代謝リズムが安定します。',
     tips:'ときどき早歩きを混ぜると刺激アップ。朝8時ごろの20分散歩は「光＋歩数」の一石二鳥です。'
+  },
+  // v1.54: 解説はカードのⓘではなく選択画面からしか読めなくなったので、抜けていた項目を埋める
+  mealrec: {
+    why:'食べたものを残すと、タンパク質が足りているか、食べ過ぎていないかが自動で判定できるようになります。記録そのものがミトコンドリアを増やすわけではありませんが、他の判定すべての土台になります。',
+    tips:'写真1枚でも、ことばで「牛丼」と書くだけでもかまいません。朝と夜の2食から始めるのが続けやすいです。'
   },
   walking: {
     why:'歩くと筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これがPGC-1α（ミトコンドリアを新しく作る司令塔）を起動させます。歩数の自動判定と重なる部分はあるので、こちらは「意識して歩きに出た日」を残す枠として使ってください。',
@@ -3861,15 +3882,8 @@ function renderTodoCards(container, items, rec, interactive) {
       tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
       card.appendChild(tb);
     }
-    if (interactive && INFO[it.id]) {
-      const ib = document.createElement('button');
-      ib.type = 'button';
-      ib.className = 'tc-info';
-      ib.setAttribute('aria-label', `${it.name} がミトコンドリアに効く理由`);
-      ib.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
-      ib.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openInfo(it); });
-      card.appendChild(ib);
-    }
+    // v1.54: ⓘはカードから外した。ミッションを多く選ぶとカードが小さくなり、
+    // チェックのつもりでⓘを踏む誤タップが起きるため。解説は選択画面（設定）のⓘから読む
     container.appendChild(card);
   });
   // 位置が変わったカードだけ、逆補正 → 次フレームで transition 付きで 0 へ戻す
@@ -4822,6 +4836,8 @@ $('#selBannerBack').addEventListener('click', () => { sel = today; weekOffset = 
 
 /* ============ v1.49: やることを選ぶ ============ */
 $('#btnPickItems').addEventListener('click', () => openPick(false));
+// v1.54: ホームの見出し右の「編集」からも同じ選択画面を開く
+$('#btnEditMissions').addEventListener('click', () => openPick(false));
 // v1.53: 自分で決める枠の名前入力
 $('#nameOk').addEventListener('click', commitName);
 $('#nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitName(); } });

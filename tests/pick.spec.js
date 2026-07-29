@@ -332,3 +332,22 @@ test('保存済みの古い表示名がv1.53の名前に移行される', async 
   expect(names.nightfast).toBe('夜食べない');   // 旧名から移行される
   expect(names.custom1).toBe('ヨガ');           // 自分でつけた名前は守られる
 });
+
+test('ホームのカードにⓘは出ず、見出しの「編集」から選択画面を開ける', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  // v1.54: 誤タップの原因だったカード上のⓘは無い
+  await expect(page.locator('#todoRowManual .tc-info')).toHaveCount(0);
+  await expect(page.locator('#todoRowAuto .tc-info')).toHaveCount(0);
+
+  // 見出し右の「編集」で選択画面が開く
+  await page.locator('#btnEditMissions').click();
+  await expect(page.locator('#pickModal')).toHaveClass(/open/);
+
+  // 解説は選択画面のⓘから読める
+  await expandAllPick(page);
+  const row = page.locator('.pick-row', { hasText: 'ストレッチをする' });
+  await row.locator('.pick-row-info').click();
+  await expect(page.locator('#infoModal')).toHaveClass(/open/);
+});
