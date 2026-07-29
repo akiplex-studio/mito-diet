@@ -461,5 +461,31 @@ eq('体重 サンプルなしはnull', pickWeightForDate([], '2026-07-28'), null
 eq('体重 配列でなくてもnull', pickWeightForDate(null, '2026-07-28'), null);
 eq('体重 値が数値でない行は無視', pickWeightForDate([{ value:'x', startDate: at(2026, 7, 28, 9, 0) }], '2026-07-28'), null);
 
+/* --- v1.53: 過去日のチェック（項目の有効期間をその日まで遡らせる） --- */
+{
+  const mk = () => [{ id:'stretch', inTodo:true, act:2, inc:0, periods:[{ from:'2026-07-28', until:null }] }];
+  // 手動項目は遡れる
+  let items = mk();
+  backdateItem(items, 'stretch', '2026-07-25');
+  eq('過去日 遡ると当日も有効', isItemActiveOn(items[0], '2026-07-25'), true);
+  eq('過去日 遡っても今日は有効のまま', isItemActiveOn(items[0], '2026-07-28'), true);
+  eq('過去日 開始より前は無効のまま', isItemActiveOn(items[0], '2026-07-24'), false);
+  // 遡った日にチェックすると、その日の集計に乗る
+  const rec = { checked:['stretch'] };
+  eq('過去日 遡ればptが付く', evalDay(rec, items, '2026-07-25').points, 2);
+  eq('過去日 遡る前はptが付かない', evalDay(rec, mk(), '2026-07-25').points, 0);
+  // 自動判定・減点は遡らせない（過去の育成結果が勝手に書き換わるのを防ぐ）
+  const auto = [{ id:'walk', inTodo:false, auto:'steps', act:2, inc:0.5, periods:[{ from:'2026-07-28', until:null }] }];
+  backdateItem(auto, 'walk', '2026-07-25');
+  eq('過去日 自動判定は遡らない', isItemActiveOn(auto[0], '2026-07-25'), false);
+  const ng = [{ id:'sleeplack', inTodo:true, ng:true, act:-8, inc:0, periods:[{ from:'2026-07-28', until:null }] }];
+  backdateItem(ng, 'sleeplack', '2026-07-25');
+  eq('過去日 減点項目は遡らない', isItemActiveOn(ng[0], '2026-07-25'), false);
+  eq('canBackdate 手動のみtrue', [canBackdate({ inTodo:true }), canBackdate({ inTodo:false }),
+      canBackdate({ inTodo:true, auto:'steps' }), canBackdate({ inTodo:true, ng:true })].join(','),
+      'true,false,false,false');
+}
+
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);

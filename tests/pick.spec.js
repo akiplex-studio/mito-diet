@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { skipOnboarding, expandAllPick } = require('./helpers');
+const { skipOnboarding, expandAllPick, pickItems } = require('./helpers');
 
 // v1.49: デイリーミッションの選び直し（機序ごとの代替選択）とオンボーディング。
 //
@@ -103,6 +103,13 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
     }));
   });
   await page.goto('/index.html');
+  await pickItems(page, ['nosake']);   // v1.53: 禁酒は推奨セットから外れたので明示的に選ぶ
+  // 当時から続けていた状態にする（このテストの主題は「入れ替えても過去が動かない」こと）
+  await page.evaluate(() => {
+    const it = DB.items.find(i => i.id === 'nosake');
+    it.periods = [{ from: '2026-07-01', until: null }];
+    commit();
+  });
 
   const before = await page.evaluate(() => {
     const s = computeState(DB, '2026-07-03');
@@ -114,8 +121,8 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
   await page.locator('#btnPickItems').click();
   await expect(page.locator('#pickModal')).toHaveClass(/open/);
   await expandAllPick(page);
-  await page.locator('.pick-row-main', { hasText: '禁酒' }).click();
-  await page.locator('.pick-row-main', { hasText: '休肝日' }).click();
+  await page.locator('.pick-row-main', { hasText: 'お酒を飲まない' }).click();
+  await page.locator('.pick-row-main', { hasText: '休肝日をつくる' }).click();
   await page.locator('#pickDone').click();
 
   const after = await page.evaluate(() => {
@@ -144,16 +151,17 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
 test('選び直すとホームのデイリーミッションも入れ替わる', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
+  await pickItems(page, ['nosake']);   // v1.53: 禁酒は推奨セットから外れたので明示的に選ぶ
 
-  // 既定では禁酒がミッションに出ている
+  // 選ぶと禁酒がミッションに出ている
   await expect(page.locator('#todoRowManual')).toContainText('禁酒');
   await expect(page.locator('#todoRowManual')).not.toContainText('休肝日');
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
   await expandAllPick(page);
-  await page.locator('.pick-row-main', { hasText: '禁酒' }).click();
-  await page.locator('.pick-row-main', { hasText: '休肝日' }).click();
+  await page.locator('.pick-row-main', { hasText: 'お酒を飲まない' }).click();
+  await page.locator('.pick-row-main', { hasText: '休肝日をつくる' }).click();
   await page.locator('#pickDone').click();
 
   await page.locator('nav.footer button[data-tab="home"]').click();
@@ -173,12 +181,14 @@ test('選択画面に一行説明が出て、ⓘで詳しい解説が読める',
 
   // 名前だけでなく、何をするのかの一行説明が添えられている
   const hiit = page.locator('.pick-row', { hasText: 'HIIT' });
-  await expect(hiit).toContainText('短時間で最も効率がいい');
+  await expect(hiit).toContainText('20秒全力');
 
   // ⓘは選択と誤爆せず、解説だけを開く
   await hiit.locator('.pick-row-info').click();
   await expect(page.locator('#infoModal')).toHaveClass(/open/);
-  await expect(page.locator('#infoBody')).toContainText('ミトコンドリアを増やす司令');
+  await expect(page.locator('#infoBody')).toContainText('AMPKの反応が強く出て');
+  // v1.53: 「どれくらいやるか」が解説に必ず入っている
+  await expect(page.locator('#infoBody')).toContainText('20秒全力＋10秒休みを8本');
   // 解説を開いただけでは選択は変わらない
   expect(await page.evaluate(() => activePickIds())).not.toContain('hiit');
 });
@@ -188,11 +198,12 @@ test('選べる数の上限を超えて選べない', async ({ page }) => {
   await page.goto('/index.html');
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
+  await pickItems(page, ['meditate']);
   await page.locator('#btnPickItems').click();
   await expandAllPick(page);
 
-  // ストレス枠は最大1つ。既定で呼吸瞑想が選ばれているので、入浴は選べないはず
-  await page.locator('.pick-row-main', { hasText: '入浴' }).click();
+  // ストレス枠は最大1つ。呼吸瞑想が選ばれている状態では、入浴は選べないはず
+  await page.locator('.pick-row-main', { hasText: '湯船につかる' }).click();
   await expect(page.locator('#pickWarn')).toContainText('最大1つ');
 
   const ids = await page.evaluate(() => activePickIds());
@@ -203,6 +214,7 @@ test('選択画面は折りたたまれて開き、開いた枠は選んでも�
   await skipOnboarding(page);
   await page.goto('/index.html');
 
+  await pickItems(page, ['meditate']);   // v1.53: ストレス枠の既定は空なので選んでおく
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();
 
@@ -219,5 +231,104 @@ test('選択画面は折りたたまれて開き、開いた枠は選んでも�
   // 選び直し（＝renderPickBodyでの作り直し）をしても開いたまま
   await stress.locator('.pick-row-main', { hasText: '呼吸瞑想' }).click();
   await expect(stress.locator('.pick-opts')).toBeVisible();
-  await expect(stress.locator('.pick-mech-cur')).toHaveText('選んでいません');
+  await expect(stress.locator('.pick-mech-cur')).toHaveText('選択中：ストレッチをする');
+});
+
+/* --- v1.53 --- */
+
+test('推奨セットで始まり、必須項目は外せない', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  // 初期状態の手動ミッションは最小構成（糖分・夜は食べない・ストレッチ）
+  const manual = await page.evaluate(() =>
+    DB.items.filter(it => isItemActiveOn(it, today) && it.inTodo).map(it => it.id).sort());
+  expect(manual).toEqual(['nightfast', 'stretch', 'sugarCtrl']);
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
+
+  // 必須項目は「外せない」表示が出て、押しても外れない
+  const sugar = page.locator('.pick-row', { hasText: '糖分' });
+  await expect(sugar).toContainText('外せない');
+  await sugar.locator('.pick-row-main').click();
+  await expect(page.locator('#pickWarn')).toContainText('外せません');
+  expect(await page.evaluate(() => activePickIds())).toContain('sugarCtrl');
+});
+
+test('自分で決める枠は名前をつけて追加でき、名前が保存される', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
+  await expandAllPick(page);
+
+  await page.locator('.pick-row-main', { hasText: '自分で決める枠' }).first().click();
+  await expect(page.locator('#nameModal')).toHaveClass(/open/);
+  await page.locator('#nameInput').fill('ヨガ');
+  await page.locator('#nameOk').click();
+
+  const saved = await page.evaluate(() => {
+    const it = DB.items.find(i => i.id === 'custom1');
+    return { name: it && it.name, active: !!it && isItemActiveOn(it, today) };
+  });
+  expect(saved).toEqual({ name: 'ヨガ', active: true });
+
+  // ホームのミッションにも自分でつけた名前で並ぶ
+  await page.locator('#pickDone').click();
+  await page.locator('nav.footer button[data-tab="home"]').click();
+  await expect(page.locator('#todoRowManual')).toContainText('ヨガ');
+});
+
+test('過去日でも今のミッションをチェックでき、その日の記録として残る', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('mito-data', JSON.stringify({
+      version: 5, startDate: '2026-07-01', items: null, onboarded: true,
+      days: { '2026-07-01': {}, '2026-07-02': {} },
+    }));
+  });
+  await page.goto('/index.html');
+
+  // 3日前を選ぶ（項目は今日から有効なので、本来その日には並ばない）
+  const past = await page.evaluate(() => {
+    const d = new Date(); d.setDate(d.getDate() - 3);
+    sel = fmtDate(d); renderAll();
+    return sel;
+  });
+
+  await expect(page.locator('#todoRowManual')).toContainText('ストレッチ');
+  await page.locator('#todoRowManual .todo-card', { hasText: 'ストレッチ' }).click();
+
+  const after = await page.evaluate((d) => ({
+    checked: (DB.days[d] || {}).checked || [],
+    activeThen: isItemActiveOn(DB.items.find(i => i.id === 'stretch'), d),
+    pt: computed.perDay[d] ? computed.perDay[d].points : 0,
+  }), past);
+  expect(after.checked).toContain('stretch');
+  expect(after.activeThen).toBe(true);   // その日まで有効期間が遡っている
+  expect(after.pt).toBe(2);              // 集計にも乗る（活+2）
+});
+
+test('保存済みの古い表示名がv1.53の名前に移行される', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('mito-data', JSON.stringify({
+      version: 5, startDate: '2026-07-01', onboarded: true, days: { '2026-07-01': {} },
+      items: [
+        { id: 'nightfast', name: '夜間空白', short: '夜間空白', inTodo: true, act: 3, inc: 0,
+          periods: [{ from: '2026-07-01', until: null }] },
+        { id: 'custom1', name: 'ヨガ', short: 'ヨガ', customName: 'ヨガ', custom: true,
+          inTodo: true, act: 5, inc: 2, periods: [{ from: '2026-07-01', until: null }] },
+      ],
+    }));
+  });
+  await page.goto('/index.html');
+
+  const names = await page.evaluate(() => ({
+    nightfast: DB.items.find(i => i.id === 'nightfast').short,
+    custom1: DB.items.find(i => i.id === 'custom1').short,
+  }));
+  expect(names.nightfast).toBe('夜食べない');   // 旧名から移行される
+  expect(names.custom1).toBe('ヨガ');           // 自分でつけた名前は守られる
 });

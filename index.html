@@ -495,8 +495,10 @@ nav.footer {
   text-align:center; animation:achievePop 320ms var(--ease-standard);
 }
 @keyframes achievePop { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
-.achieve-title { font-size:19px; font-weight:700; color:var(--primary-900); margin-bottom:var(--space-3); }
-.achieve-why { font-size:15px; line-height:1.85; color:var(--neutral-700); margin-bottom:var(--space-5); text-align:left; }
+/* v1.53: 全部読まなくても要点が伝わるよう、いちばん大事な1行を大きく太く出す */
+.achieve-sub { font-size:12px; font-weight:600; color:var(--color-text-muted); margin-bottom:4px; }
+.achieve-title { font-size:22px; font-weight:800; line-height:1.5; color:var(--primary-900); margin-bottom:var(--space-3); }
+.achieve-why { font-size:14px; line-height:1.8; color:var(--neutral-700); margin-bottom:var(--space-5); text-align:left; }
 #medModal.open { align-items:center; }
 .med-card {
   background:var(--color-surface); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
@@ -870,7 +872,7 @@ nav.footer {
       </div>
       <div class="set-section">
         <h4>写真解析（AI）</h4>
-        <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・ミトスコアを推定します。</div>
+        <div class="set-note">写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・マイトスコアを推定します。</div>
       </div>
       <div class="set-section">
         <h4>からだのプロフィール（必要カロリー計算に使用）</h4>
@@ -1002,7 +1004,23 @@ nav.footer {
       <div id="pickBody"></div>
       <div class="pick-note">選び直しても、これまでに育てた匹数と過去の記録は変わりません。</div>
       <div class="btn-row" style="margin-top:16px">
-        <button class="btn btn-primary" id="pickDone" style="flex:1">これでいく</button>
+        <button class="btn btn-primary" id="pickDone" style="flex:1">これで始める</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.53: 自分で決める枠に名前をつけるシート。prompt()はWebViewを固めるので使わない -->
+  <div class="modal" id="nameModal">
+    <div class="med-card" style="text-align:left">
+      <div class="sheet-head">
+        <h3>名前をつける</h3>
+        <button class="sheet-close" data-close aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="set-note" style="margin-bottom:8px">やる運動の名前を入れてください（例: ラジオ体操、ヨガ、卓球）</div>
+      <input type="text" id="nameInput" maxlength="12" placeholder="例: ヨガ" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--color-border)">
+      <div class="pick-warn" id="nameWarn"></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-primary" id="nameOk" style="flex:1">決定</button>
       </div>
     </div>
   </div>
@@ -1021,6 +1039,8 @@ nav.footer {
   <!-- v1.26: 達成の瞬間の反応ダイアログ（段階2）。中央ポップアップ、数値は段階1のchange-overlayで見せるためここでは出さない -->
   <div class="modal" id="achieveModal">
     <div class="achieve-card">
+      <!-- v1.53: 見出し＝いちばん伝えたい1行。項目名は小さく上に添えるだけにする -->
+      <div class="achieve-sub" id="achieveSub"></div>
       <div class="achieve-title" id="achieveTitle"></div>
       <div class="achieve-why" id="achieveWhy"></div>
       <button class="btn btn-primary" data-close style="width:100%">とじる</button>
@@ -1270,6 +1290,31 @@ function unpickItem(items, itemId, todayStr) {
   return items;
 }
 
+/* v1.53: 過去日にチェックを入れられるようにする。
+   項目を選び直したあと「一昨日もこれやってたな」と埋めたい、という要望への対応。
+   有効期間の開始をその日まで遡らせることで、集計（evalDay）にも正しく乗るようにする。
+   遡らせるのは手動チェックの項目だけ。自動判定や減点（睡眠不足）を遡らせると、
+   過去の日に減点や加点が一括で付いてしまい、育ててきた結果が勝手に書き換わるため。 */
+function canBackdate(item) {
+  return !!(item && item.inTodo && !item.auto && !item.ng);
+}
+function backdateItem(items, itemId, dateStr) {
+  const ex = items.find(it => it.id === itemId);
+  if (!ex || !canBackdate(ex)) return items;
+  if (isItemActiveOn(ex, dateStr)) return items;   // その日すでに有効なら何もしない
+  const ps = itemPeriods(ex).map(p => ({ ...p }));
+  // 今つながっている区間（until無し）があれば、その開始日を手前へずらす
+  const open = ps.find(p => !p.until);
+  if (open) {
+    if (!open.from || dateStr < open.from) open.from = dateStr;
+  } else {
+    ps.push({ from: dateStr, until: null });
+  }
+  ex.periods = ps;
+  delete ex.activeFrom; delete ex.activeUntil;
+  return items;
+}
+
 // 記録ログ全体から現在の状態を再計算（チェックの取り消し・過去日の修正にも整合）
 function computeState(db, todayStr) {
   const items = db.items || [];
@@ -1368,7 +1413,8 @@ function countMealRecords(rec) {
 /* v1.30: 達成系（walk/bodyweight/protein/hara7/juice/nosake/meditate/sugarCtrl）は
    キーをitem.idに統一し、「見ればミトが次に何をしてほしいかわかる」お願い口調に統一 */
 // v1.45: ミトの一言を「何が起きたか＋その科学」を伝える中身のあるセリフに刷新。
-// 黄金ルール: 数を増やせるのは運動だけ。食事は守る・材料、空腹/睡眠は掃除、瞑想はストレスを鎮める。
+// 黄金ルール: 数を大きく増やすのは運動。食事は守る・材料、空腹/睡眠は掃除、瞑想はストレスを鎮める。
+// （v1.53: 食事系にも inc>0 を持たせているため「運動だけ」とは言い切らない表現に統一）
 const SPEECH = {
   walk: [
     '歩くと「発電所を増やせ」の号令(PGC-1α)が鳴って、ぼくらの仲間が増えるんだ',
@@ -1554,7 +1600,7 @@ function backupNudge(db, todayStr) {
    そうしないと「お酒はやめないが代わりに別のことをする」に応えられないため。
 
    知識ベース§0の黄金ルール（docs/食事解析_ミトコンドリア知識ベース.md）が設計の背骨:
-   ・ミトコンドリアの「数」を増やせるのは運動だけ
+   ・ミトコンドリアの「数」を大きく増やせるのは運動（食事系もわずかには増える）
    ・食事の役割は「質を整える・守る・支える」であって数を増やすことではない
    → biogenesis（運動）枠だけは required。他の枠は手段の差し替えが効く。
    ============================================================ */
@@ -1565,7 +1611,7 @@ function backupNudge(db, todayStr) {
 //   section 'habit'    … その他のやること（任意）
 //   section 'auto'     … 自動で判定（外せない・基準だけ決める）
 const MECHANISMS = [
-  { id:'biogenesis', section:'exercise', name:'運動',               lead:'ミトコンドリアの数を増やせるのは運動だけ。いくつ選んでもかまいません', max:4 },
+  { id:'biogenesis', section:'exercise', name:'運動',               lead:'数を大きく増やせるのは運動です。いくつ選んでもかまいません', max:4 },
   { id:'protect',    section:'habit',    name:'サビから守る',       lead:'活性酸素のダメージを減らす',   max:3 },
   { id:'cleanup',    section:'habit',    name:'質を整える・掃除する', lead:'傷んだミトコンドリアを片づける', max:2 },
   { id:'clock',      section:'habit',    name:'体内時計を合わせる', lead:'一日のリズムを整える',         max:1 },
@@ -1578,8 +1624,10 @@ const AUTO_ITEMS = [
     lead:'これが土台。記録するとタンパク質と腹七分目が自動で判定されます' },
   { id:'walk',      name:'歩く',                 unit:'歩',
     lead:'生活によって歩く量は全然ちがうので、自分に合う目標を選んでください' },
-  { id:'protein',   name:'タンパク質',           unit:'',
-    lead:'食事の記録から自動で集計されます' },
+  // v1.53: タンパク質は「しっかり運動する人」向けの指標なので、外せない枠から任意に変えた。
+  // 外すと自動チェックも点も付かない（記録タブの栄養集計そのものは残る）
+  { id:'protein',   name:'タンパク質',           unit:'', optional:true,
+    lead:'運動して体をつくる人向け。食事の記録から自動で集計されます' },
   { id:'hara7',     name:'腹七分目',             unit:'',
     lead:'食事の記録の「食べた量の感覚」から自動で判定されます' },
   { id:'sleeplack', name:'睡眠',                 unit:'',
@@ -1612,6 +1660,24 @@ const WALK_EFFORTS = [
   { label:'10,000歩', min:10000, inc:2 },
   { label:'15,000歩', min:15000, inc:3 },
 ];
+// v1.53: 歩きに出た日を自分で申告する枠。歩数（自動判定）と重なるぶん、有酸素より控えめにする
+// （歩数だけで最大+3匹/日つくので、同じ値にすると同じ行動が二重に効いてしまう）
+const WALKING_EFFORTS = [
+  { label:'10分',     inc:0.3 },
+  { label:'20分',     inc:0.5 },
+  { label:'30分',     inc:0.8 },
+  { label:'45分',     inc:1 },
+  { label:'60分以上', inc:1.5 },
+];
+// v1.53: 種目を特定しない汎用枠・自分で名前をつける枠で使う。
+// 何をするか決まっていないので、有酸素と筋トレのちょうど中間（平均的な値）にする
+const GENERIC_EFFORTS = [
+  { label:'ちょっとだけ', hint:'10分くらい・軽く動いた',      inc:0.5 },
+  { label:'軽め',         hint:'20分くらい',                 inc:1 },
+  { label:'ふつう',       hint:'30分くらい・少し息が弾む',    inc:2 },
+  { label:'しっかり',     hint:'45分くらい・汗をかいた',      inc:3 },
+  { label:'追い込んだ',   hint:'60分以上、またはかなりきつい', inc:4.5 },
+];
 // HIITは時間あたり効率が持久の2〜3倍（論文レビューのメタ回帰）。ただし回復に中1〜2日要るので
 // 毎日やる前提の値にはしない
 const HIIT_EFFORTS = [
@@ -1636,6 +1702,10 @@ const CATALOG = [
       { value:8000,  label:'8,000歩',  hint:'通勤がある。しっかり歩きたい' },
       { value:10000, label:'10,000歩', hint:'意識して歩く習慣がある' },
     ] },
+  // v1.53: 歩数は自動で付くが「今日は歩きに出た」を自分で残したい人向け（値は控えめ）
+  { id:'walking', mech:'biogenesis', name:'ウォーキング（歩きに出る）', short:'ウォーキング',
+    act:3, inc:0.5, inTodo:true, order:2, efforts:WALKING_EFFORTS,
+    method:'自己申告（歩数の自動判定とは別枠）' },
   { id:'jog', mech:'biogenesis', name:'ジョギング', short:'ジョギング', act:4, inc:1,
     auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2,
     efforts:WALK_EFFORTS, effortFrom:'steps', method:'万歩計（自動集計・手動チェックも可）' },
@@ -1643,17 +1713,28 @@ const CATALOG = [
     inTodo:true, order:2, efforts:CARDIO_EFFORTS, method:'自己申告（歩数では測れないため）' },
   { id:'swim', mech:'biogenesis', name:'スイミング', short:'スイミング', act:4, inc:1,
     inTodo:true, order:2, efforts:CARDIO_EFFORTS, method:'自己申告（歩数では測れないため）' },
-  { id:'bodyweight', mech:'biogenesis', name:'自重トレ（腕立て・スクワット等）', short:'自重トレ',
-    act:6, inc:4, inTodo:true, order:4, isDefault:true, efforts:STRENGTH_EFFORTS, method:'自己申告' },
-  { id:'gymtrain', mech:'biogenesis', name:'筋トレ（ジム・器具あり）', short:'筋トレ',
+  { id:'bodyweight', mech:'biogenesis', name:'自重トレ（家でできる腕立て・スクワット）', short:'自重トレ',
     act:6, inc:4, inTodo:true, order:4, efforts:STRENGTH_EFFORTS, method:'自己申告' },
-  { id:'hiit', mech:'biogenesis', name:'HIIT（20秒全力・10秒休み）', short:'HIIT',
+  { id:'gymtrain', mech:'biogenesis', name:'ジム・マシンでトレーニング', short:'ジム・マシン',
+    act:6, inc:4, inTodo:true, order:4, efforts:STRENGTH_EFFORTS, method:'自己申告' },
+  { id:'hiit', mech:'biogenesis', name:'HIIT（20秒全力・10秒休みをくり返す）', short:'HIIT',
     act:6, inc:3.5, inTodo:true, order:4, efforts:HIIT_EFFORTS,
     method:'自己申告（週2〜3回・中1〜2日あける）' },
+  // v1.53: 種目を決めずに「運動した」を残せる汎用枠。カタログに無い運動の受け皿
+  { id:'lightex', mech:'biogenesis', name:'軽めの運動（体操・ラジオ体操など）', short:'軽めの運動',
+    act:3, inc:1, inTodo:true, order:3, efforts:GENERIC_EFFORTS, method:'自己申告' },
+  { id:'anyex', mech:'biogenesis', name:'その他の運動', short:'その他の運動',
+    act:5, inc:2, inTodo:true, order:3, efforts:GENERIC_EFFORTS, method:'自己申告' },
+  // v1.53: 自分で名前をつける枠。名前だけ自由にし、効果値は汎用枠と同じ平均値で固定する
+  // （効果値まで本人に決めさせると、育成のバランスがいくらでも壊せてしまうため）
+  { id:'custom1', mech:'biogenesis', name:'自分で決める枠', short:'自由枠', custom:true,
+    act:5, inc:2, inTodo:true, order:3, efforts:GENERIC_EFFORTS, method:'自己申告' },
+  { id:'custom2', mech:'biogenesis', name:'自分で決める枠（2つめ）', short:'自由枠2', custom:true,
+    act:5, inc:2, inTodo:true, order:3, efforts:GENERIC_EFFORTS, method:'自己申告' },
 
   /* --- D. 材料。Aの前提条件 --- */
   { id:'protein', kind:'auto', mech:'material', name:'タンパク質をしっかり', short:'タンパク質',
-    act:4, inc:0.3, auto:'protein', threshold:1.6, inTodo:false, order:3, isDefault:true,
+    act:4, inc:0.3, auto:'protein', threshold:1.6, inTodo:false, order:3, optional:true,
     method:'食事の記録から自動判定',
     thresholds:[
       { value:1.2, label:'体重×1.2g', hint:'まずは無理なく。高齢の方や少食の方' },
@@ -1678,8 +1759,8 @@ const CATALOG = [
       { value:7, label:'7時間', hint:'しっかり寝たい' },
       { value:8, label:'8時間', hint:'8時間は寝ないと調子が出ない' },
     ] },
-  { id:'nightfast', mech:'cleanup', name:'夜食べない', short:'夜食べない',
-    act:3, inc:0, inTodo:true, order:5, method:'自己申告' },
+  { id:'nightfast', mech:'cleanup', name:'夜は食べない', short:'夜食べない',
+    act:3, inc:0, inTodo:true, order:5, isDefault:true, required:true, method:'自己申告（夕食のあとは翌朝まで何も食べない）' },
   // v1.50: 記録すること自体をやることにする。タンパク質・腹七分目はこれが前提なので土台扱い
   { id:'mealrec', kind:'auto', mech:'material', name:'食べたものを記録する', short:'食事の記録',
     act:2, inc:0, auto:'mealRec', threshold:2, inTodo:false, order:0, isDefault:true,
@@ -1691,19 +1772,19 @@ const CATALOG = [
     ] },
 
   /* --- C. 守る（抗酸化） --- */
-  { id:'juice', mech:'protect', name:'野菜ジュース', short:'野菜ジュース', act:2, inc:0.1,
-    inTodo:true, order:1, isDefault:true, autoPhoto:'breakfast', effect:'clean', method:'写真' },
-  { id:'colorveg', mech:'protect', name:'色の濃い野菜を一品', short:'色野菜', act:2, inc:0.1,
+  { id:'juice', mech:'protect', name:'野菜ジュースを飲む', short:'ジュースを飲む', act:2, inc:0.1,
+    inTodo:true, order:1, autoPhoto:'breakfast', effect:'clean', method:'いつ飲んでもOK（朝の写真なら自動チェック）' },
+  { id:'colorveg', mech:'protect', name:'色の濃い野菜を一品食べる', short:'色野菜を食べる', act:2, inc:0.1,
     inTodo:true, order:1, autoPhoto:'breakfast', effect:'clean', method:'写真' },
-  { id:'nosake', mech:'protect', name:'禁酒', short:'禁酒', act:3, inc:0,
-    inTodo:true, order:5, isDefault:true, method:'自己申告' },
+  { id:'nosake', mech:'protect', name:'お酒を飲まない', short:'禁酒', act:3, inc:0,
+    inTodo:true, order:5, method:'自己申告' },
   // 「どうしても飲む人」向け。完全禁酒より効果は控えめにする
   { id:'restday', mech:'protect', name:'休肝日をつくる', short:'休肝日', act:2, inc:0,
     inTodo:true, order:5, method:'自己申告' },
   { id:'lessdrink', mech:'protect', name:'お酒を控えめにする（1〜2杯まで）', short:'お酒控えめ',
     act:1, inc:0, inTodo:true, order:5, method:'自己申告' },
   { id:'sugarCtrl', mech:'protect', name:'糖分に気を付ける', short:'糖分', act:1, inc:0,
-    inTodo:true, order:5, isDefault:true, method:'自己申告' },
+    inTodo:true, order:5, isDefault:true, required:true, method:'自己申告' },
   { id:'nosmoke', mech:'protect', name:'禁煙', short:'禁煙', act:3, inc:0,
     inTodo:true, order:5, method:'自己申告' },
 
@@ -1713,12 +1794,12 @@ const CATALOG = [
 
   /* --- F. ストレス --- */
   { id:'meditate', mech:'stress', name:'呼吸瞑想（5秒吸う・8秒吐く ×20）', short:'呼吸瞑想',
-    act:2, inc:0.1, inTodo:true, order:6, isDefault:true, timer:true, method:'瞑想タイマー' },
+    act:2, inc:0.1, inTodo:true, order:6, timer:true, method:'瞑想タイマー' },
   // 入浴は本来「熱ショックタンパク質」＝別機序だが、枠を増やしすぎないのでストレス枠に置く
   { id:'bath', mech:'stress', name:'湯船につかる', short:'入浴', act:2, inc:0,
     inTodo:true, order:6, method:'自己申告' },
-  { id:'stretch', mech:'stress', name:'ストレッチ', short:'ストレッチ', act:2, inc:0,
-    inTodo:true, order:6, method:'自己申告' },
+  { id:'stretch', mech:'stress', name:'ストレッチをする', short:'ストレッチ', act:2, inc:0,
+    inTodo:true, order:6, isDefault:true, method:'自己申告' },
   // darknight（夜は暗くしてスマホを避ける）は判定が曖昧で一時停止中（inTodo:false）のため、
   // カタログには載せない。選んでもチェックリストに出ず混乱するだけになる。
   // 既存ユーザーのDB.itemsには残るので、過去の集計はそのまま維持される。
@@ -1728,19 +1809,24 @@ const CATALOG = [
 // 詳しい機序は INFO（ⓘボタン）で読める。ここは操作の実像がすぐ分かる書き方にする。
 const BLURB = {
   walk:         '歩数から自動で判定',
-  jog:          '歩くより短い時間で同じだけの刺激',
-  cycling:      '膝への衝撃が少ない。通勤に混ぜやすい',
-  swim:         '全身を使えて関節にやさしい',
-  bodyweight:   '器具なしで家でできる。腕立て・スクワットなど',
-  gymtrain:     '器具で負荷を細かく上げられる',
-  hiit:         '短時間で最も効率がいい。週2〜3回まで',
+  walking:      '歩数の自動判定とは別に、意識して歩きに出た日。20〜30分が目安',
+  jog:          '20〜30分、会話ができるくらいの速さで。歩くより短時間で同じ刺激',
+  cycling:      '30分以上こぐ。膝への衝撃が少なく、通勤にも混ぜやすい',
+  swim:         '20〜30分泳ぐ（水中ウォーキングでも可）。全身を使えて関節にやさしい',
+  bodyweight:   '腕立て・スクワットなどを2〜3種目、各10〜15回。器具なしで家でできる',
+  gymtrain:     'ジムのマシンやダンベルで2〜3種目。器具で負荷を細かく上げられる',
+  hiit:         '20秒全力＋10秒休みを8本（合計4分）。週2〜3回、中1〜2日あける',
+  lightex:      'ラジオ体操・軽い体操など10〜20分。まず体を動かす習慣から',
+  anyex:        'カタログに無い運動はここに。やった時間で強さを選ぶ',
+  custom1:      '自分で名前をつけて登録する（例: ヨガ、卓球）',
+  custom2:      'もう1つ、自分で名前をつけて登録する',
   protein:      '食事の記録から自動で集計',
   hara7:        '満腹度の記録から自動で判定',
   sleeplack:    '選んだ時間を下回った日は減点になる',
   mealrec:      '写真かことばで残すと自動でチェック',
-  nightfast:    '夕食のあとは、翌朝まで何も食べない',
-  juice:        '朝の食事写真で自動チェック',
-  colorveg:     '緑・赤・紫・橙の野菜を一品',
+  nightfast:    '夕食のあとは翌朝まで何も食べない（水・お茶はOK）',
+  juice:        'いつ飲んでもOK。朝の食事写真なら自動でチェックされる',
+  colorveg:     '緑・赤・紫・橙の野菜を一品。色が濃いほど抗酸化成分が多い',
   nosake:       'その日はまったく飲まない',
   restday:      '飲む日と飲まない日を分ける',
   lessdrink:    '飲む量を1〜2杯までにおさえる',
@@ -1749,7 +1835,7 @@ const BLURB = {
   morninglight: '起きて1時間以内に5〜15分、外の光を浴びる',
   meditate:     'タイマーつき。5秒吸って8秒吐くを20回',
   bath:         '湯船で温まる。40度前後で10〜15分',
-  stretch:      '風呂上がりに5分、体をゆるめる',
+  stretch:      '風呂上がりに5分、体をゆるめる。寝る前の習慣にしやすい',
 };
 
 function catalogById(id) { return CATALOG.find(c => c.id === id) || null; }
@@ -1772,6 +1858,38 @@ const INFO = {
   walk: {
     why:'早歩きなどの有酸素運動をすると、筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これが PGC-1α（ミトコンドリアを新しく作る司令塔）のスイッチを押し、ミトコンドリアの“数”が増えていきます。朝に歩けば光で体内時計も整い、代謝リズムが安定します。',
     tips:'ときどき早歩きを混ぜると刺激アップ。朝8時ごろの20分散歩は「光＋歩数」の一石二鳥です。'
+  },
+  walking: {
+    why:'歩くと筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これがPGC-1α（ミトコンドリアを新しく作る司令塔）を起動させます。歩数の自動判定と重なる部分はあるので、こちらは「意識して歩きに出た日」を残す枠として使ってください。',
+    tips:'20〜30分が目安。ときどき早歩きを混ぜると刺激が上がります。朝に歩けば体内時計も整います。'
+  },
+  jog: {
+    why:'走ると心拍が上がり、筋肉と心肺の両方に「もっと発電所が要る」という信号が出ます。歩くより短い時間で同じだけの刺激を入れられるのが利点です。',
+    tips:'20〜30分、会話ができるくらいの速さで。膝が不安なら1分走って1分歩くを繰り返す形から。'
+  },
+  cycling: {
+    why:'自転車は体重を支えずに大きな筋肉を長く動かせるため、関節を痛めにくいまま有酸素の刺激を積めます。太ももはミトコンドリアの多い筋肉です。',
+    tips:'30分以上を目安に。信号待ちの少ない道だと心拍が落ちにくく効率的です。'
+  },
+  swim: {
+    why:'水の抵抗が全身に均等にかかるため、関節への負担が少ないまま持久的な負荷をかけられます。呼吸が制限されるぶん心肺にも効きます。',
+    tips:'20〜30分。泳ぎ続けられなくても、水中ウォーキングで十分に負荷になります。'
+  },
+  gymtrain: {
+    why:'マシンやダンベルは負荷を数字で細かく上げられるので、「少しきつい」を毎回狙えます。筋肉が増えると、その中のミトコンドリアも一緒に増えていきます。',
+    tips:'2〜3種目を各10〜15回×2〜3セット。週2回でも、同じ部位は中1〜2日あけましょう。'
+  },
+  hiit: {
+    why:'全力に近い運動を短くくり返すと、AMPKの反応が強く出て、時間あたりの効率は持久運動の2〜3倍とも報告されています。ただし回復に時間が要ります。',
+    tips:'20秒全力＋10秒休みを8本＝合計4分（タバタ式）。週2〜3回まで、中1〜2日あけてください。'
+  },
+  lightex: {
+    why:'強い運動でなくても、体を動かすこと自体が「エネルギーを使う」信号になります。まったく動かない日を減らすほうが、たまに追い込むより続きます。',
+    tips:'ラジオ体操や軽い体操を10〜20分。動く習慣がついてから強さを上げれば十分です。'
+  },
+  anyex: {
+    why:'種目が何であれ、息が弾んで筋肉を使えば、ミトコンドリアを増やす合図は出ます。カタログに無い運動はここで記録してください。',
+    tips:'やった時間で「がんばり度」を選びます。30分くらいなら「ふつう」が目安です。'
   },
   bodyweight: {
     why:'筋肉はミトコンドリアがぎっしり詰まった組織です。スクワットや腕立てで筋線維に負荷をかけると、ミトコンドリアの新生と質の向上が起きます。筋肉が増えると、じっとしていても消費するエネルギー（基礎代謝）の土台も大きくなります。',
@@ -1802,7 +1920,7 @@ const INFO = {
     tips:'5秒吸って8秒吐くをゆったり。寝る前に行うと入眠もスムーズです。'
   },
   sugar: {
-    why:'砂糖や甘い飲料は血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。ミトを守るには、まず甘い飲み物から見直すのが近道です。',
+    why:'砂糖や甘い飲料は血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。マイトを守るには、まず甘い飲み物から見直すのが近道です。',
     tips:'甘い飲料を水・お茶・炭酸水に置き換えるだけでも大きく変わります。'
   },
   sugarCtrl: {
@@ -1817,26 +1935,6 @@ const INFO = {
   /* --- v1.49: 追加した選択肢。知識ベースの黄金ルールを守り、
          「数を増やす」と書いてよいのは運動だけ。食事・入浴・瞑想は
          「守る・支える・整える」の言い回しに寄せている --- */
-  jog: {
-    why:'走ると心臓と筋肉により強い司令が届き、ミトコンドリアが新しく作られます。歩くより短い時間で同じだけの刺激を届けられます。',
-    tips:'会話ができるくらいの速さで十分です。歩く・走るを交互にするだけでも立派な有酸素運動になります。'
-  },
-  cycling: {
-    why:'ペダルをこぎ続けると、脚の筋肉で酸素を使う量が増え、ミトコンドリアを増やす司令が出ます。膝への衝撃が少ないのが利点です。',
-    tips:'平坦な道を淡々とより、ゆるい上り坂を混ぜるほうが刺激が入ります。通勤に混ぜられると続けやすいです。'
-  },
-  swim: {
-    why:'全身を使って酸素をたくさん消費するので、ミトコンドリアを増やす司令が全身に届きます。関節への負担が少ないのも特徴です。',
-    tips:'泳ぎ続けられなくても大丈夫。歩くだけの水中ウォーキングでも水の抵抗がしっかり負荷になります。'
-  },
-  gymtrain: {
-    why:'器具を使うと負荷を細かく上げられるので、筋肉という「発電所の宿り場」を広げやすくなります。筋肉が増えるほど、宿れるミトコンドリアの総量も増えます。',
-    tips:'押す・引く・脚・体幹の4方向をひと通り。同じ部位は中1〜2日あけると回復が間に合います。'
-  },
-  hiit: {
-    why:'短時間で全力を出すと、ミトコンドリアを増やす司令が非常に強く出ます。研究では、同じ時間あたりの効率がゆっくりした持久運動の2〜3倍とされています。',
-    tips:'20秒全力・10秒休みを繰り返します。刺激が強いので週2〜3回、中1〜2日あけて。持病のある方は主治医に相談してから。'
-  },
   nightfast: {
     why:'食べない時間が続くと、体は傷んだミトコンドリアを片づける掃除モードに入りやすくなります。数が増えるわけではなく、質を整える時間です。',
     tips:'夕食から翌朝まで12時間ほどあくのが目安。夜食をやめるだけで自然に届きます。極端な絶食は逆効果です。'
@@ -1874,44 +1972,44 @@ const INFO = {
 // v1.26: 達成の反応ダイアログ（段階2）用。INFO.whyより短く、複数パターンを持たせて毎回同じにならないようにする
 const WHY_VARIANTS = {
   walk: [
-    '歩いて筋肉を使うと、エネルギー不足を感じ取るセンサー・AMPKが反応し、司令塔のPGC-1αが起動します。これは「発電所を増設せよ」という細胞への号令。数ある習慣の中でも、ミトコンドリアを実際に増やせる引き金は、運動がもっとも確かだと分かっています。',
-    '朝いちばんの光は、細胞の体内時計に「今日が始まった」と知らせるスイッチです。ミトコンドリアの新生や浄化は、実はこの時計に従って一日の中で増減しています。光で針を合わせると、脂肪や糖を使うリズムそのものが乱れにくくなると考えられています。',
-    'まだ朝食前の体は、夜のあいだ続いた「脂肪を燃料に使うモード」の途中にあります。そこで軽く歩くと、その燃焼モードをもう少し延ばせるとされます。朝の3,000歩は、脂肪が優先的に燃えている貴重な時間を活かす一歩です。',
+    '歩くと「発電所を増やせ」の号令が出る||歩いて筋肉を使うと、エネルギー不足を感じ取るセンサー・AMPKが反応し、司令塔のPGC-1αが起動します。これは「発電所を増設せよ」という細胞への号令。数ある習慣の中でも、ミトコンドリアを大きく増やせる引き金は運動がもっとも確かだと分かっています。',
+    '朝の光が、体内時計のスイッチを入れる||朝いちばんの光は、細胞の体内時計に「今日が始まった」と知らせるスイッチです。ミトコンドリアの新生や浄化は、実はこの時計に従って一日の中で増減しています。光で針を合わせると、脂肪や糖を使うリズムそのものが乱れにくくなると考えられています。',
+    '朝食前に歩くと、脂肪が燃えやすい||まだ朝食前の体は、夜のあいだ続いた「脂肪を燃料に使うモード」の途中にあります。そこで軽く歩くと、その燃焼モードをもう少し延ばせるとされます。朝の3,000歩は、脂肪が優先的に燃えている貴重な時間を活かす一歩です。',
   ],
   bodyweight: [
-    '筋肉は、体の中でもミトコンドリアがぎっしり詰まった組織です。腕立てやスクワットで負荷をかけると、細胞内でカルシウムやAMPKが働き、新生と質の向上が同時に進むと報告されています。器具がなくても、自重だけで持久力の土台はしっかり育てられます。',
-    '筋肉が増えると、じっと座っている間も消費されるエネルギー——基礎代謝の土台が大きくなります。つまり自重トレは「今この瞬間」だけでなく、動いていない時間の燃焼力まで底上げする投資。中高年のミトコンドリアにこそ、よく効くと考えられています。',
-    'ポイントは、息が少し弾む「ややきつい」ところまで動くこと。この負荷が、発電所を増やせという指令を強く鳴らします。回数を数えるより、呼吸と動きを合わせる「動く瞑想」のつもりで。きつさの正体は、ミトコンドリアへのサインです。',
+    '筋肉はミトコンドリアの密集地帯||筋肉は、体の中でもミトコンドリアがぎっしり詰まった組織です。腕立てやスクワットで負荷をかけると、細胞内でカルシウムやAMPKが働き、新生と質の向上が同時に進むと報告されています。器具がなくても、自重だけで持久力の土台はしっかり育てられます。',
+    '筋肉を増やすと、休んでいる間の燃焼力も上がる||筋肉が増えると、じっと座っている間も消費されるエネルギー——基礎代謝の土台が大きくなります。つまり自重トレは「今この瞬間」だけでなく、動いていない時間の燃焼力まで底上げする投資。中高年のミトコンドリアにこそ、よく効くと考えられています。',
+    '「ややきつい」まで動くのが効くサイン||ポイントは、息が少し弾む「ややきつい」ところまで動くこと。この負荷が、発電所を増やせという指令を強く鳴らします。回数を数えるより、呼吸と動きを合わせる「動く瞑想」のつもりで。きつさの正体は、ミトコンドリアへのサインです。',
   ],
   protein: [
-    '増やす司令がいくら出ても、材料のタンパク質がなければ新しいミトコンドリアも筋肉も作れません。設計図と号令だけあって、レンガが届かない建設現場と同じです。運動でスイッチを入れたら、材料を切らさない——この両輪が揃って初めて形になります。',
-    'タンパク質は体に貯めておけないため、一度にまとめてより、一日を通してこまめに補うほうが土台を支えられます。朝・昼・晩と分けて届けるイメージ。ミトコンドリアづくりの現場に、材料が途切れず入ってくる状態をつくれます。',
-    '目安は体重×1.6g。多すぎず、でも不足させない量です。せっかく歩いてトレーニングして「増やせ」の号令を出したのに、材料不足で作れなかった——そんなもったいない状態を防ぐための、いちばん確実な下支えになります。',
+    '材料がなければ、増やす司令も無駄になる||増やす司令がいくら出ても、材料のタンパク質がなければ新しいミトコンドリアも筋肉も作れません。設計図と号令だけあって、レンガが届かない建設現場と同じです。運動でスイッチを入れたら、材料を切らさない——この両輪が揃って初めて形になります。',
+    'タンパク質は貯められない。こまめに補う||タンパク質は体に貯めておけないため、一度にまとめてより、一日を通してこまめに補うほうが土台を支えられます。朝・昼・晩と分けて届けるイメージ。ミトコンドリアづくりの現場に、材料が途切れず入ってくる状態をつくれます。',
+    '目安は体重×1.6g||目安は体重×1.6g。多すぎず、でも不足させない量です。せっかく歩いてトレーニングして「増やせ」の号令を出したのに、材料不足で作れなかった——そんなもったいない状態を防ぐための、いちばん確実な下支えになります。',
   ],
   hara7: [
-    '軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つための習慣です。',
-    '食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかり、活性酸素も出やすくなります。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分ですが、七分ならなお静かに整います。',
-    '満腹が続くと、細胞は「掃除」より「処理」に追われ続けます。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれる。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。',
+    '軽い空腹が、古い発電所の掃除を促す||軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つための習慣です。',
+    '食べ過ぎは発電所への過重労働||食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかり、活性酸素も出やすくなります。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分ですが、七分ならなお静かに整います。',
+    '空腹の時間が、点検の時間になる||満腹が続くと、細胞は「掃除」より「処理」に追われ続けます。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれる。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。',
   ],
   juice: [
-    'ミトコンドリアはエネルギーを作るたびに、副産物として活性酸素——いわば「火の粉」も出します。野菜のビタミンやポリフェノールは、この火の粉を受け止め、発電所そのものが錆びるのを防ぐ役割を担うと考えられています。彩りの多い一杯ほど頼りになります。',
-    '面白いのは、活性酸素はゼロが正解ではないこと。運動時の適度な活性酸素は「増えろ」のシグナルにもなります。だからサプリの大量摂取より、食事からほどよく抗酸化成分を補うのが理にかなっている。野菜ジュースは、その「ほどよさ」にちょうどいい形です。',
-    '錆びにくい体は、一日で作られるものではありません。日々こつこつ補う抗酸化成分が、少しずつミトコンドリアの守りを厚くしていきます。今日の一杯は、その積み重ねの一歩。飲むたびに、発電所の防護服を少し新調している感覚です。',
+    '野菜の抗酸化成分が、発電の「火の粉」を受け止める||ミトコンドリアはエネルギーを作るたびに、副産物として活性酸素——いわば「火の粉」も出します。野菜のビタミンやポリフェノールは、この火の粉を受け止め、発電所そのものが錆びるのを防ぐ役割を担うと考えられています。彩りの多い一杯ほど頼りになります。',
+    '活性酸素はゼロが正解ではない。だから食事から||面白いのは、活性酸素はゼロが正解ではないこと。運動時の適度な活性酸素は「増えろ」のシグナルにもなります。だからサプリの大量摂取より、食事からほどよく抗酸化成分を補うのが理にかなっている。野菜ジュースは、その「ほどよさ」にちょうどいい形です。',
+    '錆びにくい体は、こつこつの積み重ね||錆びにくい体は、一日で作られるものではありません。日々こつこつ補う抗酸化成分が、少しずつミトコンドリアの守りを厚くしていきます。今日の一杯は、その積み重ねの一歩。飲むたびに、発電所の防護服を少し新調している感覚です。',
   ],
   nosake: [
-    'アルコールの分解は、ミトコンドリアにとってかなりの重労働です。処理の過程で活性酸素も増え、発電所に負荷が集中します。休肝日は、その重い仕事を止めて、たまったダメージを回復させるための時間。飲まない日こそ、内側で修復が進んでいます。',
-    'お酒を休むと、分解にともなう活性酸素の発生も抑えられます。すると発電所は「処理」から解放され、本来の仕事——エネルギーづくりと自己メンテナンスに集中できる。翌朝の体の軽さは、ミトコンドリアが元気を取り戻したサインかもしれません。',
-    '毎日灯し続けたい火だからこそ、休ませる日も要ります。休肝日はサボりではなく、発電所にとっての正式な「回復日」。今日は堂々と休んでいい一日だと考えると、飲まない選択も前向きなメンテナンスに変わります。',
+    'アルコールの分解は、発電所には重労働||アルコールの分解は、ミトコンドリアにとってかなりの重労働です。処理の過程で活性酸素も増え、発電所に負荷が集中します。休肝日は、その重い仕事を止めて、たまったダメージを回復させるための時間。飲まない日こそ、内側で修復が進んでいます。',
+    '休肝日は、発電所が本業に戻れる日||お酒を休むと、分解にともなう活性酸素の発生も抑えられます。すると発電所は「処理」から解放され、本来の仕事——エネルギーづくりと自己メンテナンスに集中できる。翌朝の体の軽さは、ミトコンドリアが元気を取り戻したサインかもしれません。',
+    '休ませる日も、続けるうちに入る||毎日灯し続けたい火だからこそ、休ませる日も要ります。休肝日はサボりではなく、発電所にとっての正式な「回復日」。今日は堂々と休んでいい一日だと考えると、飲まない選択も前向きなメンテナンスに変わります。',
   ],
   meditate: [
-    '5秒吸って8秒吐く——吐く息を長くする呼吸は、自律神経のうち「休息モード」を優位にし、ストレスホルモンを下げます。ミトコンドリアはストレスの影響を受けやすい発電所。呼吸ひとつで、体の内側の緊張をゆるめてあげられます。',
-    '慢性的なストレスは、じわじわとミトコンドリアを消耗させることが分かっています。心の負荷が、細胞レベルのエネルギー低下につながるのです。だからこそ意識して休ませる時間が効く。20回の呼吸は、発電所に「いったん力を抜いていい」と伝える合図です。',
-    '深い呼吸は、無数の発電所へ酸素という薪を送り直す行為でもあります。眠っていた火に新しい空気をくべ、同時に緊張をほどく。あなたがひと息つくと、体内のミトコンドリアも一緒にひと息つく——その両方が、この5分で起きています。',
+    '長く吐く呼吸が、休息モードに切り替える||5秒吸って8秒吐く——吐く息を長くする呼吸は、自律神経のうち「休息モード」を優位にし、ストレスホルモンを下げます。ミトコンドリアはストレスの影響を受けやすい発電所。呼吸ひとつで、体の内側の緊張をゆるめてあげられます。',
+    '慢性ストレスは、細胞のエネルギーを削る||慢性的なストレスは、じわじわとミトコンドリアを消耗させることが分かっています。心の負荷が、細胞レベルのエネルギー低下につながるのです。だからこそ意識して休ませる時間が効く。20回の呼吸は、発電所に「いったん力を抜いていい」と伝える合図です。',
+    '深い呼吸は、発電所に薪をくべ直す行為||深い呼吸は、無数の発電所へ酸素という薪を送り直す行為でもあります。眠っていた火に新しい空気をくべ、同時に緊張をほどく。あなたがひと息つくと、体内のミトコンドリアも一緒にひと息つく——その両方が、この5分で起きています。',
   ],
   sugarCtrl: [
-    '甘いものや白米を摂りすぎると、血糖が急に上がって急に下がる乱高下が起きます。処理しきれず余った糖はミトコンドリアの負担になり、活性酸素も増えやすくなります。主食を拳1個分に抑えるだけで、この乱高下がぐっと穏やかになります。',
-    '糖質を控えめにすると血糖が安定し、発電所が余分な活性酸素にさらされにくくなります。血糖の波が小さいほど、ミトコンドリアは落ち着いてエネルギーを作れる。我慢というより、発電所が働きやすい環境を整えているイメージです。',
-    '果糖は特に肝臓で処理され、摂りすぎると脂肪としてたまりやすい糖です。お菓子やジュースを控え、主食も腹七分目に。派手な制限をしなくても、この一手だけでミトコンドリアにかかる糖の圧力は大きく減っていきます。',
+    '血糖の乱高下が、発電所の負担になる||甘いものや白米を摂りすぎると、血糖が急に上がって急に下がる乱高下が起きます。処理しきれず余った糖はミトコンドリアの負担になり、活性酸素も増えやすくなります。主食を拳1個分に抑えるだけで、この乱高下がぐっと穏やかになります。',
+    '糖質控えめだと、血糖の波が小さくなる||糖質を控えめにすると血糖が安定し、発電所が余分な活性酸素にさらされにくくなります。血糖の波が小さいほど、ミトコンドリアは落ち着いてエネルギーを作れる。我慢というより、発電所が働きやすい環境を整えているイメージです。',
+    '果糖は特に脂肪としてたまりやすい||果糖は特に肝臓で処理され、摂りすぎると脂肪としてたまりやすい糖です。お菓子やジュースを控え、主食も腹七分目に。派手な制限をしなくても、この一手だけでミトコンドリアにかかる糖の圧力は大きく減っていきます。',
   ],
 };
 
@@ -1947,6 +2045,17 @@ function migratePhotos(rec) {
   }
   rec.photos = out;
 }
+// v1.53: 名前を変えた項目の移行表（保存済みの DB.items を新しい表示名に揃える）
+const RENAMED_V153 = {
+  juice:      { name:'野菜ジュースを飲む',                       short:'ジュースを飲む' },
+  colorveg:   { name:'色の濃い野菜を一品食べる',                 short:'色野菜を食べる' },
+  nightfast:  { name:'夜は食べない',                             short:'夜食べない' },
+  gymtrain:   { name:'ジム・マシンでトレーニング',               short:'ジム・マシン' },
+  bodyweight: { name:'自重トレ（家でできる腕立て・スクワット）', short:'自重トレ' },
+  nosake:     { name:'お酒を飲まない',                           short:'禁酒' },
+  stretch:    { name:'ストレッチをする',                         short:'ストレッチ' },
+  hiit:       { name:'HIIT（20秒全力・10秒休みをくり返す）',     short:'HIIT' },
+};
 function migrate(d) {
   // v1.9: 既存 DB.items に短縮名 short が無ければ DEFAULT_ITEMS から id 一致で補完
   if (Array.isArray(d.items)) {
@@ -1988,6 +2097,13 @@ function migrate(d) {
       // v1.51: ホームの表示名を「ウォーキング」→「歩数」に変更（保存済みitemsには自動反映されないため）
       if (it && it.id === 'walk' && it.short === 'ウォーキング') {
         it.short = '歩数';
+      }
+      // v1.53: 表示名の見直し（名詞だけの項目を「何をするのか」が分かる形に）。
+      // カタログを変えても保存済みの DB.items には反映されないので、ここで移し替える。
+      // 自分で名前をつけた枠（customName）は上書きしない
+      if (it && RENAMED_V153[it.id] && !it.customName) {
+        it.name = RENAMED_V153[it.id].name;
+        it.short = RENAMED_V153[it.id].short;
       }
       // v1.49: チェック時の演出を項目データ駆動にしたので、既存ユーザーのjuiceにもeffectを補う
       //（無いと野菜ジュースのクリーン演出が出なくなる）
@@ -2275,7 +2391,7 @@ mitoImg.src = MITO_IMG_SRC;
   if (manifestLink) {
     const manifest = {
       name: 'ミトコンドリア・ダイエット',
-      short_name: 'ミト',
+      short_name: 'マイト',
       icons: [{ src: MITO_IMG_SRC, sizes: '128x128', type: 'image/png' }],
     };
     manifestLink.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
@@ -2687,7 +2803,7 @@ function renderPhotos() {
     } else if (ma && ma.analysis) {
       const stale = ma.photoCount != null && ma.photoCount !== arr.length;
       ab.className = 'meal-ana-btn done';
-      ab.textContent = `ミトスコア ${Number(ma.analysis.mito_score) || 0}${stale ? ' ⟳' : ''}`;
+      ab.textContent = `マイトスコア ${Number(ma.analysis.mito_score) || 0}${stale ? ' ⟳' : ''}`;
     } else if (arr.length) {
       ab.className = 'meal-ana-btn';
       ab.textContent = '🔍 解析';
@@ -2831,7 +2947,7 @@ function analysisHTML(a) {
   const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
     || '料理を特定できませんでした';
   const n = a.nutrition || {};
-  return `<div class="ana-head"><span class="ana-score num">${Number(a.mito_score) || 0}</span><span class="ana-slabel">ミトスコア</span><span class="ana-conf">確信度: ${confJp}</span></div>` +
+  return `<div class="ana-head"><span class="ana-score num">${Number(a.mito_score) || 0}</span><span class="ana-slabel">マイトスコア</span><span class="ana-conf">確信度: ${confJp}</span></div>` +
     `<div class="ana-dishes">${dishes}</div>` +
     `<div class="ana-nut num">約${Number(n.calories_kcal) || 0}kcal ・ たんぱく質${Number(n.protein_g) || 0}g ・ 脂質${Number(n.fat_g) || 0}g ・ 炭水化物${Number(n.carbs_g) || 0}g</div>` +
     ((a.good_points || []).length ? `<ul class="ana-goods">${a.good_points.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : '') +
@@ -3692,7 +3808,12 @@ function renderTodo() {
   // v1.49: その日に有効だった項目だけ出す。外した項目が残り続けないように、かつ
   //        過去日を見たときは当時のやることが並ぶようにする（sel基準でフィルタする）
   const live = DB.items.filter(it => isItemActiveOn(it, sel));
-  const manualItems = sortTodoItems(live.filter(it => it.inTodo), rec.checked);
+  // v1.53: 過去日を見ているときは「今のミッション」も並べて、後から埋められるようにする。
+  // 遡れるのは手動チェックの項目だけ（canBackdate）。チェックした時点で有効期間をその日まで伸ばす
+  const extra = sel < today
+    ? DB.items.filter(it => canBackdate(it) && isItemActiveOn(it, today) && !live.includes(it))
+    : [];
+  const manualItems = sortTodoItems(live.filter(it => it.inTodo).concat(extra), rec.checked);
   const autoItems = live.filter(it => it.auto).slice().sort((a, b) => a.order - b.order);
   renderTodoCards($('#todoRowManual'), manualItems, rec, true);
   renderTodoCards($('#todoRowAuto'), autoItems, rec, false);
@@ -3782,7 +3903,7 @@ function showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct) {
   const bm = Math.floor(beforeMito), am = Math.floor(afterMito);
   const lines = [];
   if (afterAct > beforeAct) lines.push(`活力ポイント ${beforeAct}→${afterAct}！（+${afterAct - beforeAct}pt）`);
-  if (am > bm) lines.push(`ミト数 ${bm}→${am}匹！（+${am - bm}匹）`);
+  if (am > bm) lines.push(`マイト数 ${bm}→${am}匹！（+${am - bm}匹）`);
   if (!lines.length) return false;
   const el = $('#changeOverlay');
   el.innerHTML = lines.map(t => `<div class="change-line">${esc(t)}</div>`).join('');
@@ -3807,12 +3928,16 @@ function achieveWhyText(item) {
 function openAchieveDialog(item, speechKey) {
   const why = achieveWhyText(item);
   if (!why) { if (speechKey) mitoSpeak(speechKey); return; } // 説明が無い項目はセリフだけ上部に出す
-  $('#achieveTitle').textContent = item.name;
-  $('#achieveWhy').textContent = why;
+  // v1.53: セリフとチップスを両方出すと文字が多くて読まれないので、どちらか片方だけにする。
+  // セリフが用意されている項目のときだけ、コインの裏表で選ぶ
+  if (speechKey && Math.random() < 0.5) { mitoSpeak(speechKey); return; }
+  // チップスは「重要な1行（太字・大きめ）＋本文」。全部読まなくても要点が分かるようにする
+  const bar = why.indexOf('||');
+  $('#achieveTitle').textContent = bar >= 0 ? why.slice(0, bar) : item.name;
+  $('#achieveWhy').textContent = bar >= 0 ? why.slice(bar + 2) : why;
+  $('#achieveSub').textContent = item.short || item.name;
   $('#achieveModal').classList.add('open');
-  // v1.45: セリフはダイアログと同時に、ダイアログのすぐ上へ出す（自動では消さず、閉じるまで残す）
-  if (speechKey) showBubblePinned(speechKey);
-  else pinBubbleAboveAchieveCard();
+  pinBubbleAboveAchieveCard();
   if (!stage.reduced) spawnBurst(30);
 }
 // v1.33: 達成ダイアログを開いている間だけ、ミトの一言をダイアログのすぐ上に固定表示する
@@ -3880,12 +4005,16 @@ function checkAutoAchievements() {
 /* ---- v1.49: やることを選ぶ（機序ごとの代替選択） ----
    「項目のON/OFF」ではなく「同じ狙いの別の手段」を選ばせる。
    資料の黄金ルールにより運動枠だけは外せない（数を増やせるのは運動だけのため）。 */
-// v1.50: 自動判定の項目は外せない枠なので、無ければ補う（既存ユーザーには mealrec が無い）
-function ensureAutoItems() {
+// v1.50: 外せない枠の項目が無ければ補う（既存ユーザーには mealrec が無い）
+// v1.53: 手動でも「外せない」項目（糖分・夜は食べない）ができたので、そちらも対象にする。
+//        任意に変えた項目（タンパク質＝optional）は勝手に足さない
+function ensureRequiredItems() {
   let added = false;
-  for (const a of AUTO_ITEMS) {
-    if (DB.items.some(it => it.id === a.id && isItemActiveOn(it, today))) continue;
-    const c = catalogById(a.id);
+  const need = AUTO_ITEMS.filter(a => !a.optional).map(a => a.id)
+    .concat(CATALOG.filter(c => c.required).map(c => c.id));
+  for (const id of need) {
+    if (DB.items.some(it => it.id === id && isItemActiveOn(it, today))) continue;
+    const c = catalogById(id);
     if (!c) continue;
     pickItem(DB.items, c, today);
     added = true;
@@ -3898,6 +4027,38 @@ function activePickIds() {
 }
 function pickedInMech(mechId, ids) {
   return catalogByMech(mechId).filter(c => ids.includes(c.id));
+}
+/* ---- v1.53: 自分で名前をつける枠 ----
+   カタログ側は雛形で、名前は DB.items 側にだけ持つ（過去の記録の表示名も一緒に変わる）。
+   効果値は触らせない（自由にすると育成のバランスがいくらでも壊せてしまうため）。 */
+function itemDisplayName(c) {
+  const mine = DB.items.find(it => it.id === c.id);
+  if (mine && mine.custom && mine.customName) return mine.customName;
+  // 選択画面は横幅があるので、何をするのか分かる正式名を出す（ホームのカードだけ short を使う）
+  return c.name || c.short;
+}
+let namingId = null, namingPickAfter = false;
+function openNamePrompt(itemId, pickAfter) {
+  namingId = itemId; namingPickAfter = !!pickAfter;
+  const mine = DB.items.find(it => it.id === itemId);
+  $('#nameInput').value = (mine && mine.customName) || '';
+  $('#nameWarn').textContent = '';
+  $('#nameModal').classList.add('open');
+  setTimeout(() => $('#nameInput').focus(), 50);
+}
+function commitName() {
+  const name = $('#nameInput').value.trim();
+  if (!name) { $('#nameWarn').textContent = '名前を入れてください'; return; }
+  if (namingPickAfter) {
+    const c = catalogById(namingId);
+    if (c) pickItem(DB.items, c, today);
+  }
+  const mine = DB.items.find(it => it.id === namingId);
+  if (mine) { mine.custom = true; mine.customName = name; mine.name = name; mine.short = name; }
+  $('#nameModal').classList.remove('open');
+  namingId = null; namingPickAfter = false;
+  commit();
+  renderPickBody();
 }
 
 /* ---- v1.51: 選択画面の折りたたみ ----
@@ -3951,9 +4112,31 @@ function renderAutoSection(body) {
     const curVal = cur ? Number(cur.threshold) : Number(a.threshold);
     // たたんだ状態でも今の基準（例「5,000歩」）が見えるようにする
     const curT = (a.thresholds || []).find(t => Number(t.value) === curVal);
-    const wrap = makePickBlock(body, 'auto:' + a.id, a.name, a.lead,
-      { on: true, text: '今の基準：' + (curT ? curT.label : String(curVal)) }, '外せない');
-    for (const t of (a.thresholds || [])) {
+    // v1.53: optional な自動判定（タンパク質）は使う/使わないを選べる。それ以外は外せない
+    const using = !a.optional || (cur && isItemActiveOn(cur, today));
+    const summary = !using
+      ? { on: false, text: '使っていません' }
+      : { on: true, text: '今の基準：' + (curT ? curT.label : String(curVal)) };
+    const wrap = makePickBlock(body, 'auto:' + a.id, a.name, a.lead, summary,
+      a.optional ? null : '外せない');
+    if (a.optional) {
+      const row = document.createElement('div');
+      row.className = 'pick-row' + (using ? ' on' : '');
+      const b = document.createElement('button');
+      b.className = 'pick-row-main';
+      b.innerHTML =
+        `<span class="pick-row-name">${using ? '✓ 使う' : '使う'}</span>` +
+        `<span class="pick-row-blurb">${using ? 'もう一度押すと、この項目をやめます' : '押すと今日から使います'}</span>`;
+      b.addEventListener('click', () => {
+        if (using) unpickItem(DB.items, a.id, today);
+        else { const c = catalogById(a.id); if (c) pickItem(DB.items, c, today); }
+        commit();
+        renderPickBody();
+      });
+      row.appendChild(b);
+      wrap.appendChild(row);
+    }
+    for (const t of (using ? (a.thresholds || []) : [])) {
       const on = Number(t.value) === curVal;
       const row = document.createElement('div');
       row.className = 'pick-row' + (on ? ' on' : '');
@@ -4008,12 +4191,15 @@ function renderPickBody() {
       }
     }
     const picked = pickedInMech(m.id, ids);
+    // v1.53: 外せない項目（糖分・夜は食べない）は上限数に数えない。数えると選べる幅が減ってしまう
+    const optionalPicked = picked.filter(c => !c.required);
     // v1.51: たたんだ状態でも「いま何を選んでいるか」が見えるようにする
     const summary = picked.length
-      ? { on: true,  text: '選択中：' + picked.map(c => c.short || c.name).join('・') }
+      ? { on: true,  text: '選択中：' + picked.map(c => itemDisplayName(c)).join('・') }
       : { on: false, text: '選んでいません' };
+    // v1.53: 食事系でも匹数はわずかに増える（inc>0）ので「運動だけ」と言い切らない
     const lead = m.section === 'exercise'
-      ? 'ミトコンドリアの数を増やせるのは運動だけ。続けられそうなものを、いくつでも（最大' + m.max + '）'
+      ? 'ミトコンドリアの数を大きく増やせるのは運動です。続けられそうなものを、いくつでも（最大' + m.max + '）'
       : m.lead + '　えらべる数：最大' + m.max;
     const wrap = makePickBlock(body, 'mech:' + m.id, m.name, lead, summary, null);
     for (const c of opts) {
@@ -4024,9 +4210,24 @@ function renderPickBody() {
       const b = document.createElement('button');
       b.className = 'pick-row-main';
       b.innerHTML =
-        `<span class="pick-row-name">${on ? '✓ ' : ''}${esc((c.ng ? '△ ' : '') + (c.short || c.name))}</span>` +
+        `<span class="pick-row-name">${on ? '✓ ' : ''}${esc((c.ng ? '△ ' : '') + itemDisplayName(c))}` +
+          (c.required ? `<span class="pick-mech-fixed" style="margin-left:6px">外せない</span>` : '') +
+        `</span>` +
         (BLURB[c.id] ? `<span class="pick-row-blurb">${esc(BLURB[c.id])}</span>` : '');
       if (c.ng) b.title = 'これはミッションではなく、当てはまった日に減点される項目です';
+      // v1.53: 自分で名前をつける枠は、選んだあとに名前を変えられるようにする
+      if (c.custom && on) {
+        const nb = document.createElement('button');
+        nb.className = 'pick-row-info';
+        nb.setAttribute('aria-label', '名前を変える');
+        nb.textContent = '✎';
+        nb.addEventListener('click', e => { e.stopPropagation(); openNamePrompt(c.id); });
+        row.appendChild(b);
+        row.appendChild(nb);
+        wrap.appendChild(row);
+        b.addEventListener('click', () => { unpickItem(DB.items, c.id, today); commit(); renderPickBody(); });
+        continue;
+      }
       // 詳しい解説（なぜミトコンドリアに効くのか）はⓘから。選択と誤爆しないよう別ボタンにする
       if (INFO[c.id]) {
         const ib = document.createElement('button');
@@ -4042,13 +4243,20 @@ function renderPickBody() {
       wrap.appendChild(row);
       b.addEventListener('click', () => {
         const warn = $('#pickWarn');
+        if (c.required) {
+          warn.textContent = `「${itemDisplayName(c)}」は外せません。どんな生活でも効く土台なので、必ず入ります。`;
+          return;
+        }
         if (on) {
           unpickItem(DB.items, c.id, today);
         } else {
-          if (picked.length >= m.max) {
+          // v1.53: 外せない項目は上限に数えない（数えると選べる幅が減るため）
+          if (optionalPicked.length >= m.max) {
             warn.textContent = `「${m.name}」で選べるのは最大${m.max}つまでです。他をはずしてから選んでください。`;
             return;
           }
+          // 自分で決める枠は、選ぶと同時に名前をつけてもらう
+          if (c.custom) { openNamePrompt(c.id, true); return; }
           pickItem(DB.items, c, today);
         }
         warn.textContent = '';
@@ -4067,16 +4275,18 @@ function renderPickBody() {
   }
 }
 function openPick(isOnboarding) {
-  $('#pickTitle').textContent = isOnboarding ? 'あなたに合わせて選ぶ' : 'デイリーミッションを選ぶ';
+  $('#pickTitle').textContent = isOnboarding ? 'この組み合わせで始めます' : 'デイリーミッションを選ぶ';
+  // v1.53: 初回は「まず推奨セットで始める」を既定にする。空から選ばせると、
+  // 何を選べばいいか分からないまま止まってしまうため。カスタマイズは開いた人だけがやればいい
   $('#pickIntro').textContent = isOnboarding
-    ? 'ミトコンドリアを育てるやり方は一つではありません。続けられそうなものを選んでください。あとから何度でも変えられます。'
+    ? 'まずはこの組み合わせで始めましょう。続けられそうなものに、あとから何度でも入れ替えられます。'
     : '同じ狙いなら、やり方は入れ替えられます。生活に合うものを選んでください。';
   // オンボーディング中は「閉じる」で逃げられないようにする（何も選ばれていない状態を防ぐ）
   $('#pickModal').querySelector('.sheet-close').style.display = isOnboarding ? 'none' : '';
   // v1.51: 開くたびに全部たたんだ状態から始める。ただし初回設定だけは、
   // 何も開いていない画面を突きつけないよう「運動」だけ開いておく
   pickOpen.clear();
-  if (isOnboarding) pickOpen.add('mech:biogenesis');
+  // v1.53: 初回も全部たたんだ状態で見せる（推奨セットのまま「これで始める」を押せばいい）
   renderPickBody();
   $('#pickModal').classList.add('open');
 }
@@ -4134,6 +4344,12 @@ function applyCheck(item, srcEl) {
   // v1.45: セリフは即座に上部へ出さず、達成ダイアログと同時にダイアログの上へ出す（celebrate経由）
   const k = checking ? speechKeyForCheck(item.id) : null;
   if (checking) {
+    // v1.53: 過去日で、その日はまだ有効でなかった項目にチェックを入れたら、
+    // 有効期間をその日まで遡らせる（そうしないとチェックしても集計に乗らず、ptが増えない）
+    if (!isItemActiveOn(item, sel) && canBackdate(item)) {
+      backdateItem(DB.items, item.id, sel);
+      toast(`「${item.short || item.name}」を${fmtJP(sel)}から記録できるようにしました`);
+    }
     rec.checked.push(item.id);
     beforeMito = computed.mito; beforeAct = computed.activation;
     if (item.effect) mitoEffect(item.effect);  // v1.49: 'juice' 直書きから項目データ駆動に
@@ -4413,7 +4629,7 @@ async function scheduleNativeReminder() {
       notifications: [{
         id: REMINDER_NOTIF_ID,
         title: 'ミトコンドリア・ダイエット',
-        body: '今日のデイリーミッション、まだ残ってない？ミトのためにチェックしよう🌙',
+        body: '今日のデイリーミッション、まだ残ってない？マイトのためにチェックしよう🌙',
         channelId: REMINDER_CHANNEL_ID,
         schedule: { on: { hour: hh || 0, minute: mm || 0 }, repeats: true, allowWhileIdle: true },
       }],
@@ -4606,10 +4822,13 @@ $('#selBannerBack').addEventListener('click', () => { sel = today; weekOffset = 
 
 /* ============ v1.49: やることを選ぶ ============ */
 $('#btnPickItems').addEventListener('click', () => openPick(false));
+// v1.53: 自分で決める枠の名前入力
+$('#nameOk').addEventListener('click', commitName);
+$('#nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitName(); } });
 $('#pickDone').addEventListener('click', () => {
   // v1.50: 運動は任意になった（歩数が自動で取れるので、歩くだけでも成立するため）。
   // 自動判定の項目は外せない枠なので、欠けていれば黙って補ってから閉じる
-  ensureAutoItems();
+  ensureRequiredItems();
   DB.onboarded = true;
   commit();
   $('#pickModal').classList.remove('open');
@@ -4678,7 +4897,7 @@ recompute();
 save();
 renderAll();
 // v1.50: 自動判定の項目（食事の記録など）は外せない枠なので、既存ユーザーにも足りない分を補う
-ensureAutoItems();
+ensureRequiredItems();
 // v1.49: 初回だけ「やることを選ぶ」を出す。既存ユーザーには出ない（migrateでonboarded済みにしている）
 if (!DB.onboarded) openPick(true);
 autoSyncHealthData();

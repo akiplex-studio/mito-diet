@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { skipOnboarding } = require('./helpers');
+const { skipOnboarding, pickItems } = require('./helpers');
 
 // v1.49: がんばり度（5段階）と、既存ユーザーのデータが壊れないことの担保。
 //
@@ -21,6 +21,7 @@ test('新規ユーザー: 運動項目をチェックするとがんばり度を
 
   await skipOnboarding(page);
   await page.goto('/index.html');
+  await pickItems(page, ['bodyweight']);   // v1.53: 自重トレは推奨セットから外れたので明示的に選ぶ
 
   const before = await page.evaluate(() => computed.mito);
 
@@ -53,6 +54,7 @@ test('新規ユーザー: 運動項目をチェックするとがんばり度を
 test('チェックを外すときはがんばり度を聞かない', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
+  await pickItems(page, ['bodyweight']);
 
   await page.getByText('自重トレ', { exact: true }).first().click();
   await page.locator('#effortList .effort-btn').nth(2).click();
