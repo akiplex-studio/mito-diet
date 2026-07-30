@@ -1830,7 +1830,7 @@ const CATALOG = [
     ] },
   // v1.53: 歩数は自動で付くが「今日は歩きに出た」を自分で残したい人向け（値は控えめ）
   { id:'walking', mech:'biogenesis', name:'ウォーキング（歩きに出る）', short:'ウォーキング',
-    act:3, inc:0.5, inTodo:true, order:2, efforts:WALKING_EFFORTS,
+    act:3, inc:0.5, inTodo:true, order:2, isDefault:true, efforts:WALKING_EFFORTS,
     method:'自己申告（歩数の自動判定とは別枠）' },
   { id:'jog', mech:'biogenesis', name:'ジョギング', short:'ジョギング', act:4, inc:1,
     auto:'steps', threshold:3000, manualFallback:true, inTodo:false, order:2,
@@ -5251,9 +5251,16 @@ function tutFinish() {
   }
   $('#tutorial').hidden = true;
   tut = null;
+  // v1.56: 最後にミッションを選ばせるのはやめた。初日からいきなり組み合わせを決めるのは
+  // ハードルが高いので、推奨セットのまま始めてもらい、あとから変えられることだけ伝える
+  if (mode === 'onboarding') {
+    DB.onboarded = true;
+    switchTab('home');
+  }
   commit();
-  // 初回は最後にミッションの確認へ。設定から見直したときはそのまま閉じる
-  if (mode === 'onboarding') openPick(true);
+  if (mode === 'onboarding') {
+    setTimeout(() => toast('今日のミッションは「編集」からいつでも変えられます'), 600);
+  }
 }
 $('#btnReadTips').addEventListener('click', () => startTutorial('tips'));
 $('#btnReplayTutorial').addEventListener('click', () => startTutorial('replay'));

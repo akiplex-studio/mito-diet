@@ -8,13 +8,13 @@ const { skipOnboarding, expandAllPick, pickItems, finishTutorial } = require('./
 // このアプリは匹数・活性を記録ログ全期間から毎回再計算するので、素朴に項目を
 // 差し替えると過去まで巻き添えになる。項目は消さず有効期間を閉じることで防いでいる。
 
-test('初回起動ではオンボーディングが開き、3つの区分で表示される', async ({ page }) => {
+test('選択画面は3つの区分で表示される', async ({ page }) => {
   await page.goto('/index.html');   // まっさらな状態
   await finishTutorial(page);       // v1.55: 先にチュートリアルが出るので終わらせる
-
+  // v1.56: チュートリアルの最後で選ばせるのはやめたので、設定から開く
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
   await expect(page.locator('#pickModal')).toHaveClass(/open/);
-  // 逃げ道（閉じるボタン）は隠れている
-  await expect(page.locator('#pickModal .sheet-close')).toBeHidden();
 
   // v1.51: 運動は折りたたみブロックの見出し、残り2区分はセクション見出しで出る
   await expect(page.locator('.pick-mech-name').first()).toHaveText('運動');
@@ -23,14 +23,13 @@ test('初回起動ではオンボーディングが開き、3つの区分で表�
   await expect(heads.nth(0)).toHaveText('そのほかのミッション');
   await expect(heads.nth(1)).toHaveText('自動で判定するもの');
 
-  // 運動を選ばなくても閉じられる（歩数が自動で取れるため任意になった）
+  // 運動を全部外しても閉じられる（歩数が自動で取れるため任意）
   await page.evaluate(() => {
     catalogByMech('biogenesis').forEach(c => unpickItem(DB.items, c.id, today));
     commit(); renderPickBody();
   });
   await page.locator('#pickDone').click();
   await expect(page.locator('#pickModal')).not.toHaveClass(/open/);
-  expect(await page.evaluate(() => DB.onboarded)).toBe(true);
 });
 
 test('自動判定の項目は外せず、強度だけを選べる', async ({ page }) => {
@@ -244,7 +243,7 @@ test('推奨セットで始まり、必須項目は外せない', async ({ page 
   // 初期状態の手動ミッションは最小構成（糖分・夜は食べない・ストレッチ）
   const manual = await page.evaluate(() =>
     DB.items.filter(it => isItemActiveOn(it, today) && it.inTodo).map(it => it.id).sort());
-  expect(manual).toEqual(['nightfast', 'stretch', 'sugarCtrl']);
+  expect(manual).toEqual(['nightfast', 'stretch', 'sugarCtrl', 'walking']);
 
   await page.locator('nav.footer button[data-tab="settings"]').click();
   await page.locator('#btnPickItems').click();

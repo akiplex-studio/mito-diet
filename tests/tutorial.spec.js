@@ -40,9 +40,15 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
   await expect(page.locator('#tutNext')).toHaveText('はじめる');
   await page.locator('#tutNext').click();
 
-  // 閉じて、最後にミッションの確認が開く
+  // v1.56: 最後にミッションを選ばせない。閉じたらそのままホームで始まる
   await expect(page.locator('#tutorial')).toBeHidden();
-  await expect(page.locator('#pickModal')).toHaveClass(/open/);
+  await expect(page.locator('#pickModal')).not.toHaveClass(/open/);
+  await expect(page.locator('#todoCard')).toBeVisible();
+  expect(await page.evaluate(() => DB.onboarded)).toBe(true);
+  // 推奨セットのまま始まる（ウォーキングも既定で入っている）
+  const missions = await page.evaluate(() =>
+    DB.items.filter(it => isItemActiveOn(it, today) && it.inTodo).map(it => it.id).sort());
+  expect(missions).toEqual(['nightfast', 'stretch', 'sugarCtrl', 'walking']);
 
   const saved = await page.evaluate(() => ({
     profile: DB.profile,
