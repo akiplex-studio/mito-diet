@@ -373,3 +373,21 @@ test('達成のセリフは画面の中央に出る', async ({ page }) => {
   // 画面のおおむね中央（上下10%以内）に出ている
   expect(Math.abs(box.midY - box.viewportH / 2)).toBeLessThan(box.viewportH * 0.1);
 });
+
+test('マイトは数が少ないうちは大きく描かれる', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  const sizes = await page.evaluate(() => ({
+    one: orbScale(1), ten: orbScale(10), mid: orbScale(55),
+    hundred: orbScale(100), many: orbScale(500),
+    // 実際の半径にも効いている
+    r10: planOrbs(10)[0], r100: planOrbs(100)[0],
+  }));
+  expect(sizes.one).toBe(3);          // 10匹以内は3倍
+  expect(sizes.ten).toBe(3);
+  expect(sizes.mid).toBe(2);          // 10→100 の中間はちょうど2倍
+  expect(sizes.hundred).toBe(1);      // 100匹で等倍に戻る
+  expect(sizes.many).toBe(1);         // それ以上は等倍のまま
+  expect(sizes.r10).toBe(sizes.r100 * 3);
+});

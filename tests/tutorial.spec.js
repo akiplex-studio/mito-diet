@@ -22,7 +22,10 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
 
   await expect(page.locator('#tutorial')).toBeVisible();
   await expect(page.locator('#tutBody')).toContainText('ぼくはマイト');
-  await page.locator('#tutNext').click();          // ようこそ → 最初の質問
+  await page.locator('#tutNext').click();          // ようこそ → 呼び名
+  await page.locator('#tutBody input[type="text"]').fill('ひらい');
+  await page.locator('#tutNext').click();
+  await page.locator('#tutNext').click();          // 名前を呼ぶあいさつ → 最初の質問
 
   await answerNum(page, 172);                      // 身長
   await answerNum(page, 45);                       // 年齢
@@ -57,6 +60,7 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
     // 入力がそろったので必要カロリーが計算できる
     targets: !!calcTargets(DB.profile, DB.days[today].weight),
   }));
+  expect(saved.profile.name).toBe('ひらい');
   expect(saved.profile.heightCm).toBe(172);
   expect(saved.profile.age).toBe(45);
   expect(saved.profile.sex).toBe('male');
@@ -93,15 +97,21 @@ test('tipsは「次へ」で1枚ずつめくれ、最後だけボタンが変わ
 
 test('ブラウザ版では連携の画面を出さない', async ({ page }) => {
   await page.goto('/index.html');
-  await page.locator('#tutNext').click();   // ようこそ → 次
+  await page.locator('#tutNext').click();   // ようこそ → 呼び名
+  await page.locator('#tutBody input[type="text"]').fill('ひらい');
+  await page.locator('#tutNext').click();
+  await page.locator('#tutNext').click();   // あいさつ → 次
 
-  // ネイティブ専用なので、いきなり最初の質問になる
+  // ネイティブ専用なので、連携を飛ばして身長の質問になる
   await expect(page.locator('#tutBody')).toContainText('身長');
   await expect(page.locator('#tutBody')).not.toContainText('ヘルスデータ');
 });
 
 test('途中でやめたら、次に開いたときまた出る', async ({ page }) => {
   await page.goto('/index.html');
+  await page.locator('#tutNext').click();
+  await page.locator('#tutBody input[type="text"]').fill('ひらい');
+  await page.locator('#tutNext').click();
   await page.locator('#tutNext').click();
   await answerNum(page, 170);
 
@@ -123,4 +133,22 @@ test('既存ユーザーにはチュートリアルが出ない', async ({ page 
   });
   await page.goto('/index.html');
   await expect(page.locator('#tutorial')).toBeHidden();
+});
+
+test('最初に呼び名を聞き、次のセリフでその名前を呼ぶ', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.locator('#tutNext').click();          // ようこそ → 呼び名
+
+  await expect(page.locator('#tutBody')).toContainText('なんて呼べばいい');
+  await page.locator('#tutBody input[type="text"]').fill('ひらい');
+  await page.locator('#tutNext').click();
+
+  // 次の画面で実際に名前を呼んでから話が続く
+  await expect(page.locator('#tutBody')).toContainText('ひらいだね。よろしく');
+  await expect(page.locator('#tutBody')).toContainText('ひらいがミッションをこなすたびに');
+
+  await page.locator('#tutNext').click();
+  await expect(page.locator('#tutBody')).toContainText('身長');   // 以降の質問へ続く
+
+  expect(await page.evaluate(() => DB.profile.name)).toBe(null);  // 最後まで進むまで保存しない
 });
