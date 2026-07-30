@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { skipOnboarding, expandAllPick, pickItems } = require('./helpers');
+const { skipOnboarding, expandAllPick, pickItems, finishTutorial } = require('./helpers');
 
 // v1.49: デイリーミッションの選び直し（機序ごとの代替選択）とオンボーディング。
 //
@@ -10,6 +10,7 @@ const { skipOnboarding, expandAllPick, pickItems } = require('./helpers');
 
 test('初回起動ではオンボーディングが開き、3つの区分で表示される', async ({ page }) => {
   await page.goto('/index.html');   // まっさらな状態
+  await finishTutorial(page);       // v1.55: 先にチュートリアルが出るので終わらせる
 
   await expect(page.locator('#pickModal')).toHaveClass(/open/);
   // 逃げ道（閉じるボタン）は隠れている

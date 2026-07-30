@@ -26,3 +26,7 @@ playwright-report/
 .playwright/
 # www/index.html は index.html から `npm run sync:web` で生成されるコピー。index.html を単一の正として保つため追跡しない
 www/
+
+# チュートリアルの原本画像（1枚2MB。アプリにはWebP化して埋め込むので原本は追跡しない）
+tips*.png
+ChatGPT Image*.png

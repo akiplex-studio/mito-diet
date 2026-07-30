@@ -59,4 +59,16 @@ async function pickItems(page, ids) {
   }, ids);
 }
 
-module.exports = { skipOnboarding, expandAllPick, pickItems };
+/**
+ * v1.55: 初回起動ではチュートリアルが先に出る。
+ * 選択画面そのものを見たいテストのために、チュートリアルだけ手早く終わらせる。
+ * @param {import('@playwright/test').Page} page
+ */
+async function finishTutorial(page) {
+  await page.evaluate(() => {
+    // @ts-ignore アプリ側のグローバル
+    if (typeof tut !== 'undefined' && tut) tutFinish();
+  });
+}
+
+module.exports = { skipOnboarding, expandAllPick, pickItems, finishTutorial };
