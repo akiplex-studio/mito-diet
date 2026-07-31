@@ -224,3 +224,57 @@ test('英語では日付と曜日も英語になる', async ({ page }) => {
   await expect(page.locator('#hdrDate')).toContainText(/January|February|March|April|May|June|July|August|September|October|November|December/);
   await expect(page.locator('.cal-dow').first()).toHaveText('Mon');
 });
+
+test('英語に切り替えたとき、画面に日本語が残っていない', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => setLang('en'));
+
+  /** 表示中の要素から日本語の文字を拾う（言語名の「日本語」だけは意図的に残す） */
+  const scan = () => page.evaluate(() => {
+    const JA = /[ぁ-んァ-ヴ一-龥]/;
+    const ok = ['日本語', 'Language / 言語', 'ことばを選ぶ / Choose language'];
+    const out = [];
+    document.querySelectorAll('body *').forEach(el => {
+      if (el.children.length) return;
+      if (!el.offsetParent && el.tagName !== 'OPTION') return;   // 隠れている要素は見ない
+      const s = (el.textContent || '').trim();
+      if (s && JA.test(s) && !ok.includes(s) && !out.includes(s)) out.push(s);
+    });
+    return out;
+  });
+
+  expect(await scan(), 'ホーム').toEqual([]);
+
+  await page.locator('nav.footer button[data-tab="records"]').click();
+  expect(await scan(), '記録タブ').toEqual([]);
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  expect(await scan(), '設定タブ').toEqual([]);
+
+  await page.locator('#btnPickItems').click();
+  await page.evaluate(() => {
+    MECHANISMS.forEach(m => pickOpen.add('mech:' + m.id));
+    autoCatalog().forEach(a => pickOpen.add('auto:' + a.id));
+    renderPickBody();
+  });
+  expect(await scan(), 'ミッション選択（全部開いた状態）').toEqual([]);
+});
+
+test('英語では解説とマイトのセリフも英語になる', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => setLang('en'));
+
+  const texts = await page.evaluate(() => ({
+    why: infoWhy('walk'), tips: infoTips('walk'),
+    speech: speechLines('walk')[0], tip: whyLines('walk')[0],
+    name: itemName({ id: 'bodyweight' }), blurb: itemBlurb('hiit'),
+  }));
+  const JA = /[ぁ-んァ-ヴ一-龥]/;
+  for (const [k, v] of Object.entries(texts)) {
+    expect(JA.test(v), `${k} に日本語が残っている: ${v}`).toBe(false);
+  }
+  expect(texts.why).toContain('AMPK');
+  expect(texts.name).toContain('Bodyweight');
+});

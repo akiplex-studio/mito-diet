@@ -10,6 +10,7 @@ const { skipOnboarding, expandAllPick, pickItems, finishTutorial } = require('./
 
 test('選択画面は3つの区分で表示される', async ({ page }) => {
   await page.goto('/index.html');   // まっさらな状態
+  await page.evaluate(() => setLang('ja'));   // v1.63: 端末が英語でも日本語で検証する
   await finishTutorial(page);       // v1.55: 先にチュートリアルが出るので終わらせる
   // v1.56: チュートリアルの最後で選ばせるのはやめたので、設定から開く
   await page.locator('nav.footer button[data-tab="settings"]').click();
@@ -56,7 +57,7 @@ test('目標歩数を上げても、過去の達成が取り消されない', as
   // 3,000歩で達成していた日がある既存ユーザー
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: '2026-07-01', items: null, onboarded: true,
+      version: 5, lang: 'ja', startDate: '2026-07-01', items: null, onboarded: true,
       days: { '2026-07-01': { steps: 3500 }, '2026-07-02': { steps: 3200 } },
     }));
   });
@@ -80,7 +81,7 @@ test('目標歩数を上げても、過去の達成が取り消されない', as
 test('既存ユーザーにはオンボーディングが出ない', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: '2026-07-01', items: null,
+      version: 5, lang: 'ja', startDate: '2026-07-01', items: null,
       days: { '2026-07-01': { checked: ['juice'] } },   // 記録が1日でもあれば既存ユーザー
     }));
   });
@@ -94,7 +95,7 @@ test('禁酒を休肝日に入れ替えても、過去に禁酒でためた匹�
   // 7/1〜7/3 に禁酒をチェックして育てた既存ユーザー
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: '2026-07-01', items: null, onboarded: true,
+      version: 5, lang: 'ja', startDate: '2026-07-01', items: null, onboarded: true,
       days: {
         '2026-07-01': { checked: ['nosake', 'juice'] },
         '2026-07-02': { checked: ['nosake'] },
@@ -285,7 +286,7 @@ test('自分で決める枠は名前をつけて追加でき、名前が保存�
 test('過去日でも今のミッションをチェックでき、その日の記録として残る', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: '2026-07-01', items: null, onboarded: true,
+      version: 5, lang: 'ja', startDate: '2026-07-01', items: null, onboarded: true,
       days: { '2026-07-01': {}, '2026-07-02': {} },
     }));
   });
@@ -314,7 +315,7 @@ test('過去日でも今のミッションをチェックでき、その日の�
 test('保存済みの古い表示名がv1.53の名前に移行される', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: '2026-07-01', onboarded: true, days: { '2026-07-01': {} },
+      version: 5, lang: 'ja', startDate: '2026-07-01', onboarded: true, days: { '2026-07-01': {} },
       items: [
         { id: 'nightfast', name: '夜間空白', short: '夜間空白', inTodo: true, act: 3, inc: 0,
           periods: [{ from: '2026-07-01', until: null }] },

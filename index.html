@@ -1209,6 +1209,427 @@ nav.footer {
    日本語を直したら `npm run i18n:check` が「英語が古い」と教えてくれる（i18n.lock.json） */
 const I18N = {
   ja: {
+    "item.walk.th0.hint": "自宅勤務など、あまり歩かない生活",
+    "item.walk.th0.label": "3,000歩",
+    "item.walk.th1.hint": "買い物や送り迎えで少し歩く",
+    "item.walk.th1.label": "5,000歩",
+    "item.walk.th2.hint": "通勤がある。しっかり歩きたい",
+    "item.walk.th2.label": "8,000歩",
+    "item.walk.th3.hint": "意識して歩く習慣がある",
+    "item.walk.th3.label": "10,000歩",
+    "ui.pick.autoLead": "記録から自動で判定します。外せませんが、自分に合う基準を選べます。",
+    "ui.pick.autoTitle": "自動で判定するもの",
+    "ui.pick.chosen": "選択中：{v}",
+    "ui.pick.exerciseLead": "ミトコンドリアの数を大きく増やせるのは運動です。続けられそうなものを、いくつでも（最大{n}）",
+    "ui.pick.fixed": "外せない",
+    "ui.pick.intro": "同じ狙いなら、やり方は入れ替えられます。生活に合うものを選んでください。",
+    "ui.pick.mechLead": "{lead}　えらべる数：最大{n}",
+    "ui.pick.ngHint": "これはミッションではなく、当てはまった日に減点される項目です",
+    "ui.pick.none": "選んでいません",
+    "ui.pick.onbIntro": "まずはこの組み合わせで始めましょう。続けられそうなものに、あとから何度でも入れ替えられます。",
+    "ui.pick.onbTitle": "この組み合わせで始めます",
+    "ui.pick.otherLead": "どれも任意です。生活に合うものだけ選んでください。",
+    "ui.pick.otherTitle": "そのほかのミッション",
+    "ui.pick.use": "使う",
+    "ui.pick.useOff": "もう一度押すと、この項目をやめます",
+    "ui.pick.useOn": "押すと今日から使います",
+    "st.hara7Left": "{n}/{need}食が腹七分目以下（食事解析で「軽め」「腹七分目くらい」を選ぶと集計されます）",
+    "st.hara7Done": "✓ {n}食が腹七分目以下（活+{act}・+{inc}匹）",
+    "st.needWeight": "体重を記録すると自動判定されます",
+    "st.proteinDone": "✓ {p}g / 目安{target}g（活+{act}・+{inc}匹）",
+    "st.proteinGuide": "✓ タンパク質の目安 約{g}g/日（体重×1.6）",
+    "st.proteinLeft": "{p}g / 目安{target}g（あと{left}g）",
+    "st.sleepShort": "△ 睡眠{line}時間未満（活{act}）— 今夜はゆっくり休もう",
+    "st.sleepWait": "翌朝に入力（{line}時間未満は 活{act}）",
+    "st.sleptWell": "✓ しっかり眠れました",
+    "st.stepsDone": "✓ {name} 達成（活+{act}・+{inc}匹）",
+    "st.stepsLeft": "{goal}歩で達成（あと{left}歩）",
+    "ui.pick.current": "今の基準：{v}",
+    "ui.pick.notUsing": "使っていません",
+    "toast.backdate": "「{name}」を{date}から記録できるようにしました",
+    "ui.effort.titleFor": "{name}：どのくらいやった？",
+    "ui.info.act": "活{n}",
+    "ui.info.disclaimer": "※ 一般的な健康情報であり、医療上の助言ではありません。持病や治療中の方は主治医にご相談ください。",
+    "ui.info.inc": "　+{n}匹",
+    "ui.info.incRange": "　+{lo}〜{hi}匹",
+    "ui.info.tipsLabel": "実践のコツ",
+    "ui.info.whyLabel": "なぜミトコンドリアに効くの？",
+    "ui.pick.max": "「{name}」で選べるのは最大{n}つまでです。他をはずしてから選んでください。",
+    "ui.pick.required": "「{name}」は外せません。どんな生活でも効く土台なので、必ず入ります。",
+    "auto.hara7.lead": "食事の記録の「食べた量の感覚」から自動で判定されます",
+    "auto.hara7.name": "腹七分目",
+    "auto.mealrec.lead": "これが土台。記録するとタンパク質と腹七分目が自動で判定されます",
+    "auto.mealrec.name": "食べたものを記録する",
+    "auto.protein.lead": "運動して体をつくる人向け。食事の記録から自動で集計されます",
+    "auto.protein.name": "タンパク質",
+    "auto.sleeplack.lead": "必要な睡眠時間は人によってちがいます。下回った日は減点になります",
+    "auto.sleeplack.name": "睡眠",
+    "auto.walk.lead": "生活によって歩く量は全然ちがうので、自分に合う目標を選んでください",
+    "auto.walk.name": "歩く",
+    "effort.cardio.0.label": "10分",
+    "effort.cardio.1.label": "20分",
+    "effort.cardio.2.label": "30分",
+    "effort.cardio.3.label": "45分",
+    "effort.cardio.4.label": "60分以上",
+    "effort.generic.0.hint": "10分くらい・軽く動いた",
+    "effort.generic.0.label": "ちょっとだけ",
+    "effort.generic.1.hint": "20分くらい",
+    "effort.generic.1.label": "軽め",
+    "effort.generic.2.hint": "30分くらい・少し息が弾む",
+    "effort.generic.2.label": "ふつう",
+    "effort.generic.3.hint": "45分くらい・汗をかいた",
+    "effort.generic.3.label": "しっかり",
+    "effort.generic.4.hint": "60分以上、またはかなりきつい",
+    "effort.generic.4.label": "追い込んだ",
+    "effort.hiit.0.label": "2本",
+    "effort.hiit.1.label": "4本",
+    "effort.hiit.2.label": "6本",
+    "effort.hiit.3.label": "8本",
+    "effort.hiit.4.label": "タバタ完走",
+    "effort.strength.0.hint": "1種目・数回",
+    "effort.strength.0.label": "ちょっとだけ",
+    "effort.strength.1.hint": "1〜2種目・各10回",
+    "effort.strength.1.label": "軽め",
+    "effort.strength.2.hint": "2〜3種目・各10〜15回",
+    "effort.strength.2.label": "ふつう",
+    "effort.strength.3.hint": "3種目・各2〜3セット",
+    "effort.strength.3.label": "しっかり",
+    "effort.strength.4.hint": "4種目・各3セット、または高負荷",
+    "effort.strength.4.label": "追い込んだ",
+    "effort.walk.0.label": "3,000歩",
+    "effort.walk.1.label": "5,000歩",
+    "effort.walk.2.label": "8,000歩",
+    "effort.walk.3.label": "10,000歩",
+    "effort.walk.4.label": "15,000歩",
+    "effort.walking.0.label": "10分",
+    "effort.walking.1.label": "20分",
+    "effort.walking.2.label": "30分",
+    "effort.walking.3.label": "45分",
+    "effort.walking.4.label": "60分以上",
+    "info.anyex.tips": "やった時間で「がんばり度」を選びます。30分くらいなら「ふつう」が目安です。",
+    "info.anyex.why": "種目が何であれ、息が弾んで筋肉を使えば、ミトコンドリアを増やす合図は出ます。カタログに無い運動はここで記録してください。",
+    "info.bath.tips": "40度前後で10〜15分が目安。熱すぎる湯や長湯は負担になるので避けましょう。",
+    "info.bath.why": "湯船で体を温めると、熱に反応してタンパク質を守る仕組みが働きます。運動に似た穏やかな刺激として、ミトコンドリアの質を保つのを助けます。",
+    "info.bodyweight.tips": "太もも・お尻など大きい筋肉から。きつい日は回数を減らしても「やる」ことに意味があります。",
+    "info.bodyweight.why": "筋肉はミトコンドリアがぎっしり詰まった組織です。スクワットや腕立てで筋線維に負荷をかけると、ミトコンドリアの新生と質の向上が起きます。筋肉が増えると、じっとしていても消費するエネルギー（基礎代謝）の土台も大きくなります。",
+    "info.colorveg.tips": "皿の上が虹色になるほど良いとされます。緑・赤・紫・橙を意識して一品足すだけで十分です。",
+    "info.colorveg.why": "色の濃い野菜に含まれる抗酸化成分が、エネルギーを作るときに出る活性酸素（サビ）からミトコンドリアを守ります。",
+    "info.cycling.tips": "30分以上を目安に。信号待ちの少ない道だと心拍が落ちにくく効率的です。",
+    "info.cycling.why": "自転車は体重を支えずに大きな筋肉を長く動かせるため、関節を痛めにくいまま有酸素の刺激を積めます。太ももはミトコンドリアの多い筋肉です。",
+    "info.darknight.tips": "就寝1時間前は画面を暗く・暖色に。部屋の照明も落としましょう。",
+    "info.darknight.why": "夜の強い光やスマホはメラトニン（睡眠ホルモン）を抑え、体内時計と睡眠の質を乱します。すると、夜に進むはずのミトコンドリアの修復も滞りがちに。",
+    "info.gymtrain.tips": "2〜3種目を各10〜15回×2〜3セット。週2回でも、同じ部位は中1〜2日あけましょう。",
+    "info.gymtrain.why": "マシンやダンベルは負荷を数字で細かく上げられるので、「少しきつい」を毎回狙えます。筋肉が増えると、その中のミトコンドリアも一緒に増えていきます。",
+    "info.hara7.tips": "よく噛んでゆっくり。腹七分で箸を置く習慣を。",
+    "info.hara7.why": "軽い空腹（食べ過ぎない）は、AMPKやサーチュインを介して、古くなったミトコンドリアを掃除する「マイトファジー」を促すと考えられています。逆に食べ過ぎると、余ったエネルギーがミトコンドリアの負担になります。",
+    "info.hiit.tips": "20秒全力＋10秒休みを8本＝合計4分（タバタ式）。週2〜3回まで、中1〜2日あけてください。",
+    "info.hiit.why": "全力に近い運動を短くくり返すと、AMPKの反応が強く出て、時間あたりの効率は持久運動の2〜3倍とも報告されています。ただし回復に時間が要ります。",
+    "info.jog.tips": "20〜30分、会話ができるくらいの速さで。膝が不安なら1分走って1分歩くを繰り返す形から。",
+    "info.jog.why": "走ると心拍が上がり、筋肉と心肺の両方に「もっと発電所が要る」という信号が出ます。歩くより短い時間で同じだけの刺激を入れられるのが利点です。",
+    "info.juice.tips": "糖分の多い甘いジュースは逆効果。野菜中心・無糖のものを選びましょう。",
+    "info.juice.why": "ミトコンドリアはエネルギーを作るときに活性酸素（サビの原因）も出します。野菜のビタミンやポリフェノールは、その活性酸素の処理を助け、ミトコンドリアを守ってくれます。",
+    "info.lessdrink.tips": "1〜2杯までを目安に。合間に水を挟むとペースが落ちて自然に減ります。寝る直前の一杯は睡眠の質を下げるので避けたいところ。",
+    "info.lessdrink.why": "量を減らすだけでも、ミトコンドリアが受けるダメージと、分解に追われて脂肪燃焼が後回しになる時間を減らせます。",
+    "info.lightex.tips": "ラジオ体操や軽い体操を10〜20分。動く習慣がついてから強さを上げれば十分です。",
+    "info.lightex.why": "強い運動でなくても、体を動かすこと自体が「エネルギーを使う」信号になります。まったく動かない日を減らすほうが、たまに追い込むより続きます。",
+    "info.mealrec.tips": "写真1枚でも、ことばで「牛丼」と書くだけでもかまいません。朝と夜の2食から始めるのが続けやすいです。",
+    "info.mealrec.why": "食べたものを残すと、タンパク質が足りているか、食べ過ぎていないかが自動で判定できるようになります。記録そのものがミトコンドリアを増やすわけではありませんが、他の判定すべての土台になります。",
+    "info.meditate.tips": "5秒吸って8秒吐くをゆったり。寝る前に行うと入眠もスムーズです。",
+    "info.meditate.why": "ゆっくりした呼吸は自律神経を整え、ストレスホルモンを下げます。慢性的なストレスはミトコンドリアを消耗させるので、意識して“休ませる”時間が効いてきます。",
+    "info.morninglight.tips": "起きて1時間以内に5〜15分。窓ぎわでも構いません。曇りの日でも屋外の光は室内よりずっと強いです。",
+    "info.morninglight.why": "朝の光が体内時計を合わせます。ミトコンドリアの働きや修復は一日のリズムに従って増減するので、時計が合うと代謝のリズムも整います。",
+    "info.nightfast.tips": "夕食から翌朝まで12時間ほどあくのが目安。夜食をやめるだけで自然に届きます。極端な絶食は逆効果です。",
+    "info.nightfast.why": "食べない時間が続くと、体は傷んだミトコンドリアを片づける掃除モードに入りやすくなります。数が増えるわけではなく、質を整える時間です。",
+    "info.nosake.tips": "まずは週2日の休肝日から。飲む日も水を挟むと負担が減ります。",
+    "info.nosake.why": "アルコールの分解はミトコンドリアに負担をかけ、活性酸素も増やします。お酒を休む日は、ミトコンドリアが回復する時間になります。",
+    "info.nosmoke.tips": "吸いたくなる場面（コーヒー・飲み会・休憩）を先に把握しておくと切り抜けやすくなります。",
+    "info.nosmoke.why": "たばこは活性酸素を大量に発生させてミトコンドリアのDNAを傷つけ、一酸化炭素が酸素の運搬も邪魔します。エネルギーを作る材料と現場の両方が痛みます。",
+    "info.protein.tips": "朝・昼・晩に分けてとると使われやすい。卵・魚・鶏肉・大豆・乳製品が手軽です。",
+    "info.protein.why": "新しいミトコンドリアも筋肉も、材料はタンパク質です。いくら「増やす司令」が出ても、材料が足りないと作れません。体重×1.6gを目安に、こまめに補給しましょう。",
+    "info.restday.tips": "まずは週2日から。曜日を決めてしまうほうが迷わず続きます。",
+    "info.restday.why": "お酒を分解するときに出るアセトアルデヒドがミトコンドリアを傷つけます。飲まない日をつくると、その日は分解に追われず修復にまわれます。",
+    "info.sleeplack.tips": "まずは就寝時間を一定に。寝る前のスマホ・カフェインを控えめに。",
+    "info.sleeplack.why": "睡眠中に、ミトコンドリアの修復や体内の掃除が進みます。6時間未満が続くと回復が追いつかず、日中のエネルギー効率も落ちてしまいます。",
+    "info.stretch.tips": "風呂上がりに5分。伸ばしている部位を意識して、息を止めずにゆっくり。",
+    "info.stretch.why": "ミトコンドリアを直接増やす作用は確かめられていませんが、体をゆるめて自律神経が整うと、慢性的なストレスによる消耗を減らせます。",
+    "info.sugar.tips": "甘い飲料を水・お茶・炭酸水に置き換えるだけでも大きく変わります。",
+    "info.sugar.why": "砂糖や甘い飲料は血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。マイトを守るには、まず甘い飲み物から見直すのが近道です。",
+    "info.sugarCtrl.tips": "白米は拳1個分を目安に。甘い飲料は水・お茶・炭酸水に置き換えるだけでも大きく変わります。",
+    "info.sugarCtrl.why": "砂糖や甘い飲料、白米などの糖質のとりすぎは血糖を急に上げ下げし、余った糖はミトコンドリアの負担と活性酸素を増やします。甘いものや主食を控えめにすることは、ミトコンドリアを守る近道です。",
+    "info.swim.tips": "20〜30分。泳ぎ続けられなくても、水中ウォーキングで十分に負荷になります。",
+    "info.swim.why": "水の抵抗が全身に均等にかかるため、関節への負担が少ないまま持久的な負荷をかけられます。呼吸が制限されるぶん心肺にも効きます。",
+    "info.walk.tips": "ときどき早歩きを混ぜると刺激アップ。朝8時ごろの20分散歩は「光＋歩数」の一石二鳥です。",
+    "info.walk.why": "早歩きなどの有酸素運動をすると、筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これが PGC-1α（ミトコンドリアを新しく作る司令塔）のスイッチを押し、ミトコンドリアの“数”が増えていきます。朝に歩けば光で体内時計も整い、代謝リズムが安定します。",
+    "info.walking.tips": "20〜30分が目安。ときどき早歩きを混ぜると刺激が上がります。朝に歩けば体内時計も整います。",
+    "info.walking.why": "歩くと筋肉が「エネルギーが足りない」と感じ、AMPKというセンサーが入ります。これがPGC-1α（ミトコンドリアを新しく作る司令塔）を起動させます。歩数の自動判定と重なる部分はあるので、こちらは「意識して歩きに出た日」を残す枠として使ってください。",
+    "item.anyex.blurb": "カタログに無い運動はここに。やった時間で強さを選ぶ",
+    "item.anyex.method": "自己申告",
+    "item.anyex.name": "その他の運動",
+    "item.anyex.short": "その他の運動",
+    "item.bath.blurb": "湯船で温まる。40度前後で10〜15分",
+    "item.bath.method": "自己申告",
+    "item.bath.name": "湯船につかる",
+    "item.bath.short": "入浴",
+    "item.bodyweight.blurb": "腕立て・スクワットなどを2〜3種目、各10〜15回。器具なしで家でできる",
+    "item.bodyweight.method": "自己申告",
+    "item.bodyweight.name": "自重トレ（家でできる腕立て・スクワット）",
+    "item.bodyweight.short": "自重トレ",
+    "item.colorveg.blurb": "緑・赤・紫・橙の野菜を一品。色が濃いほど抗酸化成分が多い",
+    "item.colorveg.method": "写真",
+    "item.colorveg.name": "色の濃い野菜を一品食べる",
+    "item.colorveg.short": "色野菜を食べる",
+    "item.custom1.blurb": "自分で名前をつけて登録する（例: ヨガ、卓球）",
+    "item.custom1.method": "自己申告",
+    "item.custom1.name": "自分で決める枠",
+    "item.custom1.short": "自由枠",
+    "item.custom2.blurb": "もう1つ、自分で名前をつけて登録する",
+    "item.custom2.method": "自己申告",
+    "item.custom2.name": "自分で決める枠（2つめ）",
+    "item.custom2.short": "自由枠2",
+    "item.cycling.blurb": "30分以上こぐ。膝への衝撃が少なく、通勤にも混ぜやすい",
+    "item.cycling.method": "自己申告（歩数では測れないため）",
+    "item.cycling.name": "サイクリング",
+    "item.cycling.short": "サイクリング",
+    "item.gymtrain.blurb": "ジムのマシンやダンベルで2〜3種目。器具で負荷を細かく上げられる",
+    "item.gymtrain.method": "自己申告",
+    "item.gymtrain.name": "ジム・マシンでトレーニング",
+    "item.gymtrain.short": "ジム・マシン",
+    "item.hara7.blurb": "満腹度の記録から自動で判定",
+    "item.hara7.method": "食事の記録から自動判定",
+    "item.hara7.name": "腹七分目を守る",
+    "item.hara7.short": "腹七分目",
+    "item.hara7.th0.hint": "まずは1食だけ意識する",
+    "item.hara7.th0.label": "1食",
+    "item.hara7.th1.hint": "標準。3食のうち2食を腹七分目に",
+    "item.hara7.th1.label": "2食",
+    "item.hara7.th2.hint": "毎食きっちり",
+    "item.hara7.th2.label": "3食",
+    "item.hiit.blurb": "20秒全力＋10秒休みを8本（合計4分）。週2〜3回、中1〜2日あける",
+    "item.hiit.method": "自己申告（週2〜3回・中1〜2日あける）",
+    "item.hiit.name": "HIIT（20秒全力・10秒休みをくり返す）",
+    "item.hiit.short": "HIIT",
+    "item.jog.blurb": "20〜30分、会話ができるくらいの速さで。歩くより短時間で同じ刺激",
+    "item.jog.method": "万歩計（自動集計・手動チェックも可）",
+    "item.jog.name": "ジョギング",
+    "item.jog.short": "ジョギング",
+    "item.juice.blurb": "いつ飲んでもOK。朝の食事写真なら自動でチェックされる",
+    "item.juice.method": "いつ飲んでもOK（朝の写真なら自動チェック）",
+    "item.juice.name": "野菜ジュースを飲む",
+    "item.juice.short": "ジュースを飲む",
+    "item.lessdrink.blurb": "飲む量を1〜2杯までにおさえる",
+    "item.lessdrink.method": "自己申告",
+    "item.lessdrink.name": "お酒を控えめにする（1〜2杯まで）",
+    "item.lessdrink.short": "お酒控えめ",
+    "item.lightex.blurb": "ラジオ体操・軽い体操など10〜20分。まず体を動かす習慣から",
+    "item.lightex.method": "自己申告",
+    "item.lightex.name": "軽めの運動（体操・ラジオ体操など）",
+    "item.lightex.short": "軽めの運動",
+    "item.mealrec.blurb": "写真かことばで残すと自動でチェック",
+    "item.mealrec.method": "写真かことばで記録すると自動でチェック",
+    "item.mealrec.name": "食べたものを記録する",
+    "item.mealrec.short": "食事の記録",
+    "item.mealrec.th0.hint": "まずは1食から",
+    "item.mealrec.th0.label": "1食",
+    "item.mealrec.th1.hint": "標準。朝と夜など",
+    "item.mealrec.th1.label": "2食",
+    "item.mealrec.th2.hint": "毎食きちんと残す",
+    "item.mealrec.th2.label": "3食",
+    "item.meditate.blurb": "タイマーつき。5秒吸って8秒吐くを20回",
+    "item.meditate.method": "瞑想タイマー",
+    "item.meditate.name": "呼吸瞑想（5秒吸う・8秒吐く ×20）",
+    "item.meditate.short": "呼吸瞑想",
+    "item.morninglight.blurb": "起きて1時間以内に5〜15分、外の光を浴びる",
+    "item.morninglight.method": "自己申告",
+    "item.morninglight.name": "朝の光を浴びる",
+    "item.morninglight.short": "朝の光",
+    "item.nightfast.blurb": "夕食のあとは翌朝まで何も食べない（水・お茶はOK）",
+    "item.nightfast.method": "自己申告（夕食のあとは翌朝まで何も食べない）",
+    "item.nightfast.name": "夜は食べない",
+    "item.nightfast.short": "夜食べない",
+    "item.nosake.blurb": "その日はまったく飲まない",
+    "item.nosake.method": "自己申告",
+    "item.nosake.name": "お酒を飲まない",
+    "item.nosake.short": "禁酒",
+    "item.nosmoke.blurb": "吸わない日を積み重ねる",
+    "item.nosmoke.method": "自己申告",
+    "item.nosmoke.name": "禁煙",
+    "item.nosmoke.short": "禁煙",
+    "item.protein.blurb": "食事の記録から自動で集計",
+    "item.protein.method": "食事の記録から自動判定",
+    "item.protein.name": "タンパク質をしっかり",
+    "item.protein.short": "タンパク質",
+    "item.protein.th0.hint": "まずは無理なく。高齢の方や少食の方",
+    "item.protein.th0.label": "体重×1.2g",
+    "item.protein.th1.hint": "標準。運動する人はここが目安",
+    "item.protein.th1.label": "体重×1.6g",
+    "item.protein.th2.hint": "しっかり筋肉をつけたい",
+    "item.protein.th2.label": "体重×2.0g",
+    "item.restday.blurb": "飲む日と飲まない日を分ける",
+    "item.restday.method": "自己申告",
+    "item.restday.name": "休肝日をつくる",
+    "item.restday.short": "休肝日",
+    "item.sleeplack.blurb": "選んだ時間を下回った日は減点になる",
+    "item.sleeplack.method": "睡眠ログ（自動集計）",
+    "item.sleeplack.name": "睡眠",
+    "item.sleeplack.short": "睡眠不足",
+    "item.sleeplack.th0.hint": "短くても平気なほう",
+    "item.sleeplack.th0.label": "5時間",
+    "item.sleeplack.th1.hint": "標準",
+    "item.sleeplack.th1.label": "6時間",
+    "item.sleeplack.th2.hint": "しっかり寝たい",
+    "item.sleeplack.th2.label": "7時間",
+    "item.sleeplack.th3.hint": "8時間は寝ないと調子が出ない",
+    "item.sleeplack.th3.label": "8時間",
+    "item.stretch.blurb": "風呂上がりに5分、体をゆるめる。寝る前の習慣にしやすい",
+    "item.stretch.method": "自己申告",
+    "item.stretch.name": "ストレッチをする",
+    "item.stretch.short": "ストレッチ",
+    "item.sugarCtrl.blurb": "甘い飲料と主食を控えめに",
+    "item.sugarCtrl.method": "自己申告",
+    "item.sugarCtrl.name": "糖分に気を付ける",
+    "item.sugarCtrl.short": "糖分",
+    "item.swim.blurb": "20〜30分泳ぐ（水中ウォーキングでも可）。全身を使えて関節にやさしい",
+    "item.swim.method": "自己申告（歩数では測れないため）",
+    "item.swim.name": "スイミング",
+    "item.swim.short": "スイミング",
+    "item.walk.blurb": "歩数から自動で判定",
+    "item.walk.method": "万歩計（自動集計・手動チェックも可）",
+    "item.walk.name": "歩く",
+    "item.walk.short": "歩数",
+    "item.walking.blurb": "歩数の自動判定とは別に、意識して歩きに出た日。20〜30分が目安",
+    "item.walking.method": "自己申告（歩数の自動判定とは別枠）",
+    "item.walking.name": "ウォーキング（歩きに出る）",
+    "item.walking.short": "ウォーキング",
+    "mech.biogenesis.lead": "数を大きく増やせるのは運動です。いくつ選んでもかまいません",
+    "mech.biogenesis.name": "運動",
+    "mech.cleanup.lead": "傷んだミトコンドリアを片づける",
+    "mech.cleanup.name": "質を整える・掃除する",
+    "mech.clock.lead": "一日のリズムを整える",
+    "mech.clock.name": "体内時計を合わせる",
+    "mech.protect.lead": "活性酸素のダメージを減らす",
+    "mech.protect.name": "サビから守る",
+    "mech.stress.lead": "慢性ストレスの負荷を下げる",
+    "mech.stress.name": "ストレスをおろす",
+    "speech.bodyweight.0": "筋肉はぼくらの一番の住みか。鍛えると、そこに新しい仲間が生まれるんだ",
+    "speech.bodyweight.1": "きついと感じた時こそ「増えろ」の号令が強く鳴る。今日もありがとう",
+    "speech.bodyweight.2": "脚みたいな大きい筋肉ほど、ぼくらがたくさん宿ってる。よく効いたよ",
+    "speech.bodyweight.3": "自重トレでも十分。ぼくらは負荷を感じて、数を増やしていくんだ",
+    "speech.bodyweight.4": "体を動かすと古いぼくらも新しく入れ替わる。中から若返る感じだよ",
+    "speech.darkNight.0": "暗くなるとメラトニンが出て、ぼくらの夜の大掃除が始まるんだ",
+    "speech.darkNight.1": "寝る前の強い光を避けると、深い眠りに入りやすくなるよ",
+    "speech.darkNight.2": "部屋を暗くしてくれると、ぼくらの整備がちゃんと進むんだ",
+    "speech.darkNight.3": "夜の暗さは、ぼくらのメンテナンス開始の合図なんだ",
+    "speech.darkNight.4": "スマホをお休みすると、眠りのホルモンが出やすくなるよ",
+    "speech.hara7.0": "お腹に少し空きがあると、傷んだ仲間を掃除する時間ができるんだ",
+    "speech.hara7.1": "腹七分目は、ぼくらの掃除スイッチ(マイトファジー)が入る合図だよ",
+    "speech.hara7.2": "食べ過ぎないと、ぼくら古い部品を片づけて身軽になれるんだ",
+    "speech.hara7.3": "少しの空腹は、ぼくらのメンテナンスの時間。ありがとう",
+    "speech.hara7.4": "七分目でやめると、次のごはんまでに掃除が進むんだ",
+    "speech.juice.0": "色の濃い野菜の抗酸化パワーが、ぼくらをサビから守ってくれるんだ",
+    "speech.juice.1": "緑や赤や紫の色は、ぼくらを守る成分の印。虹色だと嬉しいな",
+    "speech.juice.2": "発電のときに出るサビを、野菜のビタミンが中和してくれるんだ",
+    "speech.juice.3": "朝の一杯で、ぼくらの一日がサビにくくなるよ。ありがとう",
+    "speech.juice.4": "ポリフェノールはぼくらの守り手なんだ。続けてくれると助かるよ",
+    "speech.mealBad.0": "うっ、ぼく少しサビつきそう…",
+    "speech.mealBad.1": "ちょっと重たいな、次で整えよう",
+    "speech.mealBad.2": "これは苦手かも…明日で挽回だね",
+    "speech.mealBad.3": "油が多いかな…次は軽めにしよう",
+    "speech.mealBad.4": "大丈夫、次の野菜で立て直せるよ",
+    "speech.mealGood.0": "これはいい食事だ、体が澄んでいくよ",
+    "speech.mealGood.1": "ぼくらが喜ぶごはんだ、ありがとう",
+    "speech.mealGood.2": "いい栄養だね、サビから守られる感じ",
+    "speech.mealGood.3": "このごはん、ぼくピカピカになれる",
+    "speech.mealGood.4": "うれしいなあ、こういうのが一番だ",
+    "speech.mealOk.0": "ごちそうさま、しっかり受け取ったよ",
+    "speech.mealOk.1": "ふむふむ、これはこれで悪くないね",
+    "speech.mealOk.2": "記録ありがとう、ちゃんと見てたよ",
+    "speech.mealOk.3": "ぼくの燃料にさせてもらうね",
+    "speech.mealOk.4": "うん、次のごはんも楽しみ",
+    "speech.meditate.0": "長く吐く呼吸で心が静まると、ぼくらにかかるストレスの負担が減るんだ",
+    "speech.meditate.1": "吐く息が長いと体が落ち着く。その静けさはぼくらへの贈り物だよ",
+    "speech.meditate.2": "深い呼吸は、ぼくらに新鮮な酸素という薪をくべ直す行為なんだ",
+    "speech.meditate.3": "ストレスが続くとぼくらも疲れちゃう。ほどいてくれてありがとう",
+    "speech.meditate.4": "呼吸を整える時間は、火のまわりの風を鎮める時間なんだ",
+    "speech.nosake.0": "お酒の日はアセトアルデヒドの後始末で大変。休肝日はほっとするよ",
+    "speech.nosake.1": "飲まない夜は眠りが深くなって、ぼくらの掃除もはかどるんだ",
+    "speech.nosake.2": "お酒を分解する間、脂肪を燃やす仕事は後回しになっちゃうんだ",
+    "speech.nosake.3": "休肝日はぼくらの回復日。サビも溜まりにくくなるよ",
+    "speech.nosake.4": "たまに休ませてくれると、ぼくら長く元気に燃えられるんだ",
+    "speech.protein.0": "ぼくらの体も、宿る筋肉も、タンパク質でできてる。材料が届くと安心だよ",
+    "speech.protein.1": "肉・魚・卵・豆はぼくらの部品そのもの。切らすと修理ができないんだ",
+    "speech.protein.2": "一度にどかっとより、朝・昼・晩に分けてくれると使いやすいな",
+    "speech.protein.3": "タンパク質が足りてると、傷んだ部品もちゃんと作り直せるんだ",
+    "speech.protein.4": "筋肉が保たれると、ぼくらの住みかも守られる。ありがとう",
+    "speech.slept.0": "眠っている間、ぼくらは傷んだ部品を掃除して新品に替えてたんだ",
+    "speech.slept.1": "深い眠りはぼくらの整備の時間。夜のうちに一基ずつ点検したよ",
+    "speech.slept.2": "ぐっすり眠ると、日中に溜まったサビをきれいに落とせるんだ",
+    "speech.slept.3": "7時間眠れた夜は、ぼくらの大掃除が存分にできるよ",
+    "speech.slept.4": "眠りは脳のぼくらにとって、欠かせない夜の大掃除なんだ",
+    "speech.sugar.0": "急な血糖の波はぼくをぐったりさせる…でも次のごはんで立て直せるよ",
+    "speech.sugar.1": "甘いものが続くと、脂肪を燃やす切り替えがにぶくなっちゃうんだ",
+    "speech.sugar.2": "お砂糖が多いと、ぼく少しサビつく感じ。明日の野菜で取り返そう",
+    "speech.sugar.3": "血糖のジェットコースターは、ぼくちょっと苦手なんだ…",
+    "speech.sugar.4": "たまにはいいさ。次に色のある野菜をくれると嬉しいな",
+    "speech.sugarCtrl.0": "甘い波が穏やかだと、ぼくら脂肪も糖もしなやかに使い分けられるんだ",
+    "speech.sugarCtrl.1": "糖を控えると血糖の波が落ち着いて、ぼくら疲れにくくなるよ",
+    "speech.sugarCtrl.2": "白米は拳ひとつ分が目安。おかずと一緒だと波がゆるやかなんだ",
+    "speech.sugarCtrl.3": "甘さ控えめの日は、ぼくらの調子が整いやすいんだ",
+    "speech.sugarCtrl.4": "この習慣が続くと、ぼくら脂肪を燃やす柔軟さを保てるよ",
+    "speech.tooFull.0": "満タンだと、掃除の時間がとれないんだ",
+    "speech.tooFull.1": "ふう、消化のお手伝いで忙しいよ",
+    "speech.tooFull.2": "今日はお掃除おやすみかなあ",
+    "speech.tooFull.3": "次を軽くすると、ぼく掃除できるよ",
+    "speech.tooFull.4": "たまにはこんな日もあるさ",
+    "speech.walk.0": "歩くと「発電所を増やせ」の号令(PGC-1α)が鳴って、ぼくらの仲間が増えるんだ",
+    "speech.walk.1": "ゆっくり歩くだけでも、ぼくらの数はちゃんと増えるって研究でわかってるんだよ",
+    "speech.walk.2": "朝の光を浴びて歩くと体内時計も整う。ぼくらの一日のリズムも合うんだ",
+    "speech.walk.3": "息が少し弾むくらいが合図。今日もぼくらの新しい仲間が生まれたよ",
+    "speech.walk.4": "歩いた分だけ、脂肪を燃やすぼくらの炉が増えるんだ。また連れ出してね",
+    "tut.hello.0": "ようこそ。ぼくはマイト、きみの細胞の中にいる小さな発電所だよ。",
+    "tut.hello.1": "このアプリは、体重を減らすんじゃなくて、ぼくを増やしていくアプリなんだ。",
+    "tut.hello.2": "まずは、きみのことを少しだけ教えてくれる？",
+    "tut.q.activity.ask": "ふだん、どのくらい動く？",
+    "tut.q.activity.lead": "消費カロリーの見積もりに使います",
+    "tut.q.age.ask": "年齢は？",
+    "tut.q.age.lead": "代謝の見積もりに使います",
+    "tut.q.age.unit": "歳",
+    "tut.q.goal.ask": "目標体重は？",
+    "tut.q.goal.lead": "決めていなければ飛ばしてかまいません",
+    "tut.q.height.ask": "身長を教えて",
+    "tut.q.height.lead": "必要なカロリーの計算に使います",
+    "tut.q.name.ask": "なんて呼べばいい？",
+    "tut.q.name.lead": "あとから設定で変えられます",
+    "tut.q.name.placeholder": "ひらい",
+    "tut.q.sex.ask": "性別は？",
+    "tut.q.sex.lead": "基礎代謝の計算式が変わります",
+    "tut.q.sex.o0.label": "男性",
+    "tut.q.sex.o1.label": "女性",
+    "tut.q.weight.ask": "いまの体重は？",
+    "tut.q.weight.lead": "ここからの変化を、一緒に見ていきます",
+    "why.bodyweight.0": "筋肉はミトコンドリアの密集地帯||筋肉は、体の中でもミトコンドリアがぎっしり詰まった組織です。腕立てやスクワットで負荷をかけると、細胞内でカルシウムやAMPKが働き、新生と質の向上が同時に進むと報告されています。器具がなくても、自重だけで持久力の土台はしっかり育てられます。",
+    "why.bodyweight.1": "筋肉を増やすと、休んでいる間の燃焼力も上がる||筋肉が増えると、じっと座っている間も消費されるエネルギー——基礎代謝の土台が大きくなります。つまり自重トレは「今この瞬間」だけでなく、動いていない時間の燃焼力まで底上げする投資。中高年のミトコンドリアにこそ、よく効くと考えられています。",
+    "why.bodyweight.2": "「ややきつい」まで動くのが効くサイン||ポイントは、息が少し弾む「ややきつい」ところまで動くこと。この負荷が、発電所を増やせという指令を強く鳴らします。回数を数えるより、呼吸と動きを合わせる「動く瞑想」のつもりで。きつさの正体は、ミトコンドリアへのサインです。",
+    "why.hara7.0": "軽い空腹が、古い発電所の掃除を促す||軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つための習慣です。",
+    "why.hara7.1": "食べ過ぎは発電所への過重労働||食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかり、活性酸素も出やすくなります。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分ですが、七分ならなお静かに整います。",
+    "why.hara7.2": "空腹の時間が、点検の時間になる||満腹が続くと、細胞は「掃除」より「処理」に追われ続けます。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれる。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。",
+    "why.juice.0": "野菜の抗酸化成分が、発電の「火の粉」を受け止める||ミトコンドリアはエネルギーを作るたびに、副産物として活性酸素——いわば「火の粉」も出します。野菜のビタミンやポリフェノールは、この火の粉を受け止め、発電所そのものが錆びるのを防ぐ役割を担うと考えられています。彩りの多い一杯ほど頼りになります。",
+    "why.juice.1": "活性酸素はゼロが正解ではない。だから食事から||面白いのは、活性酸素はゼロが正解ではないこと。運動時の適度な活性酸素は「増えろ」のシグナルにもなります。だからサプリの大量摂取より、食事からほどよく抗酸化成分を補うのが理にかなっている。野菜ジュースは、その「ほどよさ」にちょうどいい形です。",
+    "why.juice.2": "錆びにくい体は、こつこつの積み重ね||錆びにくい体は、一日で作られるものではありません。日々こつこつ補う抗酸化成分が、少しずつミトコンドリアの守りを厚くしていきます。今日の一杯は、その積み重ねの一歩。飲むたびに、発電所の防護服を少し新調している感覚です。",
+    "why.meditate.0": "長く吐く呼吸が、休息モードに切り替える||5秒吸って8秒吐く——吐く息を長くする呼吸は、自律神経のうち「休息モード」を優位にし、ストレスホルモンを下げます。ミトコンドリアはストレスの影響を受けやすい発電所。呼吸ひとつで、体の内側の緊張をゆるめてあげられます。",
+    "why.meditate.1": "慢性ストレスは、細胞のエネルギーを削る||慢性的なストレスは、じわじわとミトコンドリアを消耗させることが分かっています。心の負荷が、細胞レベルのエネルギー低下につながるのです。だからこそ意識して休ませる時間が効く。20回の呼吸は、発電所に「いったん力を抜いていい」と伝える合図です。",
+    "why.meditate.2": "深い呼吸は、発電所に薪をくべ直す行為||深い呼吸は、無数の発電所へ酸素という薪を送り直す行為でもあります。眠っていた火に新しい空気をくべ、同時に緊張をほどく。あなたがひと息つくと、体内のミトコンドリアも一緒にひと息つく——その両方が、この5分で起きています。",
+    "why.nosake.0": "アルコールの分解は、発電所には重労働||アルコールの分解は、ミトコンドリアにとってかなりの重労働です。処理の過程で活性酸素も増え、発電所に負荷が集中します。休肝日は、その重い仕事を止めて、たまったダメージを回復させるための時間。飲まない日こそ、内側で修復が進んでいます。",
+    "why.nosake.1": "休肝日は、発電所が本業に戻れる日||お酒を休むと、分解にともなう活性酸素の発生も抑えられます。すると発電所は「処理」から解放され、本来の仕事——エネルギーづくりと自己メンテナンスに集中できる。翌朝の体の軽さは、ミトコンドリアが元気を取り戻したサインかもしれません。",
+    "why.nosake.2": "休ませる日も、続けるうちに入る||毎日灯し続けたい火だからこそ、休ませる日も要ります。休肝日はサボりではなく、発電所にとっての正式な「回復日」。今日は堂々と休んでいい一日だと考えると、飲まない選択も前向きなメンテナンスに変わります。",
+    "why.protein.0": "材料がなければ、増やす司令も無駄になる||増やす司令がいくら出ても、材料のタンパク質がなければ新しいミトコンドリアも筋肉も作れません。設計図と号令だけあって、レンガが届かない建設現場と同じです。運動でスイッチを入れたら、材料を切らさない——この両輪が揃って初めて形になります。",
+    "why.protein.1": "タンパク質は貯められない。こまめに補う||タンパク質は体に貯めておけないため、一度にまとめてより、一日を通してこまめに補うほうが土台を支えられます。朝・昼・晩と分けて届けるイメージ。ミトコンドリアづくりの現場に、材料が途切れず入ってくる状態をつくれます。",
+    "why.protein.2": "目安は体重×1.6g||目安は体重×1.6g。多すぎず、でも不足させない量です。せっかく歩いてトレーニングして「増やせ」の号令を出したのに、材料不足で作れなかった——そんなもったいない状態を防ぐための、いちばん確実な下支えになります。",
+    "why.sugarCtrl.0": "血糖の乱高下が、発電所の負担になる||甘いものや白米を摂りすぎると、血糖が急に上がって急に下がる乱高下が起きます。処理しきれず余った糖はミトコンドリアの負担になり、活性酸素も増えやすくなります。主食を拳1個分に抑えるだけで、この乱高下がぐっと穏やかになります。",
+    "why.sugarCtrl.1": "糖質控えめだと、血糖の波が小さくなる||糖質を控えめにすると血糖が安定し、発電所が余分な活性酸素にさらされにくくなります。血糖の波が小さいほど、ミトコンドリアは落ち着いてエネルギーを作れる。我慢というより、発電所が働きやすい環境を整えているイメージです。",
+    "why.sugarCtrl.2": "果糖は特に脂肪としてたまりやすい||果糖は特に肝臓で処理され、摂りすぎると脂肪としてたまりやすい糖です。お菓子やジュースを控え、主食も腹七分目に。派手な制限をしなくても、この一手だけでミトコンドリアにかかる糖の圧力は大きく減っていきます。",
+    "why.walk.0": "歩くと「発電所を増やせ」の号令が出る||歩いて筋肉を使うと、エネルギー不足を感じ取るセンサー・AMPKが反応し、司令塔のPGC-1αが起動します。これは「発電所を増設せよ」という細胞への号令。数ある習慣の中でも、ミトコンドリアを大きく増やせる引き金は運動がもっとも確かだと分かっています。",
+    "why.walk.1": "朝の光が、体内時計のスイッチを入れる||朝いちばんの光は、細胞の体内時計に「今日が始まった」と知らせるスイッチです。ミトコンドリアの新生や浄化は、実はこの時計に従って一日の中で増減しています。光で針を合わせると、脂肪や糖を使うリズムそのものが乱れにくくなると考えられています。",
+    "why.walk.2": "朝食前に歩くと、脂肪が燃えやすい||まだ朝食前の体は、夜のあいだ続いた「脂肪を燃料に使うモード」の途中にあります。そこで軽く歩くと、その燃焼モードをもう少し延ばせるとされます。朝の3,000歩は、脂肪が優先的に燃えている貴重な時間を活かす一歩です。",
     "mood.good": "元気",
     "mood.great": "キラキラ✨",
     "mood.low": "休みぎみ",
@@ -1370,6 +1791,427 @@ const I18N = {
     "unit.steps": "歩",
   },
   en: {
+    "item.walk.th0.hint": "Working from home, not much walking",
+    "item.walk.th0.label": "3,000 steps",
+    "item.walk.th1.hint": "A bit of walking on errands and school runs",
+    "item.walk.th1.label": "5,000 steps",
+    "item.walk.th2.hint": "You commute and want to walk properly",
+    "item.walk.th2.label": "8,000 steps",
+    "item.walk.th3.hint": "You already walk on purpose",
+    "item.walk.th3.label": "10,000 steps",
+    "ui.pick.autoLead": "Worked out from your logs. These stay, but you choose the level that suits you.",
+    "ui.pick.autoTitle": "Tracked for you",
+    "ui.pick.chosen": "Chosen: {v}",
+    "ui.pick.exerciseLead": "Exercise is what grows your numbers in a big way. Take as many as you can keep up (up to {n})",
+    "ui.pick.fixed": "always on",
+    "ui.pick.intro": "Same goal, different means. Pick whatever fits your life.",
+    "ui.pick.mechLead": "{lead} · up to {n}",
+    "ui.pick.ngHint": "This isn’t a mission — it costs you points on days it applies",
+    "ui.pick.none": "Nothing chosen",
+    "ui.pick.onbIntro": "Let’s start with this set. Swap anything for something you can keep up — as many times as you like.",
+    "ui.pick.onbTitle": "Starting with these",
+    "ui.pick.otherLead": "All optional. Take only what fits your life.",
+    "ui.pick.otherTitle": "Other missions",
+    "ui.pick.use": "Use this",
+    "ui.pick.useOff": "Tap again to stop using it",
+    "ui.pick.useOn": "Tap to start using it today",
+    "st.hara7Left": "{n} of {need} meals eaten lightly (choose “light” or “about 70% full” when logging a meal)",
+    "st.hara7Done": "✓ {n} meals eaten lightly (energy +{act}, +{inc} mito)",
+    "st.needWeight": "Log your weight and this is worked out for you",
+    "st.proteinDone": "✓ {p}g of {target}g (energy +{act}, +{inc} mito)",
+    "st.proteinGuide": "✓ Protein target about {g}g a day (1.6g per kg)",
+    "st.proteinLeft": "{p}g of {target}g ({left}g to go)",
+    "st.sleepShort": "△ Under {line}h of sleep (energy {act}) — take it easy tonight",
+    "st.sleepWait": "Log it in the morning (under {line}h costs energy {act})",
+    "st.sleptWell": "✓ You slept well",
+    "st.stepsDone": "✓ {name} done (energy +{act}, +{inc} mito)",
+    "st.stepsLeft": "{goal} steps to go ({left} left)",
+    "ui.pick.current": "Current: {v}",
+    "ui.pick.notUsing": "Not in use",
+    "toast.backdate": "“{name}” can now be logged from {date}",
+    "ui.effort.titleFor": "{name}: how much did you do?",
+    "ui.info.act": "Energy {n}",
+    "ui.info.disclaimer": "General health information, not medical advice. If you have a condition or are under treatment, please talk to your doctor.",
+    "ui.info.inc": "  +{n} mito",
+    "ui.info.incRange": "  +{lo}–{hi} mito",
+    "ui.info.tipsLabel": "How to do it",
+    "ui.info.whyLabel": "Why it helps your mitochondria",
+    "ui.pick.max": "You can pick at most {n} under “{name}”. Remove one first.",
+    "ui.pick.required": "“{name}” can’t be removed — it’s the groundwork that works whatever your life looks like.",
+    "auto.hara7.lead": "Worked out from the “how full” note on your meal logs",
+    "auto.hara7.name": "Eating lightly",
+    "auto.mealrec.lead": "This is the foundation. Log a meal and protein and portion size are worked out for you",
+    "auto.mealrec.name": "Log what you eat",
+    "auto.protein.lead": "For people training their body. Totalled up from your meal logs",
+    "auto.protein.name": "Protein",
+    "auto.sleeplack.lead": "Everyone needs a different amount. Fall short and you lose points that day",
+    "auto.sleeplack.name": "Sleep",
+    "auto.walk.lead": "How much people walk varies hugely, so pick a target that fits your life",
+    "auto.walk.name": "Walking",
+    "effort.cardio.0.label": "10 min",
+    "effort.cardio.1.label": "20 min",
+    "effort.cardio.2.label": "30 min",
+    "effort.cardio.3.label": "45 min",
+    "effort.cardio.4.label": "60 min or more",
+    "effort.generic.0.hint": "about 10 min, easy",
+    "effort.generic.0.label": "Just a little",
+    "effort.generic.1.hint": "about 20 min",
+    "effort.generic.1.label": "Light",
+    "effort.generic.2.hint": "about 30 min, breathing a little harder",
+    "effort.generic.2.label": "Normal",
+    "effort.generic.3.hint": "about 45 min, broke a sweat",
+    "effort.generic.3.label": "Solid",
+    "effort.generic.4.hint": "60 min or more, or really hard",
+    "effort.generic.4.label": "All out",
+    "effort.hiit.0.label": "2 rounds",
+    "effort.hiit.1.label": "4 rounds",
+    "effort.hiit.2.label": "6 rounds",
+    "effort.hiit.3.label": "8 rounds",
+    "effort.hiit.4.label": "Full Tabata",
+    "effort.strength.0.hint": "1 exercise, a few reps",
+    "effort.strength.0.label": "Just a little",
+    "effort.strength.1.hint": "1–2 exercises, 10 reps each",
+    "effort.strength.1.label": "Light",
+    "effort.strength.2.hint": "2–3 exercises, 10–15 reps each",
+    "effort.strength.2.label": "Normal",
+    "effort.strength.3.hint": "3 exercises, 2–3 sets each",
+    "effort.strength.3.label": "Solid",
+    "effort.strength.4.hint": "4 exercises, 3 sets each, or heavy",
+    "effort.strength.4.label": "All out",
+    "effort.walk.0.label": "3,000 steps",
+    "effort.walk.1.label": "5,000 steps",
+    "effort.walk.2.label": "8,000 steps",
+    "effort.walk.3.label": "10,000 steps",
+    "effort.walk.4.label": "15,000 steps",
+    "effort.walking.0.label": "10 min",
+    "effort.walking.1.label": "20 min",
+    "effort.walking.2.label": "30 min",
+    "effort.walking.3.label": "45 min",
+    "effort.walking.4.label": "60 min or more",
+    "info.anyex.tips": "Pick the level by how long you did it. Around 30 minutes is “normal”.",
+    "info.anyex.why": "Whatever the activity, if you’re breathing harder and using muscle, the signal to build mitochondria goes out. Log anything that isn’t in the list here.",
+    "info.bath.tips": "Around 40°C for 10–15 minutes. Water that’s too hot, or too long a soak, becomes a burden instead.",
+    "info.bath.why": "Warming up in the tub triggers heat-shock proteins, the mechanism that protects proteins. As a gentle stimulus similar to exercise, it helps keep mitochondrial quality up.",
+    "info.bodyweight.tips": "Start with the big muscles — thighs and glutes. On hard days, cutting the reps is fine; doing it at all is what counts.",
+    "info.bodyweight.why": "Muscle is the tissue most densely packed with mitochondria. Loading the fibres with squats and push-ups triggers both new mitochondria and better quality ones. More muscle also raises the floor of what you burn sitting still.",
+    "info.colorveg.tips": "The more rainbow-like your plate, the better. Adding one green, red, purple or orange item is enough.",
+    "info.colorveg.why": "The antioxidants in deeply coloured vegetables protect mitochondria from the free radicals thrown off while making energy.",
+    "info.cycling.tips": "Aim for 30 minutes or more. Roads without many lights keep your heart rate up and make it more efficient.",
+    "info.cycling.why": "On a bike you move big muscles for a long time without carrying your own weight, so you can stack up aerobic work without hurting your joints. Your thighs are full of mitochondria.",
+    "info.darknight.tips": "Dim your screens and warm the colour an hour before bed. Turn the room lights down too.",
+    "info.darknight.why": "Bright light and phones at night suppress melatonin, the sleep hormone, and throw off both your body clock and sleep quality. The mitochondrial repair that should progress overnight then stalls.",
+    "info.gymtrain.tips": "2–3 exercises, 10–15 reps × 2–3 sets. Twice a week is fine — just leave a day or two before working the same area again.",
+    "info.gymtrain.why": "Machines and dumbbells let you raise the load in small measured steps, so you can aim for “slightly hard” every time. As muscle grows, the mitochondria inside it grow with it.",
+    "info.hara7.tips": "Chew well and eat slowly. Build the habit of putting your chopsticks down at about 70% full.",
+    "info.hara7.why": "Mild hunger — not overeating — is thought to promote mitophagy, the clean-up that clears out worn mitochondria, via AMPK and sirtuins. Overeat and the leftover energy becomes a burden on your mitochondria instead.",
+    "info.hiit.tips": "20s hard + 10s rest × 8 = 4 minutes (the Tabata format). Up to 2–3 times a week, with a day or two between.",
+    "info.hiit.why": "Repeating short near-maximal efforts produces a strong AMPK response; per minute spent, it has been reported as two to three times as efficient as steady endurance work. It does need recovery time, though.",
+    "info.jog.tips": "20–30 minutes at a pace where you could still hold a conversation. If your knees worry you, start with one minute running, one minute walking.",
+    "info.jog.why": "Running lifts your heart rate and sends the signal “we need more power plants” to both muscle and heart-lung system. The advantage is the same stimulus as walking in less time.",
+    "info.juice.tips": "Sugary juice works against you. Choose vegetable-based, unsweetened.",
+    "info.juice.why": "Making energy also produces free radicals — the cause of “rust”. The vitamins and polyphenols in vegetables help mop those up and protect your mitochondria.",
+    "info.lessdrink.tips": "One or two drinks as a guide. Water in between slows the pace and cuts the total naturally. A nightcap right before bed costs you sleep quality.",
+    "info.lessdrink.why": "Simply drinking less reduces both the damage your mitochondria take and the time fat burning spends queued behind alcohol processing.",
+    "info.lightex.tips": "10–20 minutes of light calisthenics. Once moving is a habit, raising the intensity is plenty.",
+    "info.lightex.why": "It doesn’t have to be hard. Moving at all is itself a signal that energy is being used. Cutting down the days you don’t move sticks better than occasionally going all out.",
+    "info.mealrec.tips": "A single photo is enough, or just the words “beef bowl”. Starting with breakfast and dinner is the easiest way to keep it up.",
+    "info.mealrec.why": "Logging what you eat is what lets the app work out whether you got enough protein and whether you overate. The logging itself doesn’t grow mitochondria, but everything else is built on it.",
+    "info.meditate.tips": "In for five, out for eight, unhurried. Doing it before bed also helps you fall asleep.",
+    "info.meditate.why": "Slow breathing settles your nervous system and lowers stress hormones. Chronic stress wears mitochondria down, so deliberately giving them time to rest pays off.",
+    "info.morninglight.tips": "5–15 minutes within an hour of waking. By a window is fine. Even on a cloudy day, outdoor light is far stronger than indoors.",
+    "info.morninglight.why": "Morning light sets your body clock. Mitochondrial work and repair rise and fall on a daily rhythm, so a clock that’s set keeps your metabolism on rhythm too.",
+    "info.nightfast.tips": "About 12 hours from dinner to breakfast is the mark. Simply dropping late-night snacks gets you there. Extreme fasting works against you.",
+    "info.nightfast.why": "When you go without food for a while, your body slips more easily into the clean-up mode that clears out damaged mitochondria. It doesn’t raise the count; it’s time spent on quality.",
+    "info.nosake.tips": "Start with two alcohol-free days a week. On drinking days, a glass of water between drinks lightens the load.",
+    "info.nosake.why": "Breaking down alcohol puts a load on your mitochondria and raises free radicals. A day off drinking is a day they get to recover.",
+    "info.nosmoke.tips": "Knowing in advance where the urge hits — coffee, drinks, breaks — makes it easier to get past.",
+    "info.nosmoke.why": "Smoking generates free radicals in bulk, damaging mitochondrial DNA, while carbon monoxide gets in the way of carrying oxygen. Both the materials and the workplace take the hit.",
+    "info.protein.tips": "Split it across breakfast, lunch and dinner so it actually gets used. Eggs, fish, chicken, soy and dairy are the easy ones.",
+    "info.protein.why": "New mitochondria and new muscle are both built from protein. However loudly the “build more” order is shouted, nothing gets built without materials. Aim for about 1.6g per kg of body weight, topped up through the day.",
+    "info.restday.tips": "Start with two days a week. Fixing which days works better than deciding each time.",
+    "info.restday.why": "Acetaldehyde, produced while your body breaks down alcohol, damages mitochondria. Set aside days without it and those days go to repair instead of processing.",
+    "info.sleeplack.tips": "Start by keeping your bedtime steady. Go easy on screens and caffeine before bed.",
+    "info.sleeplack.why": "Repair of your mitochondria and the body’s clean-up both happen while you sleep. Keep going under six hours and recovery can’t keep up, and daytime energy efficiency drops with it.",
+    "info.stretch.tips": "5 minutes after your bath. Pay attention to the part you’re stretching, and keep breathing.",
+    "info.stretch.why": "There’s no confirmed effect of stretching directly growing mitochondria, but loosening your body settles your nervous system, which reduces the wear that chronic stress causes.",
+    "info.sugar.tips": "Just swapping sweet drinks for water, tea or sparkling water changes a lot.",
+    "info.sugar.why": "Sugar and sweet drinks spike and crash your blood sugar, and the surplus adds load and free radicals for your mitochondria. To protect Mito, the sweet drinks are the quickest thing to look at.",
+    "info.sugarCtrl.tips": "A fist-sized portion of rice is a good guide. Even just swapping sweet drinks for water, tea or sparkling water changes a lot.",
+    "info.sugarCtrl.why": "Too much sugar — sweet drinks, white rice and the rest — spikes and crashes your blood sugar, and the surplus adds load and free radicals for your mitochondria. Going easy on sweets and refined carbs is a direct way to protect them.",
+    "info.swim.tips": "20–30 minutes. Even if you can’t swim continuously, walking in water is plenty of load.",
+    "info.swim.why": "Water pushes back evenly over your whole body, so you get endurance load with very little joint strain. Because breathing is restricted, it works your heart and lungs too.",
+    "info.walk.tips": "Mix in a brisk stretch now and then. A 20-minute walk around 8am gets you light and steps in one go.",
+    "info.walk.why": "Aerobic movement like brisk walking makes your muscles feel short of energy, which trips a sensor called AMPK. That flips the switch on PGC-1α — the foreman that builds new mitochondria — and your numbers climb. Walk in the morning and the light sets your body clock too, steadying your metabolic rhythm.",
+    "info.walking.tips": "Aim for 20–30 minutes. A brisk stretch now and then raises the stimulus. Walking in the morning also sets your body clock.",
+    "info.walking.why": "Walking makes your muscles feel short of energy, tripping the AMPK sensor, which starts up PGC-1α — the foreman that builds new mitochondria. This overlaps with the automatic step count, so use this slot to mark the days you deliberately went out to walk.",
+    "item.anyex.blurb": "Anything not in the list. Pick the level by how long you did it",
+    "item.anyex.method": "You tick it",
+    "item.anyex.name": "Other exercise",
+    "item.anyex.short": "Other exercise",
+    "item.bath.blurb": "Warm up in the tub. Around 40°C for 10–15 min",
+    "item.bath.method": "You tick it",
+    "item.bath.name": "Soak in the bath",
+    "item.bath.short": "Bath",
+    "item.bodyweight.blurb": "2–3 exercises like push-ups and squats, 10–15 reps each. No equipment needed",
+    "item.bodyweight.method": "You tick it",
+    "item.bodyweight.name": "Bodyweight training (push-ups, squats at home)",
+    "item.bodyweight.short": "Bodyweight",
+    "item.colorveg.blurb": "One green, red, purple or orange vegetable. Deeper colour, more antioxidants",
+    "item.colorveg.method": "Photo",
+    "item.colorveg.name": "Eat one deeply coloured vegetable",
+    "item.colorveg.short": "Coloured veg",
+    "item.custom1.blurb": "Register something with your own name (e.g. yoga, table tennis)",
+    "item.custom1.method": "You tick it",
+    "item.custom1.name": "Your own slot",
+    "item.custom1.short": "Custom",
+    "item.custom2.blurb": "One more slot with a name of your own",
+    "item.custom2.method": "You tick it",
+    "item.custom2.name": "Your own slot (second)",
+    "item.custom2.short": "Custom 2",
+    "item.cycling.blurb": "30 min or more. Easy on the knees and fits into a commute",
+    "item.cycling.method": "You tick it (steps can’t measure this)",
+    "item.cycling.name": "Cycling",
+    "item.cycling.short": "Cycling",
+    "item.gymtrain.blurb": "2–3 exercises on machines or dumbbells. Easy to add load in small steps",
+    "item.gymtrain.method": "You tick it",
+    "item.gymtrain.name": "Train on gym machines",
+    "item.gymtrain.short": "Gym",
+    "item.hara7.blurb": "Worked out from how full you said you were",
+    "item.hara7.method": "Worked out from your meal logs",
+    "item.hara7.name": "Stop at about 70% full",
+    "item.hara7.short": "Eat lightly",
+    "item.hara7.th0.hint": "Start with just one meal",
+    "item.hara7.th0.label": "1 meal",
+    "item.hara7.th1.hint": "Standard. Two of your three meals",
+    "item.hara7.th1.label": "2 meals",
+    "item.hara7.th2.hint": "Every meal, properly",
+    "item.hara7.th2.label": "3 meals",
+    "item.hiit.blurb": "20s hard + 10s rest × 8 (4 min total). 2–3 times a week, with a day or two between",
+    "item.hiit.method": "You tick it (2–3 times a week, a day or two apart)",
+    "item.hiit.name": "HIIT (20 seconds hard, 10 seconds rest)",
+    "item.hiit.short": "HIIT",
+    "item.jog.blurb": "20–30 min at a pace where you could still talk. Same stimulus as walking, in less time",
+    "item.jog.method": "Pedometer (automatic, or tick it yourself)",
+    "item.jog.name": "Jogging",
+    "item.jog.short": "Jogging",
+    "item.juice.blurb": "Any time of day. A breakfast photo ticks it automatically",
+    "item.juice.method": "Any time of day (a breakfast photo ticks it)",
+    "item.juice.name": "Drink vegetable juice",
+    "item.juice.short": "Veg juice",
+    "item.lessdrink.blurb": "Keep it to one or two drinks",
+    "item.lessdrink.method": "You tick it",
+    "item.lessdrink.name": "Go easy on alcohol (1–2 drinks)",
+    "item.lessdrink.short": "Less alcohol",
+    "item.lightex.blurb": "10–20 min of light calisthenics. Start with the habit of moving at all",
+    "item.lightex.method": "You tick it",
+    "item.lightex.name": "Light exercise (stretch routines, calisthenics)",
+    "item.lightex.short": "Light exercise",
+    "item.mealrec.blurb": "A photo or a few words is enough — ticked automatically",
+    "item.mealrec.method": "Ticked automatically when you log a photo or a note",
+    "item.mealrec.name": "Log what you eat",
+    "item.mealrec.short": "Meal log",
+    "item.mealrec.th0.hint": "Start with one meal",
+    "item.mealrec.th0.label": "1 meal",
+    "item.mealrec.th1.hint": "Standard. Breakfast and dinner, say",
+    "item.mealrec.th1.label": "2 meals",
+    "item.mealrec.th2.hint": "Log every meal",
+    "item.mealrec.th2.label": "3 meals",
+    "item.meditate.blurb": "Comes with a timer. In for 5, out for 8, twenty times",
+    "item.meditate.method": "Breathing timer",
+    "item.meditate.name": "Breathing practice (in 5s, out 8s × 20)",
+    "item.meditate.short": "Breathing",
+    "item.morninglight.blurb": "5–15 min outside within an hour of waking",
+    "item.morninglight.method": "You tick it",
+    "item.morninglight.name": "Get morning light",
+    "item.morninglight.short": "Morning light",
+    "item.nightfast.blurb": "Nothing from after dinner until morning (water and tea are fine)",
+    "item.nightfast.method": "You tick it (nothing after dinner until morning)",
+    "item.nightfast.name": "Nothing after dinner",
+    "item.nightfast.short": "No late food",
+    "item.nosake.blurb": "Nothing at all that day",
+    "item.nosake.method": "You tick it",
+    "item.nosake.name": "No alcohol",
+    "item.nosake.short": "No alcohol",
+    "item.nosmoke.blurb": "Stack up the days you don’t smoke",
+    "item.nosmoke.method": "You tick it",
+    "item.nosmoke.name": "No smoking",
+    "item.nosmoke.short": "No smoking",
+    "item.protein.blurb": "Totalled from your meal logs",
+    "item.protein.method": "Worked out from your meal logs",
+    "item.protein.name": "Get enough protein",
+    "item.protein.short": "Protein",
+    "item.protein.th0.hint": "Gentle start. Older or lighter eaters",
+    "item.protein.th0.label": "1.2g per kg",
+    "item.protein.th1.hint": "Standard. The mark to aim for if you train",
+    "item.protein.th1.label": "1.6g per kg",
+    "item.protein.th2.hint": "You want to build real muscle",
+    "item.protein.th2.label": "2.0g per kg",
+    "item.restday.blurb": "Separate the days you drink from the days you don’t",
+    "item.restday.method": "You tick it",
+    "item.restday.name": "Keep alcohol-free days",
+    "item.restday.short": "Rest day",
+    "item.sleeplack.blurb": "Sleep less than you chose and you lose points",
+    "item.sleeplack.method": "Sleep log (automatic)",
+    "item.sleeplack.name": "Sleep",
+    "item.sleeplack.short": "Short sleep",
+    "item.sleeplack.th0.hint": "You do fine on little sleep",
+    "item.sleeplack.th0.label": "5 hours",
+    "item.sleeplack.th1.hint": "Standard",
+    "item.sleeplack.th1.label": "6 hours",
+    "item.sleeplack.th2.hint": "You want a proper night",
+    "item.sleeplack.th2.label": "7 hours",
+    "item.sleeplack.th3.hint": "Under 8 and you’re not yourself",
+    "item.sleeplack.th3.label": "8 hours",
+    "item.stretch.blurb": "5 min after your bath to loosen up. Easy to make a bedtime habit",
+    "item.stretch.method": "You tick it",
+    "item.stretch.name": "Stretch",
+    "item.stretch.short": "Stretch",
+    "item.sugarCtrl.blurb": "Go easy on sweet drinks and refined carbs",
+    "item.sugarCtrl.method": "You tick it",
+    "item.sugarCtrl.name": "Watch the sugar",
+    "item.sugarCtrl.short": "Sugar",
+    "item.swim.blurb": "20–30 min (walking in water counts). Works the whole body, kind to joints",
+    "item.swim.method": "You tick it (steps can’t measure this)",
+    "item.swim.name": "Swimming",
+    "item.swim.short": "Swimming",
+    "item.walk.blurb": "Counted from your step tracker",
+    "item.walk.method": "Pedometer (automatic, or tick it yourself)",
+    "item.walk.name": "Walking",
+    "item.walk.short": "Steps",
+    "item.walking.blurb": "Separate from step counting — days you went out to walk. Aim for 20–30 min",
+    "item.walking.method": "You tick it (separate from step counting)",
+    "item.walking.name": "Go for a walk",
+    "item.walking.short": "Walk",
+    "mech.biogenesis.lead": "Only exercise grows your numbers in a big way. Pick as many as you like",
+    "mech.biogenesis.name": "Exercise",
+    "mech.cleanup.lead": "Clear out worn-out mitochondria",
+    "mech.cleanup.name": "Clean up and maintain",
+    "mech.clock.lead": "Settle your daily rhythm",
+    "mech.clock.name": "Set your body clock",
+    "mech.protect.lead": "Reduce damage from free radicals",
+    "mech.protect.name": "Protect from rust",
+    "mech.stress.lead": "Take the load off chronic stress",
+    "mech.stress.name": "Put stress down",
+    "speech.bodyweight.0": "Muscle is where we live best. Train it and new ones of us are born there",
+    "speech.bodyweight.1": "When it feels hard, the “grow” order rings loudest. Thank you for today",
+    "speech.bodyweight.2": "The bigger the muscle — legs especially — the more of us live in it. That worked well",
+    "speech.bodyweight.3": "Bodyweight is plenty. We feel the load and multiply",
+    "speech.bodyweight.4": "Moving swaps the old ones of us for new. Young again from the inside",
+    "speech.darkNight.0": "When it goes dark, melatonin comes and our night shift begins",
+    "speech.darkNight.1": "Avoid bright light before bed and you drop into deep sleep more easily",
+    "speech.darkNight.2": "Darken the room and our servicing actually gets done",
+    "speech.darkNight.3": "The dark of night is our signal to start maintenance",
+    "speech.darkNight.4": "Give your phone a rest and the sleep hormone comes more easily",
+    "speech.hara7.0": "A little room in your stomach gives us time to clear out the damaged ones",
+    "speech.hara7.1": "Stopping at about 70% is the cue for our clean-up switch — mitophagy",
+    "speech.hara7.2": "When you don’t overeat, we can tidy the old parts away and travel light",
+    "speech.hara7.3": "A little hunger is our maintenance window. Thank you",
+    "speech.hara7.4": "Stop at seven tenths and the cleaning gets done before your next meal",
+    "speech.juice.0": "The antioxidants in deep-coloured vegetables keep the rust off us",
+    "speech.juice.1": "Green, red, purple — those colours mark the things that protect us. A rainbow makes me happy",
+    "speech.juice.2": "The rust thrown off while we generate power gets neutralised by those vitamins",
+    "speech.juice.3": "One glass in the morning and our whole day rusts less. Thank you",
+    "speech.juice.4": "Polyphenols are our bodyguards. Keeping it up really helps",
+    "speech.mealBad.0": "Ugh, I feel a bit of rust coming on…",
+    "speech.mealBad.1": "A little heavy. Let’s balance it next time",
+    "speech.mealBad.2": "Not my favourite… we’ll make it back tomorrow",
+    "speech.mealBad.3": "Quite oily, that. Something lighter next",
+    "speech.mealBad.4": "It’s fine — the next lot of vegetables will fix it",
+    "speech.mealGood.0": "Now that’s a good meal. I can feel things clearing",
+    "speech.mealGood.1": "Food we’re glad to see. Thank you",
+    "speech.mealGood.2": "Good nutrition. Feels like armour against rust",
+    "speech.mealGood.3": "This one makes me shine",
+    "speech.mealGood.4": "Lovely. This is the sort I like best",
+    "speech.mealOk.0": "Thanks for the meal — received in full",
+    "speech.mealOk.1": "Mm, not bad at all in its way",
+    "speech.mealOk.2": "Thanks for logging it. I was watching",
+    "speech.mealOk.3": "I’ll take that as fuel",
+    "speech.mealOk.4": "Right. Looking forward to the next one",
+    "speech.meditate.0": "A long exhale quietens your mind, and the load of stress on us drops",
+    "speech.meditate.1": "Breathing out longer settles the body. That quiet is a gift to us",
+    "speech.meditate.2": "Deep breathing feeds us fresh oxygen — like putting wood back on the fire",
+    "speech.meditate.3": "Endless stress tires us out too. Thank you for loosening it",
+    "speech.meditate.4": "Time spent on your breath is time spent calming the wind around our flame",
+    "speech.nosake.0": "Drinking days mean cleaning up acetaldehyde. A day off is such a relief",
+    "speech.nosake.1": "Nights without a drink go deeper, and our cleaning gets further",
+    "speech.nosake.2": "While alcohol is being broken down, burning fat waits its turn",
+    "speech.nosake.3": "A day off is our recovery day. Less rust builds up too",
+    "speech.nosake.4": "Let us rest now and then and we’ll burn bright for much longer",
+    "speech.protein.0": "Our bodies and the muscle we live in are both protein. It’s a relief when materials arrive",
+    "speech.protein.1": "Meat, fish, eggs, beans — those are our spare parts. Run out and we can’t repair",
+    "speech.protein.2": "Rather than all at once, split it over morning, noon and night. Easier for us to use",
+    "speech.protein.3": "With enough protein we can properly rebuild the worn-out parts",
+    "speech.protein.4": "Keep your muscle and you keep our home. Thank you",
+    "speech.slept.0": "While you slept, we cleaned out the damaged parts and fitted new ones",
+    "speech.slept.1": "Deep sleep is our maintenance time. We checked over each unit in the night",
+    "speech.slept.2": "Sleep well and the rust of the day comes off cleanly",
+    "speech.slept.3": "A seven-hour night gives us a proper spring clean",
+    "speech.slept.4": "For those of us in your brain, sleep is the nightly clean-up we can’t do without",
+    "speech.sugar.0": "Sharp blood-sugar waves leave me limp… but the next meal can put it right",
+    "speech.sugar.1": "Sweet things one after another and the switch to burning fat gets sluggish",
+    "speech.sugar.2": "Too much sugar and I feel a bit rusty. Let’s make it back with vegetables tomorrow",
+    "speech.sugar.3": "The blood-sugar rollercoaster isn’t really for me…",
+    "speech.sugar.4": "It’s fine now and then. Something colourful next would be lovely",
+    "speech.sugarCtrl.0": "When the sweet waves are gentle, we can switch smoothly between fat and sugar",
+    "speech.sugarCtrl.1": "Ease off sugar and your blood sugar settles, and we tire less",
+    "speech.sugarCtrl.2": "A fist of rice is the guide. Eaten with other dishes, the wave is gentler",
+    "speech.sugarCtrl.3": "On lower-sugar days we find our rhythm more easily",
+    "speech.sugarCtrl.4": "Keep this habit and we keep the flexibility to burn fat",
+    "speech.tooFull.0": "Full to the brim leaves no time for cleaning",
+    "speech.tooFull.1": "Phew, busy helping with digestion",
+    "speech.tooFull.2": "No clean-up shift today, I suppose",
+    "speech.tooFull.3": "Go lighter next time and I can get cleaning",
+    "speech.tooFull.4": "Some days are like this. That’s alright",
+    "speech.walk.0": "Walking sounds the order to build more power plants — PGC-1α — and more of us are born",
+    "speech.walk.1": "Even an easy walk grows our numbers. That’s been shown properly, you know",
+    "speech.walk.2": "Walk in the morning light and your body clock sets. Our daily rhythm falls in line too",
+    "speech.walk.3": "Breathing a little harder is the signal. New ones of us arrived today",
+    "speech.walk.4": "Every walk adds furnaces for burning fat. Take me out again",
+    "tut.hello.0": "Welcome. I’m Mito — a tiny power plant living inside your cells.",
+    "tut.hello.1": "This app isn’t about losing weight. It’s about growing more of me.",
+    "tut.hello.2": "First, tell me a little about you?",
+    "tut.q.activity.ask": "How much do you usually move?",
+    "tut.q.activity.lead": "Used to estimate the calories you burn",
+    "tut.q.age.ask": "How old are you?",
+    "tut.q.age.lead": "Used to estimate your metabolism",
+    "tut.q.age.unit": " yrs",
+    "tut.q.goal.ask": "A goal weight?",
+    "tut.q.goal.lead": "Skip it if you haven’t decided",
+    "tut.q.height.ask": "How tall are you?",
+    "tut.q.height.lead": "Used to work out the calories you need",
+    "tut.q.name.ask": "What should I call you?",
+    "tut.q.name.lead": "You can change this later in settings",
+    "tut.q.name.placeholder": "Nobu",
+    "tut.q.sex.ask": "Your sex?",
+    "tut.q.sex.lead": "The formula for your base metabolism differs",
+    "tut.q.sex.o0.label": "Male",
+    "tut.q.sex.o1.label": "Female",
+    "tut.q.weight.ask": "What do you weigh now?",
+    "tut.q.weight.lead": "We’ll watch the change from here together",
+    "why.bodyweight.0": "Muscle is where mitochondria are packed tightest||Muscle is the tissue in your body most densely packed with mitochondria. Load the fibres with push-ups or squats and calcium and AMPK go to work inside the cell, driving new mitochondria and better quality ones at the same time. With no equipment at all, bodyweight work builds a real base of endurance.",
+    "why.bodyweight.1": "More muscle raises what you burn while resting||As muscle grows, so does the floor of energy you spend even sitting still — your base metabolism. Bodyweight training is an investment not just in this moment but in the burning power of all the hours you aren’t moving. It’s thought to pay off most for mitochondria in middle age and beyond.",
+    "why.bodyweight.2": "“Slightly hard” is the sign it’s working||The point is to move until it feels slightly hard and your breathing picks up. That load is what rings the order to build more power plants. Rather than counting reps, treat it as moving meditation — breath matched to movement. What that hardness really is, is a signal to your mitochondria.",
+    "why.hara7.0": "Mild hunger prompts the clearing of old power plants||Time spent mildly hungry is thought to promote mitophagy — the process that picks out worn mitochondria and clears them away. Rather than leaving failing power plants standing, it sends them for recycling. Stopping at about 70% full is a different road from raising your numbers: it’s the habit that keeps quality up.",
+    "why.hara7.1": "Overeating is overtime for your power plants||Overeat and your mitochondria carry the load of processing the surplus, and free radicals come more easily with it. Stopping at seven tenths is the opposite state: no strain on the plants, capacity left in hand. Eight tenths is plenty, but seven settles things more quietly still.",
+    "why.hara7.2": "Time spent hungry becomes time spent on inspection||When fullness never lets up, your cells stay busy processing rather than cleaning. Leave a little hunger in between and your mitochondria get time to tidy and inspect. Stopping at seven tenths isn’t deprivation — it’s a positive choice to give the plants a maintenance window.",
+    "why.juice.0": "Antioxidants in vegetables catch the sparks of power generation||Every time mitochondria make energy, they throw off free radicals as a by-product — sparks, if you like. The vitamins and polyphenols in vegetables are thought to catch those sparks and keep the power plants themselves from rusting. The more colours in the glass, the more you can rely on it.",
+    "why.juice.1": "Zero free radicals isn’t the right answer — which is why food works||Here’s the interesting part: zero free radicals is not the goal. A moderate amount during exercise is itself a “grow” signal. That’s why topping up antioxidants sensibly through food makes more sense than swallowing supplements by the handful. Vegetable juice is a neat fit for that middle ground.",
+    "why.juice.2": "A rust-resistant body is built up little by little||A body that resists rust isn’t built in a day. Antioxidants topped up steadily thicken your mitochondria’s defences bit by bit. Today’s glass is one step in that accumulation — every time, you’re refreshing a little of the power plant’s protective gear.",
+    "why.meditate.0": "A long exhale switches you into rest mode||In for five, out for eight — lengthening the out-breath tips your nervous system towards rest mode and lowers stress hormones. Mitochondria are power plants that feel the effects of stress easily. With nothing but your breath, you can loosen the tension held inside.",
+    "why.meditate.1": "Chronic stress drains the cell’s energy||Long-running stress is known to wear mitochondria down bit by bit. A load on the mind becomes a drop in energy at the level of the cell. That’s exactly why deliberate rest works. Twenty breaths are a signal to the plants that it’s alright to ease off for a while.",
+    "why.meditate.2": "Deep breathing puts wood back on the fire||Deep breathing is also the act of sending oxygen — fuel — back to countless power plants. Fresh air on a fire that had been banked, and tension unwound at the same time. When you take a breath, the mitochondria inside you take one too; both happen in these five minutes.",
+    "why.nosake.0": "Breaking down alcohol is heavy labour for a power plant||Breaking down alcohol is seriously heavy work for mitochondria. The process raises free radicals too, and the load lands squarely on the plants. An alcohol-free day stops that heavy work and lets the accumulated damage recover. It’s precisely on the days you don’t drink that repair goes on inside.",
+    "why.nosake.1": "A day off is a day the plants get back to their real job||Rest from alcohol and you also hold back the free radicals its breakdown produces. Freed from processing, the plants can focus on their real work — making energy and maintaining themselves. That lightness the next morning may well be your mitochondria back on form.",
+    "why.nosake.2": "Days off are part of keeping it going||Precisely because it’s a fire you want lit every day, it needs days off. An alcohol-free day isn’t slacking; it’s an official recovery day for the plants. Seen as a day you’re entitled to rest, choosing not to drink turns into positive maintenance.",
+    "why.protein.0": "Without materials, the order to build goes to waste||However loudly the order to build is given, without protein you can’t make new mitochondria or new muscle. It’s a building site with drawings and a foreman but no bricks. Flip the switch with exercise, then don’t let the materials run out — it only takes shape when both are in place.",
+    "why.protein.1": "Protein can’t be stored. Top it up through the day||Your body can’t stockpile protein, so spreading it through the day supports the foundation better than one large serving. Picture deliveries at breakfast, lunch and dinner. That keeps materials arriving without a break at the site where mitochondria are built.",
+    "why.protein.2": "Aim for 1.6g per kilo of body weight||About 1.6g per kilo is the mark — not excessive, but never short. It’s the surest bit of groundwork against the waste of having walked and trained, given the order to build, and then not been able to build for want of materials.",
+    "why.sugarCtrl.0": "Blood-sugar swings put a load on your power plants||Too many sweets, or too much white rice, and your blood sugar spikes and then drops sharply. Sugar left over beyond what can be processed becomes a burden on your mitochondria, and free radicals come more easily. Keeping your staple to a fist-sized portion alone flattens those swings considerably.",
+    "why.sugarCtrl.1": "Less sugar means smaller waves in your blood sugar||Go easy on carbohydrate and your blood sugar steadies, leaving the plants less exposed to surplus free radicals. The smaller the waves, the more calmly your mitochondria can make energy. Less deprivation than tidying the workplace so the plants can work well.",
+    "why.sugarCtrl.2": "Fructose in particular is stored as fat||Fructose is handled mainly by the liver, and in excess it’s the sugar most readily stored as fat. Go easy on sweets and juice, and keep your staple to about seven tenths. Without any dramatic restriction, this one move markedly reduces the sugar pressure on your mitochondria.",
+    "why.walk.0": "Walking sends out the order to build more power plants||Using your muscles to walk trips AMPK, the sensor that notices energy running short, and that starts up PGC-1α, the foreman. It’s an order to the cell: build more power plants. Of all the habits available, exercise is the one we can be most confident grows mitochondria in a big way.",
+    "why.walk.1": "Morning light flips the switch on your body clock||The first light of the day tells the clock inside your cells that today has begun. New mitochondria and the clearing out of old ones actually rise and fall with that clock through the day. Set the hands with light and the rhythm of how you use fat and sugar is less likely to drift.",
+    "why.walk.2": "Walk before breakfast and fat burns more easily||Before breakfast your body is still partway through the “run on fat” mode it held all night. A gentle walk is thought to stretch that mode out a little longer. Three thousand steps in the morning make use of a valuable window when fat is being burned first.",
     "mood.good": "Lively",
     "mood.great": "Sparkling ✨",
     "mood.low": "Sluggish",
@@ -2046,10 +2888,12 @@ function speechKeyForSleep(prev, next) {
   return ((Number(prev) || 0) < 7 && Number(next) >= 7) ? 'slept' : null;
 }
 // v1.33: 食事解析の結果（good_points/advice）を使って、何が良い/ダメだったか分かるミトコメントを組み立てる
-function mealSpeechText(analysis, fullness, pickRand) {
+// v1.64: セリフの言語切り替えは呼び出し側の仕事。ここはDOM非依存のまま保つ
+//（linesOverride を渡さなければ従来どおり日本語のSPEECHを使う）
+function mealSpeechText(analysis, fullness, pickRand, linesOverride) {
   const k = speechKeyForMeal(analysis && analysis.mito_score, fullness);
   if (!k) return null;
-  const lines = SPEECH[k] || [];
+  const lines = linesOverride || SPEECH[k] || [];
   const rand = typeof pickRand === 'number' ? pickRand : Math.random();
   const lead = lines.length ? lines[Math.min(lines.length - 1, Math.floor(rand * lines.length))] : '';
   let detail = '';
@@ -2783,7 +3627,7 @@ function showBubbleText(text, keep) {
   if (!keep) bubbleTimer = setTimeout(hideBubble, 4000);
 }
 function showBubble(key, keep) {
-  const lines = SPEECH[key];
+  const lines = speechLines(key);
   if (!lines || !lines.length) return;
   const idx = pickSpeechIndex(lines.length, speechLastIndex[key] ?? -1, Math.random());
   speechLastIndex[key] = idx;
@@ -3871,7 +4715,8 @@ async function runMealAnalysis() {
     // v1.30: 解析直後にタンパク質・腹七分目の自動達成判定も即座に行う
     if (startSel === today) checkAutoAchievements();
     // v1.33: 良い点・アドバイスを使って「何が良くて何がダメか」が分かるミトコメントにする
-    const ms = mealSpeechText(analysis, fullness);
+    const ms = mealSpeechText(analysis, fullness, undefined,
+      speechLines(speechKeyForMeal(analysis && analysis.mito_score, fullness)));
     if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood', true);  // v1.37: 第3引数=食事登録（群がる演出）
     // 解析中に別途モーダルを開き直していた場合（「ことば」タイル等）は、その中身も更新する
     if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
@@ -3930,7 +4775,8 @@ async function runMealReanalysisFromText() {
     delete mealFixEditing[sk]; // 再解析できたら修正モードは終了し、通常の結果表示に戻す
     commit();
     if (startSel === today) checkAutoAchievements();
-    const ms = mealSpeechText(analysis, fullness);
+    const ms = mealSpeechText(analysis, fullness, undefined,
+      speechLines(speechKeyForMeal(analysis && analysis.mito_score, fullness)));
     if (ms) mitoSpeakText(ms.text, ms.key === 'mealGood', true);  // v1.37: 第3引数=食事登録（群がる演出）
     if (mealModalIsOpen() && mealModalKey === meal) renderMealResult();
     toast(t('toast.analyze.redone'));
@@ -4042,7 +4888,7 @@ function renderInputs() {
   } else {
     const g = Math.round(Number(w) * 1.6);
     wSt.className = 'rec-status ok';
-    wSt.textContent = `✓ タンパク質の目安 約${g}g/日（体重×1.6）`;
+    wSt.textContent = t('st.proteinGuide', { g });
   }
   // v1.49: 外した項目のステータスが残らないよう、その日に有効なものだけを探す
   const liveItems = DB.items.filter(i => isItemActiveOn(i, sel));
@@ -4056,10 +4902,10 @@ function renderInputs() {
       stepSt.className = 'rec-status ok';
       // v1.49: 歩数が多いほど匹数が増える（がんばり度）ので、その日の実効値を出す
       const we = itemEffect(walk, rec);
-      stepSt.textContent = `✓ ${walk.name} 達成（活+${we.act}・+${we.inc}匹）`;
+      stepSt.textContent = t('st.stepsDone', { name: itemName(walk), act: we.act, inc: we.inc });
     } else {
       stepSt.className = 'rec-status wait';
-      stepSt.textContent = `${goal.toLocaleString()}歩で達成（あと${(goal - steps).toLocaleString()}歩）`;
+      stepSt.textContent = t('st.stepsLeft', { goal: goal.toLocaleString(), left: (goal - steps).toLocaleString() });
     }
   }
   const sleepSt = $('#sleepStatus');
@@ -4068,13 +4914,13 @@ function renderInputs() {
     const h = rec.sleepHours;
     if (h === null || h === undefined || h === '') {
       sleepSt.className = 'rec-status wait';
-      sleepSt.textContent = `翌朝に入力（${line}時間未満は 活${lack.act}）`;
+      sleepSt.textContent = t('st.sleepWait', { line, act: lack.act });
     } else if (Number(h) > 0 && Number(h) < line) {
       sleepSt.className = 'rec-status ng';
-      sleepSt.textContent = `△ 睡眠${line}時間未満（活${lack.act}）— 今夜はゆっくり休もう`;
+      sleepSt.textContent = t('st.sleepShort', { line, act: lack.act });
     } else {
       sleepSt.className = 'rec-status ok';
-      sleepSt.textContent = '✓ しっかり眠れました';
+      sleepSt.textContent = t('st.sleptWell');
     }
   }
   // タンパク質：食事解析の合計と体重×1.6gを比較して自動判定（写真解析＋体重の記録が前提）
@@ -4083,16 +4929,16 @@ function renderInputs() {
   if (protein) {
     if (!(Number(rec.weight) > 0)) {
       proteinSt.className = 'rec-status wait';
-      proteinSt.textContent = '体重を記録すると自動判定されます';
+      proteinSt.textContent = t('st.needWeight');
     } else {
       const target = Number(rec.weight) * (protein.threshold ?? 1.6);
       const p = recNutrition(rec).p;
       if (p >= target) {
         proteinSt.className = 'rec-status ok';
-        proteinSt.textContent = `✓ ${Math.round(p)}g / 目安${Math.round(target)}g（活+${protein.act}・+${protein.inc}匹）`;
+        proteinSt.textContent = t('st.proteinDone', { p: Math.round(p), target: Math.round(target), act: protein.act, inc: protein.inc });
       } else {
         proteinSt.className = 'rec-status wait';
-        proteinSt.textContent = `${Math.round(p)}g / 目安${Math.round(target)}g（あと${Math.round(target - p)}g）`;
+        proteinSt.textContent = t('st.proteinLeft', { p: Math.round(p), target: Math.round(target), left: Math.round(target - p) });
       }
     }
   }
@@ -4104,10 +4950,10 @@ function renderInputs() {
     const need = hara7.threshold ?? 2;
     if (count >= need) {
       hara7St.className = 'rec-status ok';
-      hara7St.textContent = `✓ ${count}食が腹七分目以下（活+${hara7.act}・+${hara7.inc}匹）`;
+      hara7St.textContent = t('st.hara7Done', { n: count, act: hara7.act, inc: hara7.inc });
     } else {
       hara7St.className = 'rec-status wait';
-      hara7St.textContent = `${count}/${need}食が腹七分目以下（食事解析で「軽め」「腹七分目くらい」を選ぶと集計されます）`;
+      hara7St.textContent = t('st.hara7Left', { n: count, need });
     }
   }
 }
@@ -4401,19 +5247,19 @@ function renderTodoCards(container, items, rec, interactive) {
     const blankCheck = !interactive && !done;
     card.innerHTML =
       `<span class="tc-check${blankCheck ? ' blank' : ''}">${done ? '✓' : ''}</span>` +
-      `<span class="tc-name">${esc(it.short || it.name)}</span>`;
+      `<span class="tc-name">${esc(itemShort(it))}</span>`;
     if (clickable) {
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-pressed', done ? 'true' : 'false');
-      card.setAttribute('aria-label', `${it.name}${done ? '（済）' : ''}` + (!interactive ? '（自動判定・手動チェックも可）' : ''));
+      card.setAttribute('aria-label', `${itemName(it)}${done ? '（済）' : ''}` + (!interactive ? '（自動判定・手動チェックも可）' : ''));
       const activate = () => toggleCheck(it, card);
       card.addEventListener('click', activate);
       card.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
       });
     } else {
-      card.setAttribute('aria-label', `${it.name}${done ? '（自動達成）' : '（未達成）'}`);
+      card.setAttribute('aria-label', `${itemName(it)}${done ? '（自動達成）' : '（未達成）'}`);
     }
     if (it.timer) {
       const tb = document.createElement('button');
@@ -4475,8 +5321,8 @@ function showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct) {
 // 段階2: 「なぜ効くか」だけを伝える中央ポップアップ。複数パターンから選ぶ（連続で同じ文にしない）
 const whyLastIndex = {};
 function achieveWhyText(item) {
-  const variants = WHY_VARIANTS[item.id];
-  if (!variants || !variants.length) return (INFO[item.id] && INFO[item.id].why) || '';
+  const variants = whyLines(item.id);
+  if (!variants || !variants.length) return infoWhy(item.id);
   const idx = pickSpeechIndex(variants.length, whyLastIndex[item.id] ?? -1, Math.random());
   whyLastIndex[item.id] = idx;
   return variants[idx];
@@ -4491,7 +5337,7 @@ function openAchieveDialog(item, speechKey) {
   const bar = why.indexOf('||');
   $('#achieveTitle').textContent = bar >= 0 ? why.slice(0, bar) : item.name;
   $('#achieveWhy').textContent = bar >= 0 ? why.slice(bar + 2) : why;
-  $('#achieveSub').textContent = item.short || item.name;
+  $('#achieveSub').textContent = itemShort(item);
   $('#achieveModal').classList.add('open');
   pinBubbleAboveAchieveCard();
   if (!stage.reduced) spawnBurst(30);
@@ -4525,7 +5371,7 @@ function resetBubblePosition() {
 let reactionQueue = [];
 // v1.45: セリフキー(speechKey)を一緒に運び、ダイアログ表示時に同時に出せるようにする
 function queueReaction(item, speechKey) {
-  if (!WHY_VARIANTS[item.id] && !INFO[item.id]) {
+  if (!whyLines(item.id).length && !INFO[item.id]) {
     if (speechKey) mitoSpeakCentered(speechKey); // 説明ダイアログが無い項目はセリフだけ出す
     return;
   }
@@ -4591,7 +5437,7 @@ function itemDisplayName(c) {
   const mine = DB.items.find(it => it.id === c.id);
   if (mine && mine.custom && mine.customName) return mine.customName;
   // 選択画面は横幅があるので、何をするのか分かる正式名を出す（ホームのカードだけ short を使う）
-  return c.name || c.short;
+  return itemName(c);
 }
 let namingId = null, namingPickAfter = false;
 function openNamePrompt(itemId, pickAfter) {
@@ -4659,30 +5505,31 @@ function renderAutoSection(body) {
   const head = document.createElement('div');
   head.className = 'pick-section-head';
   head.innerHTML =
-    `<div class="pick-section-name">自動で判定するもの</div>` +
-    `<div class="pick-section-lead">記録から自動で判定します。外せませんが、自分に合う基準を選べます。</div>`;
+    `<div class="pick-section-name">${esc(t('ui.pick.autoTitle'))}</div>` +
+    `<div class="pick-section-lead">${esc(t('ui.pick.autoLead'))}</div>`;
   body.appendChild(head);
 
   for (const a of autoCatalog()) {
     const cur = DB.items.find(it => it.id === a.id);
     const curVal = cur ? Number(cur.threshold) : Number(a.threshold);
     // たたんだ状態でも今の基準（例「5,000歩」）が見えるようにする
-    const curT = (a.thresholds || []).find(t => Number(t.value) === curVal);
+    const curTi = (a.thresholds || []).findIndex(x => Number(x.value) === curVal);
+    const curT = curTi >= 0 ? thresholdLabel(a.id, curTi, a.thresholds[curTi].label) : null;
     // v1.53: optional な自動判定（タンパク質）は使う/使わないを選べる。それ以外は外せない
     const using = !a.optional || (cur && isItemActiveOn(cur, today));
     const summary = !using
-      ? { on: false, text: '使っていません' }
-      : { on: true, text: '今の基準：' + (curT ? curT.label : String(curVal)) };
-    const wrap = makePickBlock(body, 'auto:' + a.id, a.name, a.lead, summary,
-      a.optional ? null : '外せない');
+      ? { on: false, text: t('ui.pick.notUsing') }
+      : { on: true, text: t('ui.pick.current', { v: curT || String(curVal) }) };
+    const wrap = makePickBlock(body, 'auto:' + a.id, autoName(a), autoLead(a), summary,
+      a.optional ? null : t('ui.pick.fixed'));
     if (a.optional) {
       const row = document.createElement('div');
       row.className = 'pick-row' + (using ? ' on' : '');
       const b = document.createElement('button');
       b.className = 'pick-row-main';
       b.innerHTML =
-        `<span class="pick-row-name">${using ? '✓ 使う' : '使う'}</span>` +
-        `<span class="pick-row-blurb">${using ? 'もう一度押すと、この項目をやめます' : '押すと今日から使います'}</span>`;
+        `<span class="pick-row-name">${using ? '✓ ' : ''}${esc(t('ui.pick.use'))}</span>` +
+        `<span class="pick-row-blurb">${esc(t(using ? 'ui.pick.useOff' : 'ui.pick.useOn'))}</span>`;
       b.addEventListener('click', () => {
         if (using) unpickItem(DB.items, a.id, today);
         else { const c = catalogById(a.id); if (c) pickItem(DB.items, c, today); }
@@ -4692,22 +5539,24 @@ function renderAutoSection(body) {
       row.appendChild(b);
       wrap.appendChild(row);
     }
-    for (const t of (using ? (a.thresholds || []) : [])) {
-      const on = Number(t.value) === curVal;
+    (using ? (a.thresholds || []) : []).forEach((th, ti) => {
+      const on = Number(th.value) === curVal;
+      const thLabel = thresholdLabel(a.id, ti, th.label);
+      const thHint = thresholdHint(a.id, ti, th.hint);
       const row = document.createElement('div');
       row.className = 'pick-row' + (on ? ' on' : '');
       const b = document.createElement('button');
       b.className = 'pick-row-main';
       b.innerHTML =
-        `<span class="pick-row-name">${on ? '✓ ' : ''}${esc(t.label)}</span>` +
-        (t.hint ? `<span class="pick-row-blurb">${esc(t.hint)}</span>` : '');
+        `<span class="pick-row-name">${on ? '✓ ' : ''}${esc(thLabel)}</span>` +
+        (thHint ? `<span class="pick-row-blurb">${esc(thHint)}</span>` : '');
       b.addEventListener('click', () => {
         // 自動判定の項目が未所持なら足してから基準を決める（外せない枠なので必ず存在させる）
         if (!DB.items.find(it => it.id === a.id)) {
           const c = catalogById(a.id);
           if (c) pickItem(DB.items, c, today);
         }
-        setItemThreshold(DB.items, a.id, Number(t.value), today);
+        setItemThreshold(DB.items, a.id, Number(th.value), today);
         commit();
         renderPickBody();
       });
@@ -4715,13 +5564,13 @@ function renderAutoSection(body) {
       if (INFO[a.id]) {
         const ib = document.createElement('button');
         ib.className = 'pick-row-info';
-        ib.setAttribute('aria-label', `${a.name}の解説`);
+        ib.setAttribute('aria-label', autoName(a));
         ib.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
         ib.addEventListener('click', e => { e.stopPropagation(); openInfo(catalogById(a.id) || a); });
         row.appendChild(ib);
       }
       wrap.appendChild(row);
-    }
+    });
   }
 }
 
@@ -4741,8 +5590,8 @@ function renderPickBody() {
         const sh = document.createElement('div');
         sh.className = 'pick-section-head';
         sh.innerHTML =
-          `<div class="pick-section-name">そのほかのミッション</div>` +
-          `<div class="pick-section-lead">どれも任意です。生活に合うものだけ選んでください。</div>`;
+          `<div class="pick-section-name">${esc(t('ui.pick.otherTitle'))}</div>` +
+          `<div class="pick-section-lead">${esc(t('ui.pick.otherLead'))}</div>`;
         body.appendChild(sh);
       }
     }
@@ -4751,13 +5600,13 @@ function renderPickBody() {
     const optionalPicked = picked.filter(c => !c.required);
     // v1.51: たたんだ状態でも「いま何を選んでいるか」が見えるようにする
     const summary = picked.length
-      ? { on: true,  text: '選択中：' + picked.map(c => itemDisplayName(c)).join('・') }
-      : { on: false, text: '選んでいません' };
+      ? { on: true,  text: t('ui.pick.chosen', { v: picked.map(c => itemDisplayName(c)).join('・') }) }
+      : { on: false, text: t('ui.pick.none') };
     // v1.53: 食事系でも匹数はわずかに増える（inc>0）ので「運動だけ」と言い切らない
     const lead = m.section === 'exercise'
-      ? 'ミトコンドリアの数を大きく増やせるのは運動です。続けられそうなものを、いくつでも（最大' + m.max + '）'
-      : m.lead + '　えらべる数：最大' + m.max;
-    const wrap = makePickBlock(body, 'mech:' + m.id, m.name, lead, summary, null);
+      ? t('ui.pick.exerciseLead', { n: m.max })
+      : t('ui.pick.mechLead', { lead: mechLead(m), n: m.max });
+    const wrap = makePickBlock(body, 'mech:' + m.id, mechName(m), lead, summary, null);
     for (const c of opts) {
       const on = ids.includes(c.id);
       const row = document.createElement('div');
@@ -4767,10 +5616,10 @@ function renderPickBody() {
       b.className = 'pick-row-main';
       b.innerHTML =
         `<span class="pick-row-name">${on ? '✓ ' : ''}${esc((c.ng ? '△ ' : '') + itemDisplayName(c))}` +
-          (c.required ? `<span class="pick-mech-fixed" style="margin-left:6px">外せない</span>` : '') +
+          (c.required ? `<span class="pick-mech-fixed" style="margin-left:6px">${esc(t('ui.pick.fixed'))}</span>` : '') +
         `</span>` +
-        (BLURB[c.id] ? `<span class="pick-row-blurb">${esc(BLURB[c.id])}</span>` : '');
-      if (c.ng) b.title = 'これはミッションではなく、当てはまった日に減点される項目です';
+        (itemBlurb(c.id) ? `<span class="pick-row-blurb">${esc(itemBlurb(c.id))}</span>` : '');
+      if (c.ng) b.title = t('ui.pick.ngHint');
       // v1.53: 自分で名前をつける枠は、選んだあとに名前を変えられるようにする
       if (c.custom && on) {
         const nb = document.createElement('button');
@@ -4788,7 +5637,7 @@ function renderPickBody() {
       if (INFO[c.id]) {
         const ib = document.createElement('button');
         ib.className = 'pick-row-info';
-        ib.setAttribute('aria-label', `${c.short || c.name}の解説`);
+        ib.setAttribute('aria-label', itemName(c));
         ib.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
         ib.addEventListener('click', e => { e.stopPropagation(); openInfo(c); });
         row.appendChild(b);
@@ -4800,7 +5649,7 @@ function renderPickBody() {
       b.addEventListener('click', () => {
         const warn = $('#pickWarn');
         if (c.required) {
-          warn.textContent = `「${itemDisplayName(c)}」は外せません。どんな生活でも効く土台なので、必ず入ります。`;
+          warn.textContent = t('ui.pick.required', { name: itemDisplayName(c) });
           return;
         }
         if (on) {
@@ -4808,7 +5657,7 @@ function renderPickBody() {
         } else {
           // v1.53: 外せない項目は上限に数えない（数えると選べる幅が減るため）
           if (optionalPicked.length >= m.max) {
-            warn.textContent = `「${m.name}」で選べるのは最大${m.max}つまでです。他をはずしてから選んでください。`;
+            warn.textContent = t('ui.pick.max', { name: mechName(m), n: m.max });
             return;
           }
           // 自分で決める枠は、選ぶと同時に名前をつけてもらう
@@ -4831,12 +5680,10 @@ function renderPickBody() {
   }
 }
 function openPick(isOnboarding) {
-  $('#pickTitle').textContent = isOnboarding ? 'この組み合わせで始めます' : 'デイリーミッションを選ぶ';
+  $('#pickTitle').textContent = t(isOnboarding ? 'ui.pick.onbTitle' : 'ui.pick.title');
   // v1.53: 初回は「まず推奨セットで始める」を既定にする。空から選ばせると、
   // 何を選べばいいか分からないまま止まってしまうため。カスタマイズは開いた人だけがやればいい
-  $('#pickIntro').textContent = isOnboarding
-    ? 'まずはこの組み合わせで始めましょう。続けられそうなものに、あとから何度でも入れ替えられます。'
-    : '同じ狙いなら、やり方は入れ替えられます。生活に合うものを選んでください。';
+  $('#pickIntro').textContent = t(isOnboarding ? 'ui.pick.onbIntro' : 'ui.pick.intro');
   // オンボーディング中は「閉じる」で逃げられないようにする（何も選ばれていない状態を防ぐ）
   $('#pickModal').querySelector('.sheet-close').style.display = isOnboarding ? 'none' : '';
   // v1.51: 開くたびに全部たたんだ状態から始める。ただし初回設定だけは、
@@ -4856,16 +5703,18 @@ function needsEffortPick(item) {
 function openEffortPick(item, onPick) {
   const rec = getRec(sel, true);
   const cur = (rec.effort || {})[item.id];
-  $('#effortTitle').textContent = `${item.short || item.name}：どのくらいやった？`;
+  $('#effortTitle').textContent = t('ui.effort.titleFor', { name: itemShort(item) });
   const list = $('#effortList');
   list.innerHTML = '';
   item.efforts.forEach((e, idx) => {
+    const eLabel = effortLabel(item, idx, e.label);
+    const eHint = effortHint(item, idx, e.hint);
     const b = document.createElement('button');
     b.className = 'effort-btn' + (Number(cur) === idx ? ' on' : '');
     b.innerHTML =
       `<span class="effort-main">` +
-        `<span class="effort-name">${esc(e.label)}</span>` +
-        (e.hint ? `<span class="effort-hint">${esc(e.hint)}</span>` : '') +
+        `<span class="effort-name">${esc(eLabel)}</span>` +
+        (eHint ? `<span class="effort-hint">${esc(eHint)}</span>` : '') +
       `</span>` +
       `<span class="effort-inc">+${e.inc}匹</span>`;
     b.addEventListener('click', () => {
@@ -4904,7 +5753,7 @@ function applyCheck(item, srcEl) {
     // 有効期間をその日まで遡らせる（そうしないとチェックしても集計に乗らず、ptが増えない）
     if (!isItemActiveOn(item, sel) && canBackdate(item)) {
       backdateItem(DB.items, item.id, sel);
-      toast(`「${item.short || item.name}」を${fmtJP(sel)}から記録できるようにしました`);
+      toast(t('toast.backdate', { name: itemShort(item), date: fmtJP(sel) }));
     }
     rec.checked.push(item.id);
     beforeMito = computed.mito; beforeAct = computed.activation;
@@ -5006,20 +5855,20 @@ $('#ptSummary').addEventListener('keydown', e => {
 function openInfo(item) {
   const info = INFO[item.id];
   if (!info) return;
-  $('#infoTitle').textContent = item.name;
+  $('#infoTitle').textContent = itemName(item);
   // v1.49: がんばり度がある項目は固定値ではなく幅で見せる（例「活+6　+1〜8匹」）
-  let incTxt = item.inc ? `　+${item.inc}匹` : '';
+  let incTxt = item.inc ? t('ui.info.inc', { n: item.inc }) : '';
   if (item.efforts && item.efforts.length) {
     const incs = item.efforts.map(e => Number(e.inc) || 0);
     const lo = Math.min(...incs), hi = Math.max(...incs);
-    incTxt = hi > 0 ? `　+${lo}〜${hi}匹` : '';
+    incTxt = hi > 0 ? t('ui.info.incRange', { lo, hi }) : '';
   }
-  const scoreTxt = `活${item.act > 0 ? '+' : ''}${item.act}` + incTxt;
+  const scoreTxt = t('ui.info.act', { n: (item.act > 0 ? '+' : '') + item.act }) + incTxt;
   $('#infoBody').innerHTML =
     `<div class="info-score">${esc(scoreTxt)}</div>` +
-    `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.34 6.34-.7-.7"/><path d="M2 12h4"/><circle cx="12" cy="14" r="4"/></svg>なぜミトコンドリアに効くの？</div><p>${esc(info.why)}</p></div>` +
-    `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a7 7 0 0 0-4-12Z"/></svg>実践のコツ</div><p>${esc(info.tips)}</p></div>` +
-    `<div class="info-disclaimer">※ 一般的な健康情報であり、医療上の助言ではありません。持病や治療中の方は主治医にご相談ください。</div>`;
+    `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.34 6.34-.7-.7"/><path d="M2 12h4"/><circle cx="12" cy="14" r="4"/></svg>${esc(t('ui.info.whyLabel'))}</div><p>${esc(infoWhy(item.id))}</p></div>` +
+    `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a7 7 0 0 0-4-12Z"/></svg>${esc(t('ui.info.tipsLabel'))}</div><p>${esc(infoTips(item.id))}</p></div>` +
+    `<div class="info-disclaimer">${esc(t('ui.info.disclaimer'))}</div>`;
   $('#infoModal').classList.add('open');
 }
 
@@ -5384,6 +6233,54 @@ $('#calPrev').addEventListener('click', () => { weekOffset--; renderCalendar(); 
 $('#calNext').addEventListener('click', () => { weekOffset++; renderCalendar(); });
 $('#selBannerBack').addEventListener('click', () => { sel = today; weekOffset = 0; renderAll(); });
 
+/* v1.64: 表示用の文言は辞書から引く。
+   CATALOG/SPEECH/INFO 等に残っている日本語は「古い保存データ向けの控え」で、
+   画面に出るのはここを通した値。辞書に無いキーだけ元の値に落ちる。 */
+function tOr(key, fallback) {
+  const lang = appLang();
+  const v = (I18N[lang] && I18N[lang][key]) != null ? I18N[lang][key] : I18N.ja[key];
+  return v != null ? v : fallback;
+}
+function itemName(it)  { return (it.custom && it.customName) ? it.customName : tOr('item.' + it.id + '.name',  it.name); }
+function itemShort(it) { return (it.custom && it.customName) ? it.customName : tOr('item.' + it.id + '.short', it.short || it.name); }
+function itemBlurb(id) { return tOr('item.' + id + '.blurb', BLURB[id] || ''); }
+function itemMethod(it){ return tOr('item.' + it.id + '.method', it.method || ''); }
+function infoWhy(id)   { return tOr('info.' + id + '.why',  (INFO[id] || {}).why  || ''); }
+function infoTips(id)  { return tOr('info.' + id + '.tips', (INFO[id] || {}).tips || ''); }
+function mechName(m)   { return tOr('mech.' + m.id + '.name', m.name); }
+function mechLead(m)   { return tOr('mech.' + m.id + '.lead', m.lead); }
+function autoName(a)   { return tOr('auto.' + a.id + '.name', a.name); }
+function autoLead(a)   { return tOr('auto.' + a.id + '.lead', a.lead); }
+function thresholdLabel(id, i, fb) { return tOr('item.' + id + '.th' + i + '.label', fb); }
+function thresholdHint(id, i, fb)  { return tOr('item.' + id + '.th' + i + '.hint', fb); }
+const EFFORT_TABLE_KEY = new Map();
+[[STRENGTH_EFFORTS,'strength'],[CARDIO_EFFORTS,'cardio'],[WALK_EFFORTS,'walk'],
+ [HIIT_EFFORTS,'hiit'],[WALKING_EFFORTS,'walking'],[GENERIC_EFFORTS,'generic']]
+  .forEach(function (pair) { EFFORT_TABLE_KEY.set(JSON.stringify(pair[0].map(function (e) { return e.inc; })), pair[1]); });
+// 保存済みitemのeffortsはカタログのコピーなので、incの並びでどのテーブルか見分ける
+function effortTableName(item) {
+  return EFFORT_TABLE_KEY.get(JSON.stringify((item.efforts || []).map(function (e) { return e.inc; }))) || null;
+}
+function effortLabel(item, i, fb) {
+  const n = effortTableName(item);
+  return n ? tOr('effort.' + n + '.' + i + '.label', fb) : fb;
+}
+function effortHint(item, i, fb) {
+  const n = effortTableName(item);
+  return n ? tOr('effort.' + n + '.' + i + '.hint', fb) : fb;
+}
+// セリフ・チップスは配列。英語が入っていればそちらを使う
+function speechLines(key) {
+  const out = [];
+  for (let i = 0; ; i++) { const v = tOr('speech.' + key + '.' + i, null); if (v == null) break; out.push(v); }
+  return out.length ? out : (SPEECH[key] || []);
+}
+function whyLines(id) {
+  const out = [];
+  for (let i = 0; ; i++) { const v = tOr('why.' + id + '.' + i, null); if (v == null) break; out.push(v); }
+  return out.length ? out : (WHY_VARIANTS[id] || []);
+}
+
 /* ============ v1.55: 初回チュートリアル ============ */
 /* 何のアプリで何をすればいいのかを最初に伝える。あわせて、無いと必要カロリーも
    タンパク質の目安も計算できない「からだのプロフィール」をここで埋めてもらう。
@@ -5535,7 +6432,7 @@ function tutRender() {
     body.innerHTML =
       `<div class="tut-hero">` +
         `<img class="tut-mito" src="${MITO_IMG_SRC}" alt="マイト">` +
-        `<div class="tut-say">${TUT_HELLO.map(esc).join('<br>')}</div>` +
+        `<div class="tut-say">${TUT_HELLO.map((v, i) => esc(tOr('tut.hello.' + i, v))).join('<br>')}</div>` +
       `</div>`;
     next.textContent = t('ui.tut.start');
   } else if (s.type === 'hello2') {
@@ -5565,13 +6462,13 @@ function tutRenderQuestion(body, q, next) {
   wrap.className = 'tut-q';
   wrap.innerHTML =
     `<img class="tut-mito small" src="${MITO_IMG_SRC}" alt="" style="align-self:center">` +
-    `<div class="tut-title">${esc(q.ask)}</div>` +
-    `<div class="tut-lead">${esc(q.lead)}</div>`;
+    `<div class="tut-title">${esc(tOr('tut.q.' + q.key + '.ask', q.ask))}</div>` +
+    `<div class="tut-lead">${esc(tOr('tut.q.' + q.key + '.lead', q.lead))}</div>`;
   if (q.type === 'text') {
     const row = document.createElement('div');
     row.className = 'tut-q-row';
     const input = document.createElement('input');
-    input.type = 'text'; input.maxLength = q.maxlength || 10; input.placeholder = q.placeholder;
+    input.type = 'text'; input.maxLength = q.maxlength || 10; input.placeholder = tOr('tut.q.' + q.key + '.placeholder', q.placeholder);
     input.style.fontSize = '22px';
     const cur = tutValue(q);
     if (cur) input.value = cur;
@@ -5589,7 +6486,7 @@ function tutRenderQuestion(body, q, next) {
     const input = document.createElement('input');
     input.type = 'number'; input.inputMode = q.inputmode;
     input.min = q.min; input.max = q.max; input.step = q.inputmode === 'numeric' ? '1' : '0.1';
-    input.placeholder = q.placeholder;
+    input.placeholder = tOr('tut.q.' + q.key + '.placeholder', q.placeholder);
     const cur = tutValue(q);
     if (cur != null && cur !== '') input.value = cur;
     input.addEventListener('input', () => {
@@ -5598,7 +6495,7 @@ function tutRenderQuestion(body, q, next) {
     });
     input.addEventListener('keydown', e => { if (e.key === 'Enter' && tutQValid(q)) tutNext(); });
     row.appendChild(input);
-    row.insertAdjacentHTML('beforeend', `<span class="tut-unit">${esc(q.unit || '')}</span>`);
+    row.insertAdjacentHTML('beforeend', `<span class="tut-unit">${esc(tOr('tut.q.' + q.key + '.unit', q.unit || ''))}</span>`);
     wrap.appendChild(row);
     if (q.optional) {
       const skip = document.createElement('button');
@@ -5611,11 +6508,13 @@ function tutRenderQuestion(body, q, next) {
   } else {
     const list = document.createElement('div');
     list.className = 'tut-choices';
-    q.options.forEach(o => {
+    q.options.forEach((o, oi) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'tut-choice' + (tutValue(q) === o.v ? ' on' : '');
-      b.innerHTML = esc(o.label) + (o.sub ? `<span class="sub">${esc(o.sub)}</span>` : '');
+      const oLabel = tOr('tut.q.' + q.key + '.o' + oi + '.label', o.label);
+      const oSub = tOr('tut.q.' + q.key + '.o' + oi + '.sub', o.sub);
+      b.innerHTML = esc(oLabel) + (oSub ? `<span class="sub">${esc(oSub)}</span>` : '');
       // 選んだら、そのまま次の質問へ（1タップ減らす）
       b.addEventListener('click', () => { tut.answers[q.key] = o.v; tutGo(1); });
       list.appendChild(b);

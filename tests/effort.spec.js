@@ -72,7 +72,7 @@ test('既存ユーザー: 保存済みの効果値(inc:15)が維持され、が�
   // v1.48以前の保存データを再現する
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5,
+      version: 5, lang: 'ja',
       startDate: '2026-07-01',
       items: [
         { id: 'bodyweight', name: '自重トレ（腕立て・スクワット等）', short: '自重トレ',
@@ -104,7 +104,7 @@ test('v1.61: 保存済みの項目にも新しい効果値が反映され、過�
   // 旧い効果値（自重トレ 追い込んだ=8匹）で3日ぶん育てた既存ユーザー
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: '2026-07-01', onboarded: true,
+      version: 5, lang: 'ja', startDate: '2026-07-01', onboarded: true,
       items: [{
         id: 'bodyweight', name: '自重トレ', short: '自重トレ', act: 6, inc: 4,
         inTodo: true, order: 4, mech: 'biogenesis',
