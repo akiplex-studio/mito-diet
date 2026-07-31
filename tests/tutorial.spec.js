@@ -152,3 +152,24 @@ test('最初に呼び名を聞き、次のセリフでその名前を呼ぶ', as
 
   expect(await page.evaluate(() => DB.profile.name)).toBe(null);  // 最後まで進むまで保存しない
 });
+
+test('図解は端末の言語で日本語版と英語版が切り替わる', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  const r = await page.evaluate(() => {
+    const ja = TIPS_IMGS_JA, en = TIPS_IMGS_EN;
+    const pick = (lang) => { DB.lang = lang; const v = tipsImgs(); delete DB.lang; return v; };
+    return {
+      jaCount: ja.length, enCount: en.length,
+      別物: ja.every((s, i) => s !== en[i]),
+      ja選択: pick('ja') === ja,
+      en選択: pick('en') === en,
+    };
+  });
+  expect(r.jaCount).toBe(3);
+  expect(r.enCount).toBe(3);   // 2枚目の英語版もそろっている
+  expect(r.別物).toBe(true);
+  expect(r.ja選択).toBe(true);
+  expect(r.en選択).toBe(true);
+});
