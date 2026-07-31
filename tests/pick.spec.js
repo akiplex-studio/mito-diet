@@ -379,15 +379,25 @@ test('マイトは数が少ないうちは大きく描かれる', async ({ page 
   await page.goto('/index.html');
 
   const sizes = await page.evaluate(() => ({
-    one: orbScale(1), ten: orbScale(10), mid: orbScale(55),
+    one: orbScale(1), ten: orbScale(10), twenty: orbScale(20),
     hundred: orbScale(100), many: orbScale(500),
     // 実際の半径にも効いている
     r10: planOrbs(10)[0], r100: planOrbs(100)[0],
   }));
   expect(sizes.one).toBe(3);          // 10匹以内は3倍
   expect(sizes.ten).toBe(3);
-  expect(sizes.mid).toBe(2);          // 10→100 の中間はちょうど2倍
   expect(sizes.hundred).toBe(1);      // 100匹で等倍に戻る
   expect(sizes.many).toBe(1);         // それ以上は等倍のまま
   expect(sizes.r10).toBe(sizes.r100 * 3);
+  expect(sizes.twenty).toBe(2.4);     // v1.60: 段ごとに0.2ずつ小さくなる
+
+  // 10段階あり、匹数が増えるほど必ず小さく（同じか小さく）なる
+  const steps = await page.evaluate(() => {
+    const seen = [];
+    for (let n = 1; n <= 120; n++) { const v = orbScale(n); if (seen[seen.length - 1] !== v) seen.push(v); }
+    return seen;
+  });
+  expect(steps).toEqual([3, 2.8, 2.6, 2.4, 2.2, 2, 1.8, 1.6, 1.4, 1.2, 1]);
+  const sorted = [...steps].sort((a, b) => b - a);
+  expect(steps).toEqual(sorted);      // 逆戻りしない
 });

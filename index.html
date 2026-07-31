@@ -2618,11 +2618,26 @@ const ORB_FULL_R = 9, ORB_MIN_R = 4.5, ORB_SCALE_START = 500;
 /* v1.57: 数が少ないうちは1匹を大きく見せる。
    序盤（1〜10匹）は点が数個あるだけの寂しい画面になり、育てている実感が出ないため。
    10匹＝3倍、そこから100匹にかけて等倍まで戻す。100匹より多いところは従来どおり。 */
+/* v1.60: 10段階のはっきりした刻みにする。連続的に縮めると1匹増えただけでは
+   数%しか変わらず「変わっていない」と感じるため、段が上がった瞬間に目で分かるようにした。
+   境目は匹数の「比」で刻む（10→13は+3匹、72→99は+27匹）。増え始めのほうが
+   1匹の重みが大きく、変化を感じやすいのに合わせている。 */
+const ORB_STEPS = [
+  { upto: 10, scale: 3.0 },
+  { upto: 13, scale: 2.8 },
+  { upto: 16, scale: 2.6 },
+  { upto: 21, scale: 2.4 },
+  { upto: 27, scale: 2.2 },
+  { upto: 34, scale: 2.0 },
+  { upto: 44, scale: 1.8 },
+  { upto: 56, scale: 1.6 },
+  { upto: 72, scale: 1.4 },
+  { upto: 99, scale: 1.2 },
+];
 function orbScale(count) {
   const n = Math.max(1, Math.floor(count));
-  if (n <= 10) return 3;
-  if (n >= 100) return 1;
-  return 3 - 2 * (n - 10) / 90;
+  const step = ORB_STEPS.find(s => n <= s.upto);
+  return step ? step.scale : 1;   // 100匹以上は等倍（従来の見え方）
 }
 function planOrbs(count) {
   const n = Math.max(1, Math.floor(count));
