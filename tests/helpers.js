@@ -15,6 +15,7 @@ async function skipOnboarding(page) {
       try {
         const d = JSON.parse(raw);
         d.onboarded = true;
+        d.lang = d.lang || 'ja';   // v1.63: 端末が英語でもテストは日本語で始める
         localStorage.setItem('mito-data', JSON.stringify(d));
         return;
       } catch { /* 壊れていたら下で作り直す */ }
@@ -23,7 +24,7 @@ async function skipOnboarding(page) {
     const iso = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
     // items を空にしておくと load() が DEFAULT_ITEMS で初期化してくれる
     localStorage.setItem('mito-data', JSON.stringify({
-      version: 5, startDate: iso, items: null, days: {}, onboarded: true,
+      version: 5, startDate: iso, items: null, days: {}, onboarded: true, lang: 'ja',
     }));
   });
 }

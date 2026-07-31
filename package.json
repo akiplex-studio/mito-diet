@@ -8,9 +8,10 @@
     "cap:sync": "npm run sync:web && npx cap sync",
     "cap:open:ios": "npm run cap:sync && npx cap open ios",
     "cap:open:android": "npm run cap:sync && npx cap open android",
-    "i18n:check": "node -e \"console.log('[i18n:check] i18n未導入のためスキップ（導入したらここでキー整合を検査する）')\"",
+    "i18n:check": "node scripts/i18n-check.mjs",
     "test:smoke": "playwright test",
-    "check": "npm run i18n:check && npm run test:smoke"
+    "check": "npm run i18n:check && npm run test:smoke",
+    "i18n:accept": "node scripts/i18n-check.mjs --accept"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",

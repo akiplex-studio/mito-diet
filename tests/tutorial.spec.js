@@ -13,6 +13,10 @@ async function answerNum(page, value) {
   await page.locator('#tutNext').click();
 }
 /** 選択肢の質問に答える（選ぶと自動で次へ進む） */
+/** v1.63: 先頭の言語選択を日本語で通す（端末の言語に左右されないようにする） */
+async function chooseJa(page) {
+  await page.locator('.tut-choice', { hasText: '日本語' }).click();
+}
 async function answerChoice(page, label) {
   await page.locator('.tut-choice', { hasText: label }).click();
 }
@@ -21,6 +25,7 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
   await page.goto('/index.html');   // まっさらな状態
 
   await expect(page.locator('#tutorial')).toBeVisible();
+  await chooseJa(page);
   await expect(page.locator('#tutBody')).toContainText('ぼくはマイト');
   await page.locator('#tutNext').click();          // ようこそ → 呼び名
   await page.locator('#tutBody input[type="text"]').fill('ひらい');
@@ -97,6 +102,7 @@ test('tipsは「次へ」で1枚ずつめくれ、最後だけボタンが変わ
 
 test('ブラウザ版では連携の画面を出さない', async ({ page }) => {
   await page.goto('/index.html');
+  await chooseJa(page);
   await page.locator('#tutNext').click();   // ようこそ → 呼び名
   await page.locator('#tutBody input[type="text"]').fill('ひらい');
   await page.locator('#tutNext').click();
@@ -109,6 +115,7 @@ test('ブラウザ版では連携の画面を出さない', async ({ page }) => 
 
 test('途中でやめたら、次に開いたときまた出る', async ({ page }) => {
   await page.goto('/index.html');
+  await chooseJa(page);
   await page.locator('#tutNext').click();
   await page.locator('#tutBody input[type="text"]').fill('ひらい');
   await page.locator('#tutNext').click();
@@ -137,6 +144,7 @@ test('既存ユーザーにはチュートリアルが出ない', async ({ page 
 
 test('最初に呼び名を聞き、次のセリフでその名前を呼ぶ', async ({ page }) => {
   await page.goto('/index.html');
+  await chooseJa(page);
   await page.locator('#tutNext').click();          // ようこそ → 呼び名
 
   await expect(page.locator('#tutBody')).toContainText('なんて呼べばいい');
@@ -172,4 +180,47 @@ test('図解は端末の言語で日本語版と英語版が切り替わる', as
   expect(r.別物).toBe(true);
   expect(r.ja選択).toBe(true);
   expect(r.en選択).toBe(true);
+});
+
+/* --- v1.63: i18n（Step 1: 骨組みとUIラベル） --- */
+
+test('最初に言語を選ぶ画面が出て、選ぶとその場で切り替わる', async ({ page }) => {
+  await page.goto('/index.html');
+
+  await expect(page.locator('#tutBody')).toContainText('Choose language');
+  await page.locator('.tut-choice', { hasText: 'English' }).click();
+
+  expect(await page.evaluate(() => DB.lang)).toBe('en');
+  // 次の画面（ようこそ）に進み、下のボタンが英語になっている
+  await expect(page.locator('#tutNext')).toHaveText('Start');
+  await expect(page.locator('#tutSkip')).toHaveText('Skip');
+  await expect(page.locator('#tutBack')).toHaveText('Back');
+});
+
+test('英語にするとホームと設定のラベルが英語になる', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => setLang('en'));
+
+  await expect(page.locator('#todoCard h2')).toContainText('Daily missions');
+  await expect(page.locator('#btnEditMissions')).toContainText('Edit');
+  await expect(page.locator('.todo-row-label')).toHaveText('Tracked for you');
+  await expect(page.locator('nav.footer button[data-tab="home"]')).toContainText('Home');
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await expect(page.locator('#btnPickItems')).toHaveText('Choose your missions');
+  await expect(page.locator('#btnSaveClose')).toHaveText('Save and close');
+
+  // 日本語に戻すと元どおり
+  await page.evaluate(() => setLang('ja'));
+  await expect(page.locator('#btnPickItems')).toHaveText('デイリーミッションを選ぶ');
+});
+
+test('英語では日付と曜日も英語になる', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => setLang('en'));
+
+  await expect(page.locator('#hdrDate')).toContainText(/January|February|March|April|May|June|July|August|September|October|November|December/);
+  await expect(page.locator('.cal-dow').first()).toHaveText('Mon');
 });
