@@ -246,6 +246,17 @@ test('英語に切り替えたとき、画面に日本語が残っていない',
 
   expect(await scan(), 'ホーム').toEqual([]);
 
+  // v1.65: 食事タブを見落としていた（朝昼晩・栄養カードの説明が日本語のまま残っていた）
+  await page.locator('nav.footer button[data-tab="meals"]').click();
+  expect(await scan(), '食事タブ（プロフィール未設定）').toEqual([]);
+  // プロフィールと体重を入れると栄養カードの中身が変わるので、その状態も見る
+  await page.evaluate(() => {
+    DB.profile = { name:'x', heightCm:172, age:45, sex:'male', activity:1.375, targetRatio:0.7 };
+    getRec(today, true).weight = 79.7;
+    commit();
+  });
+  expect(await scan(), '食事タブ（栄養カードあり）').toEqual([]);
+
   await page.locator('nav.footer button[data-tab="records"]').click();
   expect(await scan(), '記録タブ').toEqual([]);
 
