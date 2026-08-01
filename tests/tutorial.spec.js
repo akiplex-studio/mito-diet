@@ -246,9 +246,30 @@ test('英語に切り替えたとき、画面に日本語が残っていない',
 
   expect(await scan(), 'ホーム').toEqual([]);
 
+  // v1.66: 過去日を選ぶと日付バナーが出る。ここも見落としていた
+  await page.evaluate(() => {
+    const d = new Date(); d.setDate(d.getDate() - 3);
+    sel = fmtDate(d); renderAll();
+  });
+  await expect(page.locator('#selBanner')).toBeVisible();
+  expect(await scan(), 'ホーム（過去日を選択中）').toEqual([]);
+  await page.evaluate(() => { sel = today; renderAll(); });
+
+  // 獲得ポイントの内訳
+  await page.locator('#ptSummary').click();
+  expect(await scan(), '内訳を開いた状態').toEqual([]);
+  await page.locator('#ptSummary').click();
+
   // v1.65: 食事タブを見落としていた（朝昼晩・栄養カードの説明が日本語のまま残っていた）
   await page.locator('nav.footer button[data-tab="meals"]').click();
   expect(await scan(), '食事タブ（プロフィール未設定）').toEqual([]);
+
+  // 「＋」で開く追加シートと、ことば入力の解析フォーム
+  await page.locator('.photo-add-btn').first().click();
+  expect(await scan(), '食べたものを追加シート').toEqual([]);
+  await page.locator('#addChoiceText').click();
+  expect(await scan(), '食事解析フォーム（満腹度の選択肢を含む）').toEqual([]);
+  await page.evaluate(() => document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')));
   // プロフィールと体重を入れると栄養カードの中身が変わるので、その状態も見る
   await page.evaluate(() => {
     DB.profile = { name:'x', heightCm:172, age:45, sex:'male', activity:1.375, targetRatio:0.7 };

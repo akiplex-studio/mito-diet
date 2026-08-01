@@ -1209,6 +1209,98 @@ nav.footer {
    日本語を直したら `npm run i18n:check` が「英語が古い」と教えてくれる（i18n.lock.json） */
 const I18N = {
   ja: {
+    "ui.bd.mitoChange": "{d}匹 → {after}匹",
+    "ui.bd.none": "なし",
+    "ui.header.viewingDate": "{d} の記録を表示・編集中",
+    "ui.bd.start": "開始値",
+    "aria.addMeal": "{meal}に食べたものを追加",
+    "aria.autoDone": "（自動達成）",
+    "aria.autoOrManual": "（自動判定・手動チェックも可）",
+    "aria.done": "（済）",
+    "aria.mealPhoto": "{meal}の食事 {n}",
+    "aria.notYet": "（未達成）",
+    "aria.rename": "名前を変える",
+    "toast.autoChecked": "「{name}」を自動チェックしました",
+    "toast.backup.since": "最後のバックアップから{n}日。設定の「書き出す」で保存しておこう",
+    "toast.med.done": "呼吸瞑想 完了！ 活+{act}・+{inc}匹 ✨",
+    "toast.photo.max": "この食事は最大{n}枚までです",
+    "ui.ana.quota": "AI解析 今日あと{n}回",
+    "ui.ana.score": "マイトスコア {n}",
+    "ui.bd.baseFrom": "活性{a}による基礎増加",
+    "ui.bd.decFrom": "活性{a}による減少",
+    "ui.bd.minusMito": "{n}匹",
+    "ui.bd.plusMito": "+{n}匹",
+    "ui.change.energy": "活力ポイント {a}→{b}！（+{d}pt）",
+    "ui.change.mito": "マイト数 {a}→{b}匹！（+{d}匹）",
+    "ui.effort.inc": "+{n}匹",
+    "ui.meal.note": "補足: {v}",
+    "ui.med.countN": "5秒吸って、8秒吐く × {n}回（約4分半）",
+    "ui.med.progress": "{a} / {b} 回",
+    "ui.weight.goalLine": "目標 {v}kg",
+    "ui.weight.trend": "{arrow} {d}（{n}日間）",
+    "ful.full": "満腹",
+    "ful.hara7": "腹七分目くらい",
+    "ful.light": "軽め",
+    "ful.normal": "普通",
+    "ful.over": "食べ過ぎ",
+    "ph.mealNote": "例：すき家でご飯大盛りの牛丼と肉皿",
+    "ph.mealNoteExtra": "ことばで補足（任意）例：ご飯は大盛り、味噌汁も飲んだ",
+    "ui.common.cancel": "やめる",
+    "ui.meal.analyseBtn": "解析する",
+    "ui.meal.batchNote": "写真{n}枚を1つの食事としてまとめて解析します",
+    "ui.meal.fullnessIs": "満腹度: {v}",
+    "ui.ana.legacyNote": "旧形式（写真ごと）の解析結果です。今後は写真一覧の「🔍 解析」で食事ごとにまとめて解析されます",
+    "ui.ana.perMealNote": "栄養の解析は食事ごとにまとめて行います。写真一覧の「🔍 解析」ボタンからどうぞ",
+    "ui.bd.checked": "チェックした行動",
+    "ui.bd.dayChange": "この日の増減",
+    "ui.bd.dayEnergy": "この日の活性",
+    "ui.bd.empty": "この日の記録はまだありません。",
+    "ui.bd.mito": "ミトコンドリア（匹数）",
+    "ui.meal.fullness": "食べた量の感覚（必須）",
+    "ui.meal.noPhoto": "写真はありません。食べたものを言葉で入力してください",
+    "ui.meal.redo": "写真からやり直す",
+    "ui.tut.linkLead": "あとから設定でも変えられます。いまは飛ばしてもかまいません。",
+    "ui.tut.linkTitle": "できることを増やしておく",
+    "ui.tut.linked": "✓ 連携済み",
+    "ui.weight.hint": "上の「体重」に入力すると、ここに推移グラフが表示されます。",
+    "ui.weight.none": "まだ体重の記録がありません。",
+    "aria.kcalChart": "摂取カロリーの推移",
+    "aria.medTimer": "瞑想タイマーを開く",
+    "aria.weightChart": "体重推移グラフ",
+    "toast.backup.first": "記録がたまってきました。設定の「書き出す」でバックアップしておこう",
+    "toast.notify.setupFailed": "通知の設定に失敗しました（端末の通知設定を確認してください）",
+    "ui.ana.error": "エラーが発生しました",
+    "ui.ana.noConnect": "接続できませんでした（URLとサーバーの稼働を確認）",
+    "ui.ana.noDish": "料理を特定できませんでした",
+    "ui.ana.quotaOut": "今日の解析は使い切りました。明日また6回使えます。",
+    "ui.ana.quotaOut2": "本日の解析枠が上限に達しました。明日また使えます。",
+    "ui.ana.quotaOut3": "今日の解析回数の上限に達しました。また明日どうぞ",
+    "ui.ana.retry": "⚠ 再試行",
+    "ui.ana.run": "🔍 解析",
+    "ui.ana.running": "解析中…",
+    "ui.ana.serverError": "サーバーでエラーが発生しました",
+    "ui.ana.timeout": "時間切れです。少し待ってもう一度試してください",
+    "ui.bd.base": "基礎増加（活性45以上で発生）",
+    "ui.bd.memory": "ミトコンドリアメモリー（×2）",
+    "ui.bd.memoryBonus": "2倍ボーナス",
+    "ui.bd.regress": "前日から50へ回帰",
+    "ui.confirm.import": "現在のデータをこのファイルの内容で置き換えますか？",
+    "ui.confirm.reset2": "最終確認：この操作は取り消せません。初期化しますか？（心配なら先に「書き出す」でバックアップ）",
+    "ui.meal.analysing": "🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）",
+    "ui.meal.confirmDelete": "この写真を削除しますか？",
+    "ui.meal.needFix": "修正後の内容を入力してください",
+    "ui.meal.needFullness": "食べた量の感覚を選んでください",
+    "ui.meal.needText": "写真が無い場合は、食べたものを入力してください",
+    "ui.med.in": "鼻から吸って（5秒）",
+    "ui.med.out": "ゆっくり吐いて（8秒）",
+    "ui.med.ready2": "準備はいい？",
+    "ui.name.needName": "名前を入れてください",
+    "ui.notify.body": "今日のデイリーミッションをチェックし忘れていませんか？",
+    "ui.tut.linkHealth": "ヘルスデータと連携する",
+    "ui.tut.linkHealthWhy": "歩数・体重・睡眠を自動で取り込みます。毎日の手入力が要らなくなります",
+    "ui.tut.linkNotifyWhy": "決めた時刻に「今日のミッション、まだ残ってる？」とお知らせします",
+    "ui.tut.skipQ": "いまは決めない",
+    "ui.weight.goalHit": "🎉 目標達成！",
     "ui.weight.empty": "記録を続けると変化が見えます",
     "ui.weight.needTwo": "2日以上記録するとグラフが描かれます。",
     "meal.breakfast": "朝",
@@ -1819,6 +1911,98 @@ const I18N = {
     "unit.steps": "歩",
   },
   en: {
+    "ui.bd.mitoChange": "{d} → {after} mito",
+    "ui.bd.none": "None",
+    "ui.header.viewingDate": "Viewing and editing {d}",
+    "ui.bd.start": "Starting value",
+    "aria.addMeal": "Add what you ate for {meal}",
+    "aria.autoDone": "(done automatically)",
+    "aria.autoOrManual": "(tracked for you, or tick it yourself)",
+    "aria.done": "(done)",
+    "aria.mealPhoto": "{meal} photo {n}",
+    "aria.notYet": "(not yet)",
+    "aria.rename": "Rename",
+    "toast.autoChecked": "“{name}” ticked automatically",
+    "toast.backup.since": "{n} days since your last backup. Save one with “Export” in settings",
+    "toast.med.done": "Breathing done! Energy +{act}, +{inc} mito ✨",
+    "toast.photo.max": "Up to {n} photos per meal",
+    "ui.ana.quota": "AI analysis: {n} left today",
+    "ui.ana.score": "Mito score {n}",
+    "ui.bd.baseFrom": "Base growth from energy {a}",
+    "ui.bd.decFrom": "Loss from energy {a}",
+    "ui.bd.minusMito": "{n} mito",
+    "ui.bd.plusMito": "+{n} mito",
+    "ui.change.energy": "Energy {a}→{b}! (+{d}pt)",
+    "ui.change.mito": "Mito {a}→{b}! (+{d})",
+    "ui.effort.inc": "+{n} mito",
+    "ui.meal.note": "Note: {v}",
+    "ui.med.countN": "In 5s, out 8s × {n} (about 4½ minutes)",
+    "ui.med.progress": "{a} / {b}",
+    "ui.weight.goalLine": "Goal {v}kg",
+    "ui.weight.trend": "{arrow} {d} (over {n} days)",
+    "ful.full": "Full",
+    "ful.hara7": "About 70% full",
+    "ful.light": "Light",
+    "ful.normal": "Normal",
+    "ful.over": "Too much",
+    "ph.mealNote": "e.g. beef bowl with large rice and a side of meat",
+    "ph.mealNoteExtra": "Add a note (optional), e.g. large rice, also had miso soup",
+    "ui.common.cancel": "Cancel",
+    "ui.meal.analyseBtn": "Analyse",
+    "ui.meal.batchNote": "Analysing {n} photos together as one meal",
+    "ui.meal.fullnessIs": "How full: {v}",
+    "ui.ana.legacyNote": "This is an old per-photo result. From now on, use “🔍 Analyse” in the photo list to analyse the whole meal at once",
+    "ui.ana.perMealNote": "Nutrition is analysed per meal. Use the “🔍 Analyse” button in the photo list",
+    "ui.bd.checked": "What you ticked",
+    "ui.bd.dayChange": "Change for the day",
+    "ui.bd.dayEnergy": "Energy for the day",
+    "ui.bd.empty": "Nothing logged for this day yet.",
+    "ui.bd.mito": "Mitochondria (count)",
+    "ui.meal.fullness": "How full were you? (required)",
+    "ui.meal.noPhoto": "No photos. Type what you ate instead",
+    "ui.meal.redo": "Start over from photos",
+    "ui.tut.linkLead": "You can change these later in settings. Skipping is fine.",
+    "ui.tut.linkTitle": "Set up what the app can do",
+    "ui.tut.linked": "✓ Connected",
+    "ui.weight.hint": "Enter it under “Weight” above and a chart appears here.",
+    "ui.weight.none": "No weight logged yet.",
+    "aria.kcalChart": "Calorie intake chart",
+    "aria.medTimer": "Open the breathing timer",
+    "aria.weightChart": "Weight chart",
+    "toast.backup.first": "Your records are building up. Back them up with “Export” in settings",
+    "toast.notify.setupFailed": "Could not set up notifications (check your device notification settings)",
+    "ui.ana.error": "Something went wrong",
+    "ui.ana.noConnect": "Could not connect (check the URL and that the server is up)",
+    "ui.ana.noDish": "Couldn’t identify the dishes",
+    "ui.ana.quotaOut": "You’ve used today’s analyses. Six more tomorrow.",
+    "ui.ana.quotaOut2": "You’ve hit today’s analysis limit. It resets tomorrow.",
+    "ui.ana.quotaOut3": "You’ve hit today’s analysis limit. See you tomorrow",
+    "ui.ana.retry": "⚠ Retry",
+    "ui.ana.run": "🔍 Analyse",
+    "ui.ana.running": "Analysing…",
+    "ui.ana.serverError": "The server hit an error",
+    "ui.ana.timeout": "Timed out. Wait a moment and try again",
+    "ui.bd.base": "Base growth (energy 45 or above)",
+    "ui.bd.memory": "Mitochondrial memory (×2)",
+    "ui.bd.memoryBonus": "Double bonus",
+    "ui.bd.regress": "Drifting back towards 50 from yesterday",
+    "ui.confirm.import": "Replace your current data with this file?",
+    "ui.confirm.reset2": "Last check: this cannot be undone. Erase everything? (Export a backup first if unsure)",
+    "ui.meal.analysing": "🔬 Analysing… (can take a minute right after the server wakes up)",
+    "ui.meal.confirmDelete": "Delete this photo?",
+    "ui.meal.needFix": "Type the corrected version",
+    "ui.meal.needFullness": "Choose how full you were",
+    "ui.meal.needText": "With no photos, type what you ate",
+    "ui.med.in": "Breathe in through your nose (5s)",
+    "ui.med.out": "Breathe out slowly (8s)",
+    "ui.med.ready2": "Ready?",
+    "ui.name.needName": "Please enter a name",
+    "ui.notify.body": "Did you forget to check off today’s missions?",
+    "ui.tut.linkHealth": "Connect health data",
+    "ui.tut.linkHealthWhy": "Steps, weight and sleep come in automatically. No more typing them each day",
+    "ui.tut.linkNotifyWhy": "At the time you choose, we’ll remind you that missions are still open",
+    "ui.tut.skipQ": "Decide later",
+    "ui.weight.goalHit": "🎉 Goal reached!",
     "ui.weight.empty": "Keep logging and the change shows up",
     "ui.weight.needTwo": "Log two or more days and a chart appears.",
     "meal.breakfast": "Breakfast",
@@ -3810,7 +3994,7 @@ function renderCalendar() {
   const banner = $('#selBanner');
   if (sel !== today) {
     banner.style.display = 'flex';
-    $('#selBannerText').textContent = `${fmtJP(sel)} の記録を表示・編集中`;
+    $('#selBannerText').textContent = t('ui.header.viewingDate', { d: fmtJP(sel) });
   } else {
     banner.style.display = 'none';
   }
@@ -4260,18 +4444,18 @@ function renderPhotos() {
     let showAb = true;
     if (mealPending[mealStateKey(sel, key)]) {
       ab.className = 'meal-ana-btn pending';
-      ab.innerHTML = '<span class="meal-spin" aria-hidden="true"></span>解析中…';
+      ab.innerHTML = '<span class="meal-spin" aria-hidden="true"></span>' + esc(t('ui.ana.running'));
       ab.disabled = true;
     } else if (mealError[mealStateKey(sel, key)]) {
       ab.className = 'meal-ana-btn error';
-      ab.textContent = '⚠ 再試行';
+      ab.textContent = t('ui.ana.retry');
     } else if (ma && ma.analysis) {
       const stale = ma.photoCount != null && ma.photoCount !== arr.length;
       ab.className = 'meal-ana-btn done';
-      ab.textContent = `マイトスコア ${Number(ma.analysis.mito_score) || 0}${stale ? ' ⟳' : ''}`;
+      ab.textContent = t('ui.ana.score', { n: Number(ma.analysis.mito_score) || 0 }) + (stale ? ' ⟳' : '');
     } else if (arr.length) {
       ab.className = 'meal-ana-btn';
-      ab.textContent = '🔍 解析';
+      ab.textContent = t('ui.ana.run');
     } else {
       showAb = false;
     }
@@ -4295,7 +4479,7 @@ function renderPhotos() {
     body.className = 'photo-meal-body';
     const addBtn = document.createElement('button');
     addBtn.className = 'photo-add-btn';
-    addBtn.setAttribute('aria-label', `${label}に食べたものを追加`);
+    addBtn.setAttribute('aria-label', t('aria.addMeal', { meal: label }));
     addBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>';
     addBtn.addEventListener('click', () => openAddChoice(key));
     body.appendChild(addBtn);
@@ -4309,7 +4493,7 @@ function renderPhotos() {
         const t = document.createElement('div');
         t.className = 'photo-thumb';
         const img = document.createElement('img');
-        img.src = entry.data; img.alt = `${label}の食事 ${idx + 1}`;
+        img.src = entry.data; img.alt = t('aria.mealPhoto', { meal: label, n: idx + 1 });
         img.addEventListener('click', () => openLightbox(key, idx));
         t.appendChild(img);
         thumbs.appendChild(t);
@@ -4330,7 +4514,7 @@ function renderPhotos() {
       } else {
         const line = document.createElement('div');
         line.className = 'dish-line muted';
-        line.textContent = '料理を特定できませんでした';
+        line.textContent = t('ui.ana.noDish');
         lines.appendChild(line);
       }
       lines.addEventListener('click', () => openMealModal(key));
@@ -4407,10 +4591,13 @@ function analysisComment(a) {
 }
 // v1.36: 満腹度アイコン（ミトスコアバッジの左に添える）
 const FULLNESS_ICON = { '軽め':'🍃', '腹七分目くらい':'👍', '普通':'🙂', '満腹':'😌', '食べ過ぎ':'⚠️' };
+// v1.66: 保存される値は日本語のまま（過去の記録と互換を保つ）。表示名だけ辞書から引く
+const FULLNESS_KEY = { '軽め':'ful.light', '腹七分目くらい':'ful.hara7', '普通':'ful.normal', '満腹':'ful.full', '食べ過ぎ':'ful.over' };
+function fullnessLabel(v) { return v ? tOr(FULLNESS_KEY[v], v) : ''; }
 function analysisHTML(a) {
   const confJp = ({ low: '低', medium: '中', high: '高' })[a.confidence] || '—';
   const dishes = (a.dishes || []).map(d => `${esc(d.name)}（${esc(d.amount)}）`).join('、')
-    || '料理を特定できませんでした';
+    || t('ui.ana.noDish');
   const n = a.nutrition || {};
   return `<div class="ana-head"><span class="ana-score num">${Number(a.mito_score) || 0}</span><span class="ana-slabel">マイトスコア</span><span class="ana-conf">確信度: ${confJp}</span></div>` +
     `<div class="ana-dishes">${dishes}</div>` +
@@ -4426,10 +4613,10 @@ function renderLbPanel() {
   if (entry.analysis) {
     // 旧形式（写真単位）の解析結果は読み取り専用で表示
     panel.innerHTML = analysisHTML(entry.analysis) +
-      `<div class="ana-note">旧形式（写真ごと）の解析結果です。今後は写真一覧の「🔍 解析」で食事ごとにまとめて解析されます</div>`;
+      `<div class="ana-note">${esc(t('ui.ana.legacyNote'))}</div>`;
     return;
   }
-  panel.innerHTML = `<div class="ana-note">栄養の解析は食事ごとにまとめて行います。写真一覧の「🔍 解析」ボタンからどうぞ</div>`;
+  panel.innerHTML = `<div class="ana-note">${esc(t('ui.ana.perMealNote'))}</div>`;
 }
 
 /* v1.44: デバイスID（利用枠の識別用。ユーザー操作なし・自動発行。mito-dataとは別キーに保存し、
@@ -4457,7 +4644,7 @@ function renderQuotaNote() {
   if (!el) return;
   if (quotaRemaining === null) { el.hidden = true; return; }
   el.hidden = false;
-  el.textContent = `AI解析 今日あと${quotaRemaining}回`;
+  el.textContent = t('ui.ana.quota', { n: quotaRemaining });
 }
 // v1.44: 将来のリワード広告用フック（残り回数にnを加算して表示を更新するだけ。広告実装はここでは行わない）
 function applyQuotaBonus(n) {
@@ -4488,17 +4675,17 @@ async function callAnalyzeAPI(bodyReq) {
       renderQuotaNote();
       const reason = json && json.error;
       const msg = reason === 'device_daily_limit'
-        ? '今日の解析は使い切りました。明日また6回使えます。'
+        ? t('ui.ana.quotaOut')
         : reason === 'global_budget_reached'
-          ? '本日の解析枠が上限に達しました。明日また使えます。'
-          : '今日の解析回数の上限に達しました。また明日どうぞ';
+          ? t('ui.ana.quotaOut2')
+          : t('ui.ana.quotaOut3');
       const e = new Error(msg);
       e.gentle = true; // v1.44: 利用枠の到達はエラーではなく穏やかな案内として扱う
       throw e;
     }
     // v1.6: サーバーが返す message フィールドがあれば、それをそのままエラー文言に使う
     if (!res.ok || !json || !json.ok || !json.analysis) {
-      throw new Error((json && json.message) || 'サーバーでエラーが発生しました');
+      throw new Error((json && json.message) || t('ui.ana.serverError'));
     }
     if (json.meta && typeof json.meta.remaining === 'number') {
       quotaRemaining = json.meta.remaining;
@@ -4510,9 +4697,9 @@ async function callAnalyzeAPI(bodyReq) {
   }
 }
 function analyzeErrMsg(err) {
-  if (err && err.name === 'AbortError') return '時間切れです。少し待ってもう一度試してください';
-  if (err instanceof TypeError) return '接続できませんでした（URLとサーバーの稼働を確認）';
-  return (err && err.message) || 'エラーが発生しました';
+  if (err && err.name === 'AbortError') return t('ui.ana.timeout');
+  if (err instanceof TypeError) return t('ui.ana.noConnect');
+  return (err && err.message) || t('ui.ana.error');
 }
 
 /* ---- ヘルスデータ自動連携（v1.12: Health Connect→自動化アプリ→サーバー経由 / v1.41: ネイティブAndroidはCapacitor Healthプラグインで直接取得 / v1.42: iOS(HealthKit)も対応） ---- */
@@ -4640,7 +4827,7 @@ function renderMealFul() {
   box.innerHTML = '';
   FULLNESS_OPTS.forEach(o => {
     const b = document.createElement('button');
-    b.textContent = o;
+    b.textContent = fullnessLabel(o);
     if (mealFulSel === o) b.className = 'on';
     b.addEventListener('click', () => { mealFulSel = mealFulSel === o ? null : o; renderMealFul(); });
     box.appendChild(b);
@@ -4654,23 +4841,23 @@ function renderMealForm() {
   const pending = mealPending[mealStateKey(sel, mealModalKey)];
   const strip = arr.length
     ? `<div class="meal-strip">${arr.map(e => `<img src="${e.data}" alt="">`).join('')}</div>` +
-      `<div class="ana-note" style="text-align:left">写真${arr.length}枚を1つの食事としてまとめて解析します</div>`
-    : `<div class="ana-note" style="text-align:left">写真はありません。食べたものを言葉で入力してください</div>`;
+      `<div class="ana-note" style="text-align:left">${esc(t('ui.meal.batchNote', { n: arr.length }))}</div>`
+    : `<div class="ana-note" style="text-align:left">${esc(t('ui.meal.noPhoto'))}</div>`;
   body.innerHTML =
     strip +
-    `<textarea id="mealNote" class="meal-textarea" placeholder="${arr.length ? 'ことばで補足（任意）例：ご飯は大盛り、味噌汁も飲んだ' : '例：すき家でご飯大盛りの牛丼と肉皿'}"${pending ? ' disabled' : ''}>${esc((ma && ma.note) || '')}</textarea>` +
-    `<div class="ful-label">食べた量の感覚（必須）</div>` +
+    `<textarea id="mealNote" class="meal-textarea" placeholder="${esc(t(arr.length ? 'ph.mealNoteExtra' : 'ph.mealNote'))}"${pending ? ' disabled' : ''}>${esc((ma && ma.note) || '')}</textarea>` +
+    `<div class="ful-label">${esc(t('ui.meal.fullness'))}</div>` +
     `<div class="ful-chips" id="mealFul"></div>` +
     `<div class="btn-row" style="margin-top:14px">` +
-      `<button class="btn btn-primary" id="mealRun"${pending ? ' disabled' : ''}>${pending ? '解析中…' : '解析する'}</button>` +
-      `<button class="btn btn-secondary" data-close>やめる</button>` +
+      `<button class="btn btn-primary" id="mealRun"${pending ? ' disabled' : ''}>${pending ? t('ui.ana.running') : esc(t('ui.meal.analyseBtn'))}</button>` +
+      `<button class="btn btn-secondary" data-close>${esc(t('ui.common.cancel'))}</button>` +
     `</div>` +
     `<div class="ana-note" id="mealMsg" style="text-align:left; min-height:1.4em"></div>`;
   renderMealFul();
   $('#mealRun').addEventListener('click', runMealAnalysis);
   // v1.6: 解析中/直前のエラーをモーダル内メッセージに反映
   if (pending) {
-    $('#mealMsg').textContent = '🔬 解析中…（サーバー起動直後は1分ほどかかることがあります）';
+    $('#mealMsg').textContent = t('ui.meal.analysing');
   } else if (mealError[mealStateKey(sel, mealModalKey)]) {
     $('#mealMsg').textContent = '⚠ ' + mealError[mealStateKey(sel, mealModalKey)];
   }
@@ -4685,8 +4872,8 @@ function renderMealResult() {
   if (!ma || !ma.analysis) { renderMealForm(); return; }
   const stale = ma.photoCount != null && ma.photoCount !== arr.length;
   const metaBits = [
-    ma.fullness ? `満腹度: ${esc(ma.fullness)}` : '',
-    ma.note ? `補足: ${esc(ma.note)}` : '',
+    ma.fullness ? t('ui.meal.fullnessIs', { v: fullnessLabel(ma.fullness) }) : '',
+    ma.note ? esc(t('ui.meal.note', { v: ma.note })) : '',
   ].filter(Boolean).join(' ・ ');
   // v1.33〜v1.34: 写真解析は間違っていることが多いため、全文メニューの下の「修正する」ボタンから
   // 認識した料理を手で直して再解析できる。修正中は写真も一緒に表示して見比べられるようにする
@@ -4716,7 +4903,7 @@ function renderMealResult() {
     (stale ? `<div class="ana-note" style="text-align:left">⟳ 解析後に写真の枚数が変わっています。再解析すると正確になります</div>` : '') +
     editSection +
     `<div class="btn-row" style="margin-top:14px">` +
-      `<button class="btn btn-secondary" id="mealRedo">写真からやり直す</button>` +
+      `<button class="btn btn-secondary" id="mealRedo">${esc(t('ui.meal.redo'))}</button>` +
       `<button class="btn btn-primary" data-close>閉じる</button>` +
     `</div>`;
   $('#mealRedo').addEventListener('click', renderMealForm);
@@ -4739,12 +4926,12 @@ async function runMealAnalysis() {
   const arr = (rec.photos && rec.photos[meal]) || [];
   const note = ($('#mealNote') ? $('#mealNote').value.trim() : '');
   if (!arr.length && note.length < 2) {
-    $('#mealMsg').textContent = '写真が無い場合は、食べたものを入力してください';
+    $('#mealMsg').textContent = t('ui.meal.needText');
     return;
   }
   // v1.33: 満腹度は量の推定に直結するため必須項目にする
   if (!mealFulSel) {
-    $('#mealMsg').textContent = '食べた量の感覚を選んでください';
+    $('#mealMsg').textContent = t('ui.meal.needFullness');
     return;
   }
   const fullness = mealFulSel;
@@ -4805,7 +4992,7 @@ async function runMealReanalysisFromText() {
   if (mealFixPending[sk]) return;
   const text = ($('#mealDishesEdit') ? $('#mealDishesEdit').value.trim() : '');
   if (text.length < 2) {
-    $('#mealFixMsg').textContent = '修正後の内容を入力してください';
+    $('#mealFixMsg').textContent = t('ui.meal.needFix');
     return;
   }
   const startSel = sel;
@@ -4856,7 +5043,7 @@ async function runMealReanalysisFromText() {
 $('#lbDel').addEventListener('click', () => {
   const { meal, index } = lightbox;
   if (meal == null) return;
-  if (confirm('この写真を削除しますか？')) {
+  if (confirm(t('ui.meal.confirmDelete'))) {
     const rec = getRec(sel, true);
     if (Array.isArray(rec.photos[meal])) rec.photos[meal].splice(index, 1);
     $('#lightbox').classList.remove('open');
@@ -4884,7 +5071,7 @@ async function addPhotoFile(file) {
   const rec = getRec(sel, true);
   if (!rec.photos || typeof rec.photos !== 'object') rec.photos = { breakfast:[], lunch:[], dinner:[] };
   if (!Array.isArray(rec.photos[photoSlot])) rec.photos[photoSlot] = [];
-  if (rec.photos[photoSlot].length >= MAX_PHOTOS) { toast(`この食事は最大${MAX_PHOTOS}枚までです`); return; }
+  if (rec.photos[photoSlot].length >= MAX_PHOTOS) { toast(t('toast.photo.max', { n: MAX_PHOTOS })); return; }
   try {
     const data = await resizeImage(file);
     const first = rec.photos[photoSlot].length === 0;
@@ -4896,7 +5083,7 @@ async function addPhotoFile(file) {
         if (!isItemActiveOn(it, sel)) continue;  // v1.49: 外した項目は自動チェックしない
         if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
           rec.checked.push(it.id);
-          autoMsg = `「${it.name}」を自動チェックしました`;
+          autoMsg = t('toast.autoChecked', { name: itemName(it) });
           // v1.5: 写真で自動チェックされたときのミトの一言・演出
           // v1.49: 'juice' 直書きをやめ、項目自身のidと effect から引くようにした
           //        （mitoSpeak は SPEECH に無いキーなら何もしないので、解説の無い項目でも安全）
@@ -5055,7 +5242,7 @@ function renderWeightGraph() {
     .sort()
     .map(d => ({ d, w: Number(DB.days[d].weight) }));
   if (pts.length === 0) {
-    body.innerHTML = `<div class="wt-empty">まだ体重の記録がありません。<br>上の「体重」に入力すると、ここに推移グラフが表示されます。</div>`;
+    body.innerHTML = `<div class="wt-empty">${esc(t('ui.weight.none'))}<br>${esc(t('ui.weight.hint'))}</div>`;
     wtGraphMeta = null;
     return;
   }
@@ -5078,8 +5265,8 @@ function renderWeightGraph() {
   const head = `<div class="wt-head">
       <div><span class="wt-current">${last.w.toFixed(1)}<small>kg</small></span></div>
       <div class="wt-delta ${dcls}">${
-        reached ? '🎉 目標達成！' :
-        recent.length > 1 ? `${arrow} ${dtxt}（${recent.length}日間）` : t('ui.weight.empty')
+        reached ? t('ui.weight.goalHit') :
+        recent.length > 1 ? t('ui.weight.trend', { arrow, d: dtxt, n: recent.length }) : t('ui.weight.empty')
       }</div>
     </div>`;
 
@@ -5125,7 +5312,7 @@ function renderWeightGraph() {
       `<rect class="wt-tap-label-bg" x="${boxX.toFixed(1)}" y="${boxY.toFixed(1)}" width="${labelW.toFixed(1)}" height="18" rx="4"/>` +
       `<text class="wt-tap-label" x="${(boxX + labelW / 2).toFixed(1)}" y="${(boxY + 13).toFixed(1)}" text-anchor="middle">${labelText}</text>`;
   }
-  const svg = `<svg id="wtGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="体重推移グラフ">
+  const svg = `<svg id="wtGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label=t('aria.weightChart')>
     ${grid}
     <polygon points="${area}" fill="#D9E8C6" opacity="0.5"/>
     ${goalLine}
@@ -5134,7 +5321,7 @@ function renderWeightGraph() {
     ${tapLabel}
   </svg>`;
   const legend = `<div class="wt-legend"><span><i></i>体重</span>${
-    goal != null ? `<span><i class="goal"></i>目標 ${Number(goal).toFixed(1)}kg</span>` : ''
+    goal != null ? `<span><i class="goal"></i>${esc(t('ui.weight.goalLine', { v: Number(goal).toFixed(1) }))}</span>` : ''
   }</div>`;
   body.innerHTML = head + svg + legend;
   wtGraphMeta = { recent, padL, padR, W };
@@ -5257,7 +5444,7 @@ function renderKcalGraph(tg) {
     const x = padL + i * bw + bw / 2;
     return `<text x="${x.toFixed(1)}" y="${H - 5}" text-anchor="middle" font-size="8.5" fill="#A89F8A">${Number(dd.slice(5, 7))}/${Number(dd.slice(8))}</text>`;
   }).join('');
-  return `<svg id="kcalGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="摂取カロリーの推移">
+  return `<svg id="kcalGraph" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label=t('aria.kcalChart')>
     <line x1="${padL}" y1="${ys(tg.tdee).toFixed(1)}" x2="${W - padR}" y2="${ys(tg.tdee).toFixed(1)}" stroke="#A89F8A" stroke-width="1" stroke-dasharray="2 3"/>
     <line x1="${padL}" y1="${ys(tg.kcal).toFixed(1)}" x2="${W - padR}" y2="${ys(tg.kcal).toFixed(1)}" stroke="#4E8098" stroke-width="1.5" stroke-dasharray="5 4"/>
     ${gridLines}${bars}${dayLabels}
@@ -5318,20 +5505,20 @@ function renderTodoCards(container, items, rec, interactive) {
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-pressed', done ? 'true' : 'false');
-      card.setAttribute('aria-label', `${itemName(it)}${done ? '（済）' : ''}` + (!interactive ? '（自動判定・手動チェックも可）' : ''));
+      card.setAttribute('aria-label', itemName(it) + (done ? ' ' + t('aria.done') : '') + (!interactive ? ' ' + t('aria.autoOrManual') : ''));
       const activate = () => toggleCheck(it, card);
       card.addEventListener('click', activate);
       card.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
       });
     } else {
-      card.setAttribute('aria-label', `${itemName(it)}${done ? '（自動達成）' : '（未達成）'}`);
+      card.setAttribute('aria-label', itemName(it) + ' ' + t(done ? 'aria.autoDone' : 'aria.notYet'));
     }
     if (it.timer) {
       const tb = document.createElement('button');
       tb.type = 'button';
       tb.className = 'tc-timer';
-      tb.setAttribute('aria-label', '瞑想タイマーを開く');
+      tb.setAttribute('aria-label', t('aria.medTimer'));
       tb.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
       tb.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openMeditation(); });
       card.appendChild(tb);
@@ -5370,8 +5557,8 @@ const ACHIEVE_DIALOG_DELAY_MS = 1000; // v1.27: 段階1→段階2の待ち時間
 function showChangeOverlay(beforeMito, afterMito, beforeAct, afterAct) {
   const bm = Math.floor(beforeMito), am = Math.floor(afterMito);
   const lines = [];
-  if (afterAct > beforeAct) lines.push(`活力ポイント ${beforeAct}→${afterAct}！（+${afterAct - beforeAct}pt）`);
-  if (am > bm) lines.push(`マイト数 ${bm}→${am}匹！（+${am - bm}匹）`);
+  if (afterAct > beforeAct) lines.push(t('ui.change.energy', { a: beforeAct, b: afterAct, d: afterAct - beforeAct }));
+  if (am > bm) lines.push(t('ui.change.mito', { a: bm, b: am, d: am - bm }));
   if (!lines.length) return false;
   const el = $('#changeOverlay');
   el.innerHTML = lines.map(t => `<div class="change-line">${esc(t)}</div>`).join('');
@@ -5516,7 +5703,7 @@ function openNamePrompt(itemId, pickAfter) {
 }
 function commitName() {
   const name = $('#nameInput').value.trim();
-  if (!name) { $('#nameWarn').textContent = '名前を入れてください'; return; }
+  if (!name) { $('#nameWarn').textContent = t('ui.name.needName'); return; }
   if (namingPickAfter) {
     const c = catalogById(namingId);
     if (c) pickItem(DB.items, c, today);
@@ -5690,7 +5877,7 @@ function renderPickBody() {
       if (c.custom && on) {
         const nb = document.createElement('button');
         nb.className = 'pick-row-info';
-        nb.setAttribute('aria-label', '名前を変える');
+        nb.setAttribute('aria-label', t('aria.rename'));
         nb.textContent = '✎';
         nb.addEventListener('click', e => { e.stopPropagation(); openNamePrompt(c.id); });
         row.appendChild(b);
@@ -5782,7 +5969,7 @@ function openEffortPick(item, onPick) {
         `<span class="effort-name">${esc(eLabel)}</span>` +
         (eHint ? `<span class="effort-hint">${esc(eHint)}</span>` : '') +
       `</span>` +
-      `<span class="effort-inc">+${e.inc}匹</span>`;
+      `<span class="effort-inc">${esc(t('ui.effort.inc', { n: e.inc }))}</span>`;
     b.addEventListener('click', () => {
       const r = getRec(sel, true);
       if (!r.effort) r.effort = {};
@@ -5884,25 +6071,25 @@ function dayContributions(dateStr) {
 function renderBreakdown() {
   const box = $('#breakdown');
   const b = dayContributions(sel);
-  if (!b) { box.innerHTML = `<div class="bd-empty">この日の記録はまだありません。</div>`; return; }
+  if (!b) { box.innerHTML = `<div class="bd-empty">${esc(t('ui.bd.empty'))}</div>`; return; }
   const row = (g, v, cls) => `<div class="bd-row"><span class="g">${esc(g)}</span><span class="v ${cls}">${v}</span></div>`;
-  let html = '<div class="bd-sec">活性ゲージ</div>';
-  html += row(b.regressed ? '前日から50へ回帰' : '開始値', b.actBefore, 'zero');
+  let html = '<div class="bd-sec">' + esc(t('ui.bd.energy')) + '</div>';
+  html += row(b.regressed ? t('ui.bd.regress') : t('ui.bd.start'), b.actBefore, 'zero');
   if (b.actItems.length) {
     b.actItems.forEach(it => html += row(it.name, `${it.v > 0 ? '+' : ''}${it.v}`, it.v >= 0 ? 'plus' : 'minus'));
   } else {
-    html += `<div class="bd-row"><span class="g">チェックした行動</span><span class="v zero">なし</span></div>`;
+    html += `<div class="bd-row"><span class="g">${esc(t('ui.bd.checked'))}</span><span class="v zero">${esc(t('ui.bd.none'))}</span></div>`;
   }
-  html += `<div class="bd-row bd-total"><span class="g">この日の活性</span><span class="v ${b.actAfter >= b.actBefore ? 'plus' : 'minus'}">${b.actAfter} / 100</span></div>`;
+  html += `<div class="bd-row bd-total"><span class="g">${esc(t('ui.bd.dayEnergy'))}</span><span class="v ${b.actAfter >= b.actBefore ? 'plus' : 'minus'}">${b.actAfter} / 100</span></div>`;
 
-  html += '<div class="bd-sec">ミトコンドリア（匹数）</div>';
-  if (b.base > 0) html += row(`活性${b.actAfter}による基礎増加`, `+${b.base}匹`, 'plus');
-  else html += row('基礎増加（活性45以上で発生）', '+0', 'zero');
-  b.mitoItems.forEach(it => html += row(it.name, `+${it.v}匹`, 'plus'));
-  if (b.memory) html += row('ミトコンドリアメモリー（×2）', '2倍ボーナス', 'plus');
-  if (b.dec < 0) html += row(`活性${b.actAfter}による減少`, `${b.dec}匹`, 'minus');
+  html += '<div class="bd-sec">' + esc(t('ui.bd.mito')) + '</div>';
+  if (b.base > 0) html += row(t('ui.bd.baseFrom', { a: b.actAfter }), t('ui.bd.plusMito', { n: b.base }), 'plus');
+  else html += row(t('ui.bd.base'), '+0', 'zero');
+  b.mitoItems.forEach(it => html += row(it.name, t('ui.bd.plusMito', { n: it.v }), 'plus'));
+  if (b.memory) html += row(t('ui.bd.memory'), t('ui.bd.memoryBonus'), 'plus');
+  if (b.dec < 0) html += row(t('ui.bd.decFrom', { a: b.actAfter }), t('ui.bd.minusMito', { n: b.dec }), 'minus');
   const dm = b.deltaMito;
-  html += `<div class="bd-row bd-total"><span class="g">この日の増減</span><span class="v ${dm > 0 ? 'plus' : dm < 0 ? 'minus' : 'zero'}">${dm > 0 ? '+' : ''}${dm}匹 → ${b.mitoAfter.toFixed(1)}匹</span></div>`;
+  html += `<div class="bd-row bd-total"><span class="g">${esc(t('ui.bd.dayChange'))}</span><span class="v ${dm > 0 ? 'plus' : dm < 0 ? 'minus' : 'zero'}">${esc(t('ui.bd.mitoChange', { d: (dm > 0 ? '+' : '') + dm, after: b.mitoAfter.toFixed(1) }))}</span></div>`;
   box.innerHTML = html;
 }
 let breakdownOpen = false;
@@ -5967,8 +6154,8 @@ const MED = { inhale: 5000, exhale: 8000, cycles: 20 };
 let med = null;
 function openMeditation() {
   $('#medModal').classList.add('open');
-  $('#medPhase').textContent = '準備はいい？';
-  $('#medCount').textContent = `5秒吸って、8秒吐く × ${MED.cycles}回（約4分半）`;
+  $('#medPhase').textContent = t('ui.med.ready2');
+  $('#medCount').textContent = t('ui.med.countN', { n: MED.cycles });
   $('#medStartBtn').style.display = '';
   const c = $('#medCircle');
   c.style.transition = 'none'; c.style.transform = 'scale(1)';
@@ -5976,14 +6163,14 @@ function openMeditation() {
 function medPhaseRun() {
   if (!med) return;
   const c = $('#medCircle');
-  $('#medCount').textContent = `${med.cycle} / ${MED.cycles} 回`;
+  $('#medCount').textContent = t('ui.med.progress', { a: med.cycle, b: MED.cycles });
   if (med.phase === 'inhale') {
-    $('#medPhase').textContent = '鼻から吸って（5秒）';
+    $('#medPhase').textContent = t('ui.med.in');
     c.style.transition = `transform ${MED.inhale}ms ease-in-out`;
     c.style.transform = 'scale(1.45)';
     med.t = setTimeout(() => { med.phase = 'exhale'; medPhaseRun(); }, MED.inhale);
   } else {
-    $('#medPhase').textContent = 'ゆっくり吐いて（8秒）';
+    $('#medPhase').textContent = t('ui.med.out');
     c.style.transition = `transform ${MED.exhale}ms ease-in-out`;
     c.style.transform = 'scale(0.72)';
     med.t = setTimeout(() => {
@@ -5998,7 +6185,7 @@ function medFinish() {
     const rec = getRec(today, true);  // 瞑想は「今」やったので今日の記録に付ける
     if (!rec.checked.includes(item.id)) rec.checked.push(item.id);
     commit();
-    toast(`呼吸瞑想 完了！ 活+${item.act}・+${item.inc}匹 ✨`);
+    toast(t('toast.med.done', { act: item.act, inc: item.inc }));
   }
   medStop();
 }
@@ -6147,7 +6334,7 @@ $('#remindTime').addEventListener('change', async e => {
   const LN = nativeLocalNotifications();
   if (LN) {
     const ok = await scheduleNativeReminder();
-    toast(ok ? DB.reminderTime + ' に通知します🔔' : '通知の設定に失敗しました（端末の通知設定を確認してください）');
+    toast(ok ? t('toast.notify.at', { time: DB.reminderTime }) : t('toast.notify.setupFailed'));
     renderNotifyStatus();
   } else {
     scheduleTodoReminder();
@@ -6183,7 +6370,7 @@ function fireTodoReminder() {
   save();
   toast(t('toast.reminder.left'));
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    try { new Notification('ミトコンドリア・ダイエット', { body: '今日のデイリーミッションをチェックし忘れていませんか？' }); } catch {}
+    try { new Notification('ミトコンドリア・ダイエット', { body: t('ui.notify.body') }); } catch {}
   }
 }
 let reminderTimer = null;
@@ -6231,7 +6418,7 @@ $('#btnImport').addEventListener('click', () => {
         if (!d || typeof d !== 'object' || !Array.isArray(d.items) || typeof d.days !== 'object') {
           throw new Error('bad format');
         }
-        if (!confirm('現在のデータをこのファイルの内容で置き換えますか？')) return;
+        if (!confirm(t('ui.confirm.import'))) return;
         DB = d;
         if (!DB.startDate) DB.startDate = Object.keys(DB.days).sort()[0] || todayStr();
         migrate(DB);
@@ -6253,7 +6440,7 @@ $('#btnSaveClose').addEventListener('click', () => {
 });
 $('#btnReset').addEventListener('click', () => {
   if (!confirm('本当に全データを初期化しますか？\n匹数・活性・チェック履歴・写真がすべて消えます。')) return;
-  if (!confirm('最終確認：この操作は取り消せません。初期化しますか？（心配なら先に「書き出す」でバックアップ）')) return;
+  if (!confirm(t('ui.confirm.reset2'))) return;
   localStorage.removeItem(STORE_KEY);
   DB = freshDB();
   sel = today; weekOffset = 0;
@@ -6564,7 +6751,7 @@ function tutRenderQuestion(body, q, next) {
     if (q.optional) {
       const skip = document.createElement('button');
       skip.type = 'button'; skip.className = 'tut-back'; skip.style.alignSelf = 'center';
-      skip.textContent = 'いまは決めない';
+      skip.textContent = t('ui.tut.skipQ');
       skip.addEventListener('click', () => { tut.answers[q.key] = null; tutGo(1); });
       wrap.appendChild(skip);
     }
@@ -6612,15 +6799,15 @@ function tutRenderLink(body) {
   tutProbeLink();
   const rows = [];
   if (nativeHealthPlugin()) {
-    rows.push({ id:'health', name:'ヘルスデータと連携する',
-      why:'歩数・体重・睡眠を自動で取り込みます。毎日の手入力が要らなくなります',
+    rows.push({ id:'health', name:t('ui.tut.linkHealth'),
+      why:t('ui.tut.linkHealthWhy'),
       ok:tut.healthOk });
   }
   rows.push({ id:'notify', name:'通知を許可する',
-    why:'決めた時刻に「今日のミッション、まだ残ってる？」とお知らせします', ok:tut.notifyOk });
+    why:t('ui.tut.linkNotifyWhy'), ok:tut.notifyOk });
   body.innerHTML =
-    `<div class="tut-title">できることを増やしておく</div>` +
-    `<div class="tut-lead">あとから設定でも変えられます。いまは飛ばしてもかまいません。</div>`;
+    `<div class="tut-title">${esc(t('ui.tut.linkTitle'))}</div>` +
+    `<div class="tut-lead">${esc(t('ui.tut.linkLead'))}</div>`;
   rows.forEach(r => {
     const el = document.createElement('div');
     el.className = 'tut-link-row';
@@ -6628,7 +6815,7 @@ function tutRenderLink(body) {
       `<div class="tut-link-main"><div class="tut-link-name">${esc(r.name)}</div>` +
       `<div class="tut-link-why">${esc(r.why)}</div></div>`;
     if (r.ok) {
-      el.insertAdjacentHTML('beforeend', `<span class="tut-link-ok">✓ 連携済み</span>`);
+      el.insertAdjacentHTML('beforeend', `<span class="tut-link-ok">${esc(t('ui.tut.linked'))}</span>`);
     } else {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'tut-link-btn'; b.textContent = '許可する';
@@ -6831,8 +7018,8 @@ startStage();
   if (shown === today) return;
   try { localStorage.setItem('mito-backup-nudge', today); } catch (e) {}
   toast(nudge.kind === 'never'
-    ? '記録がたまってきました。設定の「書き出す」でバックアップしておこう'
-    : `最後のバックアップから${nudge.days}日。設定の「書き出す」で保存しておこう`);
+    ? t('toast.backup.first')
+    : t('toast.backup.since', { n: nudge.days }));
 })();
 </script>
 </body>
