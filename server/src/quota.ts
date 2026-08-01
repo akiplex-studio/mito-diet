@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 // v1.44: 共有シークレット認証を廃止し、デバイス単位の日次利用枠に置き換えるためのロジック。
 // Render無料プランはディスクが非永続なため、カウンタはUpstash Redis（HTTP API）に保存する。
 // ネットワークなしでテストできるよう、ストアはインタフェース越しに注入する設計にしている。
@@ -162,11 +163,34 @@ export function resetAtIso(nowMs: number, offsetMin: number): string {
   return new Date(actualUtcMs).toISOString();
 }
 
-/** デバイスIDの形式チェック（認証ではなく識別子のため、厳密なUUID形式チェックまではしない） */
+/** デバイスIDの形式チェック（形だけ。署名の検証は verifyDeviceId で行う） */
 export function validateDeviceId(id: unknown): id is string {
   if (typeof id !== "string") return false;
-  if (id.length < 8 || id.length > 64) return false;
-  return /^[A-Za-z0-9-]+$/.test(id);
+  if (id.length < 8 || id.length > 128) return false;
+  return /^[A-Za-z0-9._-]+$/.test(id);
+}
+
+/* ============ v1.67: サーバー発行のデバイスID ============
+   以前は「8〜64文字の英数字」なら何でも受け付けていたため、IDを変えるだけで
+   デバイス日次上限を無限に回避できた（結果、グローバル上限を他人に食われて
+   本人が使えなくなる）。サーバーがHMACで署名したIDだけを受け付けるようにする。
+   形式は  <ランダム22文字>.<署名の先頭16文字>  */
+export function issueDeviceId(secret: string): string {
+  const raw = crypto.randomBytes(16).toString("base64url");   // 22文字
+  return `${raw}.${signDeviceId(raw, secret)}`;
+}
+function signDeviceId(raw: string, secret: string): string {
+  return crypto.createHmac("sha256", secret).update(raw).digest("base64url").slice(0, 16);
+}
+/** サーバーが発行したIDかどうか。形式が違う・署名が合わないものは false */
+export function verifyDeviceId(id: string, secret: string): boolean {
+  const dot = id.lastIndexOf(".");
+  if (dot <= 0) return false;
+  const raw = id.slice(0, dot);
+  const sig = id.slice(dot + 1);
+  const expected = signDeviceId(raw, secret);
+  if (sig.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 
 const DEVICE_TTL_SEC = 48 * 3600; // デバイスカウンタは48時間で自然に消える

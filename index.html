@@ -1209,6 +1209,8 @@ nav.footer {
    日本語を直したら `npm run i18n:check` が「英語が古い」と教えてくれる（i18n.lock.json） */
 const I18N = {
   ja: {
+    "ui.ana.disabled": "いまAI解析を一時的に止めています。写真とことばの記録はそのまま使えます。",
+    "ui.ana.quotaOutIp": "この回線からの解析が多かったため、今日はここまでです。明日また使えます。",
     "aria.mito": "マイト",
     "ui.weight.noRange": "直近{r}の記録がありません。",
     "tut.hello2.0": "{name}だね。よろしく！",
@@ -1932,6 +1934,8 @@ const I18N = {
     "unit.steps": "歩",
   },
   en: {
+    "ui.ana.disabled": "AI analysis is paused right now. Photos and notes still work as usual.",
+    "ui.ana.quotaOutIp": "Too many analyses from this network today. It resets tomorrow.",
     "aria.mito": "Mito",
     "ui.weight.noRange": "No records in the last {r}.",
     "tut.hello2.0": "{name}. Nice to meet you!",
@@ -4664,19 +4668,17 @@ function renderLbPanel() {
 /* v1.44: デバイスID（利用枠の識別用。ユーザー操作なし・自動発行。mito-dataとは別キーに保存し、
    データ初期化・エクスポート/インポートの影響を受けないようにする） */
 const DEVICE_ID_KEY = 'mito-device-id';
+/* v1.67: IDはサーバーが署名付きで発行する。自前で作ったIDは解析APIで弾かれる。
+   （以前は端末側で自由に作れたので、IDを変えるだけで日次上限を回避できた） */
 function getDeviceId() {
-  try {
-    let id = localStorage.getItem(DEVICE_ID_KEY);
-    if (id) return id;
-    id = (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
-    localStorage.setItem(DEVICE_ID_KEY, id);
-    return id;
-  } catch (e) {
-    // localStorage不可の環境（プライベートモード等）でも通信自体は続けられるよう、その場限りのIDを返す
-    return 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
-  }
+  try { return localStorage.getItem(DEVICE_ID_KEY); } catch (e) { return null; }
+}
+async function registerDevice() {
+  const res = await fetch(ANALYZE_API_URL.replace(/\/+$/, '') + '/api/device', { method: 'POST' });
+  const json = await res.json().catch(() => null);
+  if (!json || !json.deviceId) throw new Error(t('ui.ana.serverError'));
+  try { localStorage.setItem(DEVICE_ID_KEY, json.deviceId); } catch (e) {}
+  return json.deviceId;
 }
 
 /* v1.44: AI解析 今日あと◯回の表示（残り回数はサーバーレスポンスから更新。未取得の間は表示しない） */
@@ -4697,21 +4699,34 @@ function applyQuotaBonus(n) {
 
 /* ---- API呼び出し（共通） ---- */
 const ANALYZE_API_URL = 'https://mito-meal-analyzer.onrender.com'; // v1.44: サーバーURLは固定化（設定画面のURL入力欄は廃止）
-async function callAnalyzeAPI(bodyReq) {
+async function callAnalyzeAPI(bodyReq, retried) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 120000);
   try {
+    const deviceId = getDeviceId() || await registerDevice();
     const res = await fetch(ANALYZE_API_URL.replace(/\/+$/, '') + '/api/analyze-meal', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-device-id': getDeviceId(),
+        'x-device-id': deviceId,
         'x-tz-offset': String(-new Date().getTimezoneOffset()),
       },
       body: JSON.stringify(bodyReq),
       signal: ctrl.signal,
     });
     const json = await res.json().catch(() => null);
+    // v1.67: 署名の無い古いIDを持っている端末は、1度だけ取り直して再送する
+    if (res.status === 401 && json && json.error === 'need_registration' && !retried) {
+      try { localStorage.removeItem(DEVICE_ID_KEY); } catch (e) {}
+      await registerDevice();
+      clearTimeout(timer);
+      return callAnalyzeAPI(bodyReq, true);
+    }
+    if (res.status === 503 && json && json.error === 'analyze_disabled') {
+      const e = new Error(t('ui.ana.disabled'));
+      e.gentle = true;   // 一時停止は「エラー」ではなく案内として見せる
+      throw e;
+    }
     if (res.status === 429) {
       quotaRemaining = 0;
       renderQuotaNote();
@@ -4720,7 +4735,9 @@ async function callAnalyzeAPI(bodyReq) {
         ? t('ui.ana.quotaOut')
         : reason === 'global_budget_reached'
           ? t('ui.ana.quotaOut2')
-          : t('ui.ana.quotaOut3');
+          : reason === 'ip_daily_limit'
+            ? t('ui.ana.quotaOutIp')
+            : t('ui.ana.quotaOut3');
       const e = new Error(msg);
       e.gentle = true; // v1.44: 利用枠の到達はエラーではなく穏やかな案内として扱う
       throw e;

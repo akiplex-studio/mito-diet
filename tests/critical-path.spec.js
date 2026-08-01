@@ -25,6 +25,11 @@ test('食事を記録するとミトくんが反応する', async ({ page }) => 
   page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
   page.on('pageerror', (err) => { pageErrors.push(err.message); });
 
+  // v1.67: 解析の前にデバイスIDの発行を叩くようになったので、これもモックする
+  await page.route('**/api/device', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ deviceId: 'testdevice.testsignature' }) });
+  });
   // 解析APIをモック（実サーバー・実APIには到達させない）
   await page.route('**/api/analyze-meal', async (route) => {
     await route.fulfill({

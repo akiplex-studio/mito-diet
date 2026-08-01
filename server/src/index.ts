@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { analyzeMeal, BadImageError } from "./analyze.js";
 import { estimateCostUSD, logUsage } from "./usage.js";
-import { buildQuotaStore, checkAndConsume, recordCost, validateDeviceId } from "./quota.js";
+import { buildQuotaStore, checkAndConsume, issueDeviceId, recordCost, validateDeviceId, verifyDeviceId } from "./quota.js";
 import {
   extractSleepHoursFromRaw,
   extractStepsFromRaw,
@@ -19,6 +19,14 @@ const SECRET = process.env.APP_SHARED_SECRET || "";
 // v1.44: グローバル合算の日次上限（暴走防止）は廃止し、デバイス単位の日次上限＋グローバルコスト上限に置き換え
 const DEVICE_DAILY_LIMIT = Number(process.env.DEVICE_DAILY_LIMIT || 6);
 const GLOBAL_DAILY_COST_USD = Number(process.env.GLOBAL_DAILY_COST_USD || 1.5);
+/* v1.67: 踏み台対策。
+   ① IPごとの日次上限 — デバイスIDを変えて回避されても、同じ回線からは頭打ちになる
+   ② 署名つきデバイスID — サーバー発行のIDだけ受け付ける（勝手に作れない）
+   ③ 緊急停止 — ANALYZE_ENABLED=0 を入れて再起動すれば解析だけ止まる（他機能は生きる） */
+const IP_DAILY_LIMIT = Number(process.env.IP_DAILY_LIMIT || 30);
+const ANALYZE_ENABLED = (process.env.ANALYZE_ENABLED ?? "1") !== "0";
+// 旧クライアント（署名なしID）を一時的に通す逃げ道。既定はオフ
+const ALLOW_LEGACY_DEVICE_ID = process.env.ALLOW_LEGACY_DEVICE_ID === "1";
 const quotaStore = buildQuotaStore();
 const ALLOWED_ORIGINS = (
   process.env.ALLOWED_ORIGINS ||
@@ -38,6 +46,8 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 const app = express();
+// v1.67: Renderはリバースプロキシの内側。これが無いと req.ip が全員同じになりIP制限が効かない
+app.set("trust proxy", 1);
 // v1.44: x-device-id / x-tz-offset を /api/analyze-meal で使用するため許可ヘッダーに追加
 app.use(
   cors({ origin: ALLOWED_ORIGINS, allowedHeaders: ["content-type", "x-app-secret", "x-device-id", "x-tz-offset"] })
@@ -61,11 +71,29 @@ function parseTzOffset(raw: string | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/* v1.67: デバイスIDの発行。クライアントは初回だけ叩き、返ってきたIDを保存して使い回す。
+   署名が入っているので、勝手に作ったIDは /api/analyze-meal で弾かれる。 */
+app.post("/api/device", (req, res) => {
+  const id = issueDeviceId(SECRET);
+  console.log(`[device] 発行 ip=${req.ip}`);
+  res.json({ deviceId: id });
+});
+
 app.post("/api/analyze-meal", async (req, res) => {
+  // 0. 緊急停止（環境変数ひとつで解析だけ止める）
+  if (!ANALYZE_ENABLED) {
+    res.status(503).json({ error: "analyze_disabled" });
+    return;
+  }
   // 1. デバイスIDの検証（v1.44: 共有シークレット認証を廃止し、デバイス単位の識別子に置き換え）
   const deviceId = req.header("x-device-id");
   if (!validateDeviceId(deviceId)) {
     res.status(400).json({ error: "bad_device_id" });
+    return;
+  }
+  // v1.67: サーバーが発行したIDか確かめる。違えば再発行を促す（クライアントは1度だけ取り直す）
+  if (!verifyDeviceId(deviceId, SECRET) && !ALLOW_LEGACY_DEVICE_ID) {
+    res.status(401).json({ error: "need_registration" });
     return;
   }
   const offsetMin = parseTzOffset(req.header("x-tz-offset"));
@@ -88,6 +116,15 @@ app.post("/api/analyze-meal", async (req, res) => {
     text: hasText ? String(rawText).trim().slice(0, 500) : undefined,
     fullness: typeof rawFullness === "string" && rawFullness.trim() ? rawFullness.trim().slice(0, 30) : undefined,
   };
+
+  // 3-0. IPごとの日次上限。デバイスIDを変えて回避されても、同じ回線ならここで頭打ちになる
+  const ipKey = `ip:${new Date(Date.now() + offsetMin * 60_000).toISOString().slice(0, 10)}:${req.ip}`;
+  const ipCount = await quotaStore.incr(ipKey, 48 * 3600);
+  if (ipCount > IP_DAILY_LIMIT) {
+    console.error(`[quota] IP日次上限（${IP_DAILY_LIMIT}回）に到達: ip=${req.ip}`);
+    res.status(429).json({ error: "ip_daily_limit" });
+    return;
+  }
 
   // 3. 利用枠チェック（デバイス単位の日次上限＋グローバルコスト上限。暴走防止）
   const quota = await checkAndConsume(quotaStore, deviceId, offsetMin, {
@@ -256,7 +293,9 @@ app.get("/api/health-data", (req, res) => {
 app.listen(PORT, () => {
   console.log(`mito-meal-analyzer: http://localhost:${PORT}`);
   console.log(
-    `  POST /api/analyze-meal (x-device-id 必須) / デバイス日次上限 ${DEVICE_DAILY_LIMIT} 回・グローバル日次コスト上限 $${GLOBAL_DAILY_COST_USD}`
+    `  POST /api/device (デバイスID発行)\n` +
+    `  POST /api/analyze-meal (署名つき x-device-id 必須) / デバイス ${DEVICE_DAILY_LIMIT}回/日・IP ${IP_DAILY_LIMIT}回/日・グローバル $${GLOBAL_DAILY_COST_USD}/日` +
+    `${ANALYZE_ENABLED ? "" : " ※ANALYZE_ENABLED=0 のため解析は停止中"}`
   );
   console.log(`  POST/GET /api/health-data (x-app-secret 必須)`);
   console.log(`  CORS許可: ${ALLOWED_ORIGINS.join(", ")}`);
