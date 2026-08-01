@@ -12,10 +12,12 @@ eq('regress(20)=29', regress(20), 29);
 eq('regress(50)=50', regress(50), 50);
 
 /* --- mitoStep --- */
-// 活性62 → 基礎+2、運動増加なし
-eq('mitoStep base+2', mitoStep(100, 100, 62, 0), 102);
-// 活性50 → 基礎+1
-eq('mitoStep base+1', mitoStep(100, 100, 50, 0), 101);
+// v1.68: 基礎増加を半分にした（活性60以上で+1、45以上で+0.5）
+// 活性62 → 基礎+1、運動増加なし
+eq('mitoStep base+1', mitoStep(100, 100, 62, 0), 101);
+// 活性50 → 基礎+0.5
+eq('mitoStep base+0.5', mitoStep(100, 100, 50, 0), 100.5);
+eq('baseGrowth 境界', [baseGrowth(60), baseGrowth(59), baseGrowth(45), baseGrowth(44)].join(','), '1,0.5,0.5,0');
 // 活性40 → 基礎0・減少-2
 eq('mitoStep dec-2', mitoStep(100, 100, 40, 0), 98);
 // 活性10 → 減少-10
@@ -24,14 +26,14 @@ eq('mitoStep dec-10', mitoStep(100, 100, 10, 0), 90);
 eq('mitoStep floor10', mitoStep(12, 12, 5, 0), 10);
 // 既に10未満（序盤）は減少しない
 eq('mitoStep below floor keeps', mitoStep(3, 3, 5, 0), 3);
-// メモリー: peak40の半分以下(15)なら増加2倍 → base2*2=4
-eq('mitoStep memory x2', mitoStep(15, 40, 70, 0), 19);
+// メモリー: peak40の半分以下(15)なら増加2倍 → base1*2=2
+eq('mitoStep memory x2', mitoStep(15, 40, 70, 0), 17);
 // メモリー: 半分超(21)なら等倍
-eq('mitoStep no memory', mitoStep(21, 40, 70, 0), 23);
+eq('mitoStep no memory', mitoStep(21, 40, 70, 0), 22);
 // 上限5000
 eq('mitoStep cap5000', mitoStep(4999, 4999, 70, 100), 5000);
 // 小数の増加
-eq('mitoStep fractional', mitoStep(1, 1, 50, 0.1), 2.1);
+eq('mitoStep fractional', mitoStep(1, 1, 50, 0.1), 1.6);
 
 /* --- evalDay / isItemDone --- */
 const items = [
@@ -54,17 +56,17 @@ eq('evalDay sleep zero no NG', evalDay({ sleepHours:0 }, items).actSum, 0);
 eq('nextDate', nextDate('2026-06-30'), '2026-07-01');
 eq('nextDate year', nextDate('2026-12-31'), '2027-01-01');
 
-// 初日: 野菜ジュースのみ → 活50+2=52 → 基礎+1・増0.1 → 匹1+1.1=2.1
+// 初日: 野菜ジュースのみ → 活50+2=52 → 基礎+0.5・増0.1 → 匹1+0.6=1.6
 const db1 = { startDate:'2026-07-01', items, days:{ '2026-07-01': { checked:['juice'] } } };
 const s1 = computeState(db1, '2026-07-01');
 eq('day1 activation', s1.activation, 52);
-eq('day1 mito', s1.mito, 2.1);
+eq('day1 mito', s1.mito, 1.6);
 eq('day1 points', s1.perDay['2026-07-01'].points, 2);
 
-// 2日目: 何もしない → 回帰 52→51、基礎+1 → 3.1
+// 2日目: 何もしない → 回帰 52→51、基礎+0.5 → 2.1
 const s2 = computeState(db1, '2026-07-02');
 eq('day2 idle activation', s2.activation, 51);
-eq('day2 idle mito', s2.mito, 3.1);
+eq('day2 idle mito', s2.mito, 2.1);
 
 // 悪い日: 睡眠5h → 初日 50-8=42 → 減少-2だが下限未満スタートなので1のまま
 const db3 = { startDate:'2026-07-01', items, days:{ '2026-07-01': { sleepHours:5 } } };

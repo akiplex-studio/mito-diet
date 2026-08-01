@@ -45,8 +45,8 @@ test('新規ユーザー: 運動項目をチェックするとがんばり度を
 
   expect(after.checked).toContain('bodyweight');
   expect(after.effort).toBe(4);                 // 選んだ段階が記録されている
-  // 活性+6で基礎+1、がんばり度「追い込んだ」で+3.5 → 合計+4.5
-  expect(after.mito - before).toBe(4.5 - 1);    // before には当日の基礎+1が既に入っているため
+  // 活性+6で基礎+0.5、がんばり度「追い込んだ」で+3.5 → 合計+4
+  expect(after.mito - before).toBe(4 - 0.5);    // before には当日の基礎+0.5が既に入っているため
 
   expect(pageErrors, `pageerror が発生: ${pageErrors.join(' / ')}`).toEqual([]);
 });
@@ -130,6 +130,7 @@ test('v1.61: 保存済みの項目にも新しい効果値が反映され、過�
   // 新しい値に置き換わっている
   expect(after.efforts).toEqual([0.5, 1, 1.5, 2.5, 3.5]);
   // 過去の匹数も新しい基準で計算し直される。
-  // 旧値（追い込んだ=8匹）のままなら3日で30匹まで伸びていたところが16.5匹になる
-  expect(after.mito).toBe(16.5);
+  // 旧値（追い込んだ=8匹・基礎+2）のままなら3日で30匹まで伸びていたところが14匹になる
+  // （v1.61で効果値を半分に、v1.68で基礎増加も半分にした）
+  expect(after.mito).toBe(14);
 });

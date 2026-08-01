@@ -1053,7 +1053,7 @@ nav.footer {
         </div>
         <div class="set-note" data-i18n="ui.set.note.goal">設定すると「体重のあゆみ」グラフに目標線（青の破線）が表示されます。空欄にすると非表示になります。</div>
       </div>
-      <div class="set-note" style="text-align:center" data-i18n="ui.set.footer">ミトコンドリア・ダイエット v1.4 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存</div>
+      <div class="set-note" style="text-align:center" id="setFooter"></div>
       <button class="btn btn-primary" id="btnSaveClose" style="width:100%; margin-top:var(--space-4)" data-i18n="ui.set.saveClose">保存して閉じる</button>
     </div>
   </main>
@@ -1889,7 +1889,7 @@ const I18N = {
     "ui.set.allowNotify": "通知を許可する",
     "ui.set.data": "育成データ",
     "ui.set.export": "書き出す（JSON）",
-    "ui.set.footer": "ミトコンドリア・ダイエット v1.4 — 仕様書・Design.md 準拠 / データは端末内（localStorage）のみに保存",
+    "ui.set.footer": "ミトコンドリア・ダイエット v{v} / データは端末内（localStorage）にだけ保存されます",
     "ui.set.goal": "目標体重",
     "ui.set.goalWeight": "目標体重（任意・kg）",
     "ui.set.height": "身長（cm）",
@@ -2614,7 +2614,7 @@ const I18N = {
     "ui.set.allowNotify": "Allow notifications",
     "ui.set.data": "Your progress",
     "ui.set.export": "Export (JSON)",
-    "ui.set.footer": "Mitochondria Diet v1.4 — all data stays on this device (localStorage)",
+    "ui.set.footer": "Mitochondria Diet v{v} / all your data stays on this device (localStorage)",
     "ui.set.goal": "Goal weight",
     "ui.set.goalWeight": "Goal weight (optional, kg)",
     "ui.set.height": "Height (cm)",
@@ -2694,6 +2694,8 @@ const DOW_KEYS = ['dow.mon','dow.tue','dow.wed','dow.thu','dow.fri','dow.sat','d
 /* ==================================================================
    @logic-start  純粋ロジック（DOM非依存・テスト可能）
    ================================================================== */
+// v1.68: 画面に出すバージョン。ここだけ直せばよいようにする
+const APP_VERSION = '1.68';
 const CFG = {
   ACT_START: 50,       // 活性ゲージ初期値・回帰の目標
   REGRESS: 0.3,        // 毎朝、50へ戻す割合
@@ -2842,9 +2844,15 @@ function evalDay(rec, items, dateStr) {
   return { actSum, incSum, points: actSum };
 }
 
+/* v1.68: 何もしなくても増える分（基礎増加）を半分にした。
+   活性60以上で+2/日は、それだけで年730匹になり、ミッションで稼いだ分が霞んでいた。
+   同じ式が内訳表示にも書かれていて食い違う恐れがあったので、関数にまとめて1か所にする。 */
+function baseGrowth(act) {
+  return act >= 60 ? 1 : act >= 45 ? 0.5 : 0;
+}
 // 匹数の1日更新：基礎増加＋運動増加、低活性の減少、メモリー倍増、下限・上限
 function mitoStep(mito, peak, act, incSum) {
-  const base = act >= 60 ? 2 : act >= 45 ? 1 : 0;
+  const base = baseGrowth(act);
   const dec  = act >= 45 ? 0 : act >= 30 ? -2 : act >= 15 ? -5 : -10;
   let gain = base + incSum;
   if (gain > 0 && mito <= peak / 2) gain *= 2;  // ミトコンドリアメモリー
@@ -6106,7 +6114,7 @@ function dayContributions(dateStr) {
     peak = Math.max(peak, mito);
     if (d === dateStr) {
       // 匹数の内訳を再現（mitoStep と同じ計算）
-      const base = act >= 60 ? 2 : act >= 45 ? 1 : 0;
+      const base = baseGrowth(act);
       const dec  = act >= 45 ? 0 : act >= 30 ? -2 : act >= 15 ? -5 : -10;
       const memory = (base + ev.incSum) > 0 && mitoBefore <= peakBefore / 2;
       const actItems = [], mitoItems = [];
@@ -6276,6 +6284,7 @@ function openSettings() {
   } else {
     $('#lastExportNote').textContent = t('ui.set.neverExported');
   }
+  $('#setFooter').textContent = t('ui.set.footer', { v: APP_VERSION });
   $('#setLang').value = appLang();
   $('#profName').value = DB.profile.name || '';
   $('#goalInput').value = (DB.goalWeight != null && DB.goalWeight !== '') ? DB.goalWeight : '';
