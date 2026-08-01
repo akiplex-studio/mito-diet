@@ -10,8 +10,9 @@
     "cap:open:android": "npm run cap:sync && npx cap open android",
     "i18n:check": "node scripts/i18n-check.mjs",
     "test:smoke": "playwright test",
-    "check": "npm run i18n:check && npm run test:smoke",
-    "i18n:accept": "node scripts/i18n-check.mjs --accept"
+    "check": "npm run i18n:scan && npm run i18n:check && npm run test:smoke",
+    "i18n:accept": "node scripts/i18n-check.mjs --accept",
+    "i18n:scan": "node scripts/i18n-scan.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
