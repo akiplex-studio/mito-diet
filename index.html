@@ -4544,13 +4544,14 @@ function renderPhotos() {
       const thumbs = document.createElement('div');
       thumbs.className = 'photo-thumbs';
       arr.forEach((entry, idx) => {
-        const t = document.createElement('div');
-        t.className = 'photo-thumb';
+        // v1.69: ここを t という名前にすると翻訳関数 t() を隠して落ちる。thumb にすること
+        const thumb = document.createElement('div');
+        thumb.className = 'photo-thumb';
         const img = document.createElement('img');
         img.src = entry.data; img.alt = t('aria.mealPhoto', { meal: label, n: idx + 1 });
         img.addEventListener('click', () => openLightbox(key, idx));
-        t.appendChild(img);
-        thumbs.appendChild(t);
+        thumb.appendChild(img);
+        thumbs.appendChild(thumb);
       });
       content.appendChild(thumbs);
     }

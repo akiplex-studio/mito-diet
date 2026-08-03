@@ -44,6 +44,41 @@ const DATA_BLOCKS = [
   'WALKING_EFFORTS', 'GENERIC_EFFORTS',
 ];
 
+
+/* v1.69: 翻訳関数 t() を隠すローカル変数を探す。
+   `const t = document.createElement('div')` のようにローカルで t を作ると、
+   同じ関数の中の t('キー') が「t is not a function」で落ちる。
+   日本語表示では t() を呼ばない経路だと表に出ないため、英語化のあとで初めて壊れる。
+   実際に renderNutrition・renderKcalGraph・renderPhotos の3か所でやらかした。
+
+   ただの `const t = new Date(...)` は、その関数が t() を呼んでいなければ無害。
+   **同じ関数の中で「t を宣言」かつ「t(...) を呼ぶ」ものだけ**を落とす。 */
+function findShadowedT(text) {
+  const hits = [];
+  const declRe = /(?:^|[;{(\s])(?:const|let|var)\s+t\s*=/;
+  // 行頭の function 宣言で関数を切り出し、その本体だけを見る
+  const fnRe = /^(?:async )?function\s+([A-Za-z0-9_$]+)\s*\(/gm;
+  let m;
+  while ((m = fnRe.exec(text))) {
+    const bodyStart = text.indexOf('{', m.index);
+    if (bodyStart < 0) continue;
+    let depth = 0, end = bodyStart;
+    for (let i = bodyStart; i < text.length; i++) {
+      const c = text[i];
+      if (c === '{') depth++;
+      else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
+    }
+    const body = text.slice(bodyStart, end);
+    if (!declRe.test(body)) continue;
+    // t('...') / t(`...`) の呼び出しがあるか（自分の宣言行は除く）
+    const callsT = /[^.\w]t\s*\(\s*['`]/.test(body);
+    if (!callsT) continue;
+    const line = text.slice(0, m.index).split('\n').length;
+    hits.push({ fn: m[1], line });
+  }
+  return hits;
+}
+
 const src = readFileSync(SRC, 'utf8');
 
 /** 対応する括弧まで飛ばして [start,end) を返す */
@@ -104,6 +139,16 @@ for (let i = 0; i < lines.length; i++) {
     if (ALLOW_PREFIX.some((p) => v.startsWith(p))) continue;
     if (!found.has(v)) found.set(v, i + 1);
   }
+}
+
+// 翻訳関数を隠すローカル変数（見つけたら必ず落とす）
+const shadowed = findShadowedT(masked.slice(scriptAt));
+if (shadowed.length) {
+  console.error(`\n[i18n-scan] 翻訳関数 t() を隠している関数が ${shadowed.length}件あります`);
+  console.error('  同じ関数の中で t を宣言し、かつ t(\'キー\') を呼んでいます。');
+  console.error('  実行すると「t is not a function」で落ちます。ローカル変数を別名にしてください。\n');
+  for (const h of shadowed) console.error(`  ${SRC}: ${h.fn}()`);
+  process.exit(1);
 }
 
 if (found.size === 0) {
