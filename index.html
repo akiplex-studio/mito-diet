@@ -965,6 +965,10 @@ nav.footer {
           <button class="btn btn-danger" id="btnReset" data-i18n="ui.set.reset">全データを初期化</button>
         </div>
         <div class="set-note" data-i18n="ui.set.note.export">書き出しには写真データも含まれます。機種変更前のバックアップに使えます。</div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btnExportSummary" data-i18n="ui.set.exportSummary">記録だけ書き出す（写真なし）</button>
+        </div>
+        <div class="set-note" data-i18n="ui.set.note.exportSummary">写真を含まない軽量な書き出しです。栄養の合計と達成した項目だけが入ります。解析や他のアプリへの取り込みに使えます。</div>
         <div class="set-note" id="lastExportNote"></div>
       </div>
       <div class="set-section">
@@ -1801,6 +1805,7 @@ const I18N = {
     "toast.analyze.redoFailed": "再解析に失敗しました",
     "toast.analyze.redone": "修正して再解析しました ✨",
     "toast.export.done": "JSONを書き出しました",
+    "toast.exportSummary.done": "記録を書き出しました（写真なし）",
     "toast.health.appOnly": "ヘルス連携はアプリ版でのみ利用できます",
     "toast.health.applied": "ヘルスデータを反映しました",
     "toast.health.denied": "連携できませんでした。端末の設定から許可してください",
@@ -1897,6 +1902,7 @@ const I18N = {
     "ui.set.allowNotify": "通知を許可する",
     "ui.set.data": "育成データ",
     "ui.set.export": "書き出す（JSON）",
+    "ui.set.exportSummary": "記録だけ書き出す（写真なし）",
     "ui.set.footer": "ミトコンドリア・ダイエット v{v} / データは端末内（localStorage）にだけ保存されます",
     "ui.set.goal": "目標体重",
     "ui.set.goalWeight": "目標体重（任意・kg）",
@@ -1912,6 +1918,7 @@ const I18N = {
     "ui.set.name": "呼び名",
     "ui.set.note.ai": "写真の拡大表示にある「解析」ボタンで、AIが料理・栄養・マイトスコアを推定します。",
     "ui.set.note.export": "書き出しには写真データも含まれます。機種変更前のバックアップに使えます。",
+    "ui.set.note.exportSummary": "写真を含まない軽量な書き出しです。栄養の合計と達成した項目だけが入ります。解析や他のアプリへの取り込みに使えます。",
     "ui.set.note.goal": "設定すると「体重のあゆみ」グラフに目標線（青の破線）が表示されます。空欄にすると非表示になります。",
     "ui.set.note.howto": "「マイトの基本」は3枚の図解だけ、「最初から見直す」は身長・年齢などの入力からやり直せます。",
     "ui.set.note.missions": "自重トレを筋トレに、禁酒を休肝日に、といった入れ替えができます。選び直しても過去の記録と匹数は変わりません。",
@@ -2534,6 +2541,7 @@ const I18N = {
     "toast.analyze.redoFailed": "Could not re-analyse",
     "toast.analyze.redone": "Re-analysed with your edits ✨",
     "toast.export.done": "Exported as JSON",
+    "toast.exportSummary.done": "Records exported (no photos)",
     "toast.health.appOnly": "Health sync is only available in the app",
     "toast.health.applied": "Health data applied",
     "toast.health.denied": "Could not connect. Please allow it in your device settings",
@@ -2630,6 +2638,7 @@ const I18N = {
     "ui.set.allowNotify": "Allow notifications",
     "ui.set.data": "Your progress",
     "ui.set.export": "Export (JSON)",
+    "ui.set.exportSummary": "Export records only (no photos)",
     "ui.set.footer": "Mitochondria Diet v{v} / all your data stays on this device (localStorage)",
     "ui.set.goal": "Goal weight",
     "ui.set.goalWeight": "Goal weight (optional, kg)",
@@ -2645,6 +2654,7 @@ const I18N = {
     "ui.set.name": "What to call you",
     "ui.set.note.ai": "Tap “Analyse” on an enlarged photo and the AI estimates the dishes, nutrition and Mito score.",
     "ui.set.note.export": "The export includes your photos. Useful as a backup before changing phones.",
+    "ui.set.note.exportSummary": "A lightweight export without photos. It contains only your nutrition totals and completed items. Useful for analysis or importing into another app.",
     "ui.set.note.goal": "Set this and a goal line (blue dashed) appears on the weight chart. Leave it empty to hide it.",
     "ui.set.note.howto": "“Read the basics” shows the three illustrated pages. “Start the intro again” lets you redo height, age and the rest.",
     "ui.set.note.missions": "Swap bodyweight training for the gym, or going alcohol-free for a rest day. Changing your picks never alters your past records or your mito count.",
@@ -3248,6 +3258,37 @@ function backupNudge(db, todayStr) {
   const d = daysBetween(last, todayStr);
   return d >= 7 ? { kind: 'stale', days: d } : null;
 }
+// 記録の要約を作る。**写真は含めない。**
+// 出口は2つ（①ファイルに書き出して外部へ取り込む ②Claudeへ共有：将来）だが、
+// 中身の定義はここが唯一の正。片方だけ直して食い違うのを防ぐ。
+// nameOf(id) は表示名の解決係。**外から渡す**（i18n とカスタム名は @logic の外にあるため、
+// このブロックの「DOM非依存・テスト可能」を壊さないようにする）。省略時は db.items の name で代用する。
+function buildSummary(db, todayStr, nameOf) {
+  const fallback = {};
+  for (const it of (db.items || [])) fallback[it.id] = it.name || it.id;
+  const resolve = nameOf || ((id) => fallback[id] || id);
+  const out = {};
+  for (const date of Object.keys(db.days || {}).sort()) {
+    if (date > todayStr) continue;
+    const rec = db.days[date] || {};
+    const n = recNutrition(rec);
+    const day = {};
+    // 解析済みの食事が1つも無い日は栄養のキーごと出さない（0 と欠測を区別するため）
+    if (n.analyzedMeals > 0) {
+      day.meal_kcal = Math.round(n.kcal);
+      day.protein_g = Math.round(n.p);
+      day.fat_g = Math.round(n.f);
+      day.carbs_g = Math.round(n.c);
+    }
+    day.meals_recorded = countMealRecords(rec);
+    day.hara7_meals = countHara7Meals(rec);
+    const done = (rec.checked || []).map(resolve);
+    if (done.length) day.mito_done = done;
+    out[date] = day;
+  }
+  return out;
+}
+
 /* @logic-end */
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
@@ -6489,6 +6530,23 @@ $('#btnExport').addEventListener('click', () => {
   DB.lastExport = todayStr();
   save();
   toast(t('toast.export.done'));
+});
+// 写真を含まない軽量な書き出し。外部（Obsidian等）への取り込み用。
+// 既存の #btnExport（写真込みのフルバックアップ）とは別物で、あちらには触っていない。
+$('#btnExportSummary').addEventListener('click', () => {
+  // 選び直しで DB.items から外れた項目も過去の記録には残るので、CATALOG 側も見る
+  const nameOf = (id) => {
+    const it = (DB.items || []).find(x => x.id === id) || CATALOG.find(x => x.id === id);
+    return it ? itemName(it) : id;
+  };
+  const payload = { generated: todayStr(), days: buildSummary(DB, todayStr(), nameOf) };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `mito-summary-${todayStr()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  toast(t('toast.exportSummary.done'));
 });
 $('#btnImport').addEventListener('click', () => {
   const input = document.createElement('input');
