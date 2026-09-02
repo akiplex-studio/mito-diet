@@ -30,3 +30,10 @@ www/
 # チュートリアルの原本画像（1枚2MB。アプリにはWebP化して埋め込むので原本は追跡しない）
 tips*.png
 ChatGPT Image*.png
+
+# Android リリース署名（絶対にコミットしない）
+# 階層を問わず無視する。TextEditが .rtf を付けても拾えるように末尾もワイルドカード
+keystore.properties*
+**/keystore.properties*
+*.jks
+*.keystore
