@@ -24,7 +24,20 @@
   4. IPA を展開して埋め込みアイコンが実物であることを確認済み（`pngcrush -revert-iphone-optimizations` で復元して目視）。
 - **未対応**: Android のスプラッシュは青い X のまま。v170 が審査中のため触っていない。直すなら v171 として出し直す判断が要る。
 
-## 169 に同梱したその他の変更（2026-09-05）
+## iOS の配信状況（2026-09-06 時点）
+
+- App ID `6808987894`、バンドルID `com.akiplex.mitodiet`、チーム `8VX6T3795L`。
+- **内部テスター**: グループ `Internal Testing`。`apple@akiplex.com`（未承諾）と `ikaubon6@gmail.com`。
+  後者が平井さんの iPhone（12 Pro Max / iOS 26.6.1）で **build 171 をインストール済み**。
+  ikaubon6@gmail.com は App Store Connect のユーザー（ロール Marketing）として追加してある。
+- **外部テスター**: グループ `Friends and Family`。build 171 で**ベータ審査に提出済み**（2026-09-06 未明）。
+  承認後に奥さんと東江さんをメールで招待する予定。**アドレスは未取得。**
+- Test Information は入力済み（説明・フィードバック先 ikaubon6@gmail.com・審査連絡先・審査メモ）。
+  プライバシーポリシーは `https://akiplex-studio.github.io/mito-diet/privacypolicy.html`。
+  **`akiplex.com/mito-life/privacypolicy.html` は使わない** — 200 を返すが中身は Akiplex Studio のトップ。
+- iPhone にあった旧開発版のデータ（9/3 の1日分）は `backup/ios_20260905_235909/` に退避済み。
+
+## iOS のアイコン・スプラッシュが Capacitor の初期状態のままだった（2026-09-06 発覚・対応済み）
 - ランチャーアイコンをマイトに差し替え（アダプティブ、背景 #386641）。
 - アプリ名を「ミトコンドリア・ライフ」に統一: `strings.xml`、`capacitor.config.json`、`index.html`（title・フッター・通知タイトル・PWA name）、`privacypolicy.html`、iOS `Info.plist`。`scripts/i18n-scan.mjs` の ALLOW も更新。
 - 残っている旧名（意図的に未変更）: `package.json` / `server/package.json` の description、プロジェクトの `CLAUDE.md` の見出し、`~/claude/CLAUDE.md` の目次行。
