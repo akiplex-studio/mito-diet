@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#386641">
-<title>ミトコンドリア・ダイエット</title>
+<title>ミトコンドリア・ライフ</title>
 <link rel="icon" type="image/png" id="mitoFavicon">
 <link rel="apple-touch-icon" id="mitoAppleIcon">
 <link rel="manifest" id="mitoManifestLink">
@@ -1806,6 +1806,7 @@ const I18N = {
     "toast.analyze.redone": "修正して再解析しました ✨",
     "toast.export.done": "JSONを書き出しました",
     "toast.exportSummary.done": "記録を書き出しました（写真なし）",
+    "toast.export.failed": "書き出しできませんでした。もう一度お試しください",
     "toast.health.appOnly": "ヘルス連携はアプリ版でのみ利用できます",
     "toast.health.applied": "ヘルスデータを反映しました",
     "toast.health.denied": "連携できませんでした。端末の設定から許可してください",
@@ -1903,7 +1904,7 @@ const I18N = {
     "ui.set.data": "育成データ",
     "ui.set.export": "書き出す（JSON）",
     "ui.set.exportSummary": "記録だけ書き出す（写真なし）",
-    "ui.set.footer": "ミトコンドリア・ダイエット v{v} / データは端末内（localStorage）にだけ保存されます",
+    "ui.set.footer": "ミトコンドリア・ライフ v{v} / データは端末内（localStorage）にだけ保存されます",
     "ui.set.goal": "目標体重",
     "ui.set.goalWeight": "目標体重（任意・kg）",
     "ui.set.height": "身長（cm）",
@@ -2542,6 +2543,7 @@ const I18N = {
     "toast.analyze.redone": "Re-analysed with your edits ✨",
     "toast.export.done": "Exported as JSON",
     "toast.exportSummary.done": "Records exported (no photos)",
+    "toast.export.failed": "Export failed. Please try again",
     "toast.health.appOnly": "Health sync is only available in the app",
     "toast.health.applied": "Health data applied",
     "toast.health.denied": "Could not connect. Please allow it in your device settings",
@@ -2639,7 +2641,7 @@ const I18N = {
     "ui.set.data": "Your progress",
     "ui.set.export": "Export (JSON)",
     "ui.set.exportSummary": "Export records only (no photos)",
-    "ui.set.footer": "Mitochondria Diet v{v} / all your data stays on this device (localStorage)",
+    "ui.set.footer": "Mitochondria Life v{v} / all your data stays on this device (localStorage)",
     "ui.set.goal": "Goal weight",
     "ui.set.goalWeight": "Goal weight (optional, kg)",
     "ui.set.height": "Height (cm)",
@@ -3734,7 +3736,13 @@ function freshDB() {
 const MEAL_KEYS = ['breakfast','lunch','dinner'];
 function normalizePhotoEntry(x) {
   if (typeof x === 'string' && x) return { data: x, analysis: null };           // v1/v2形式
-  if (x && typeof x === 'object' && typeof x.data === 'string' && x.data) {     // v3形式
+  if (x && typeof x === 'object' && typeof x.data === 'string' && x.data) {     // v3形式（記録の中に画像を持つ）
+    if (!('analysis' in x)) x.analysis = null;
+    return x;
+  }
+  // v1.70形式（画像はファイル、記録には場所だけ）。
+  // ここを足し忘れると、移行した写真が次の起動で全部捨てられる（2026-09-05に踏んだ）
+  if (x && typeof x === 'object' && typeof x.file === 'string' && x.file) {
     if (!('analysis' in x)) x.analysis = null;
     return x;
   }
@@ -3891,10 +3899,17 @@ function save() {
                   activation: computed.activation, updated: todayStr() };
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(DB));
+    saveFailed = false;
+    return true;
   } catch {
+    // v1.70: 失敗を呼び出し側に返す。直後に成功トーストを出して上書きしてしまうと、
+    // 画面は正常に見えるのに保存されておらず、再起動で記録が消える（2026-09-05に発生）
+    saveFailed = true;
     toast(t('toast.save.full'));
+    return false;
   }
 }
+let saveFailed = false;   // 直近の保存が失敗したか。成功トーストで上書きしないための目印
 
 /* ============ アプリ状態 ============ */
 let DB = load();
@@ -4124,7 +4139,7 @@ mitoImg.src = MITO_IMG_SRC;
   const manifestLink = document.getElementById('mitoManifestLink');
   if (manifestLink) {
     const manifest = {
-      name: 'ミトコンドリア・ダイエット',
+      name: 'ミトコンドリア・ライフ',
       short_name: 'マイト',
       icons: [{ src: MITO_IMG_SRC, sizes: '128x128', type: 'image/png' }],
     };
@@ -4605,7 +4620,7 @@ function renderPhotos() {
         const thumb = document.createElement('div');
         thumb.className = 'photo-thumb';
         const img = document.createElement('img');
-        img.src = entry.data; img.alt = t('aria.mealPhoto', { meal: label, n: idx + 1 });
+        setPhotoSrc(img, entry); img.alt = t('aria.mealPhoto', { meal: label, n: idx + 1 });
         img.addEventListener('click', () => openLightbox(key, idx));
         thumb.appendChild(img);
         thumbs.appendChild(thumb);
@@ -4675,7 +4690,8 @@ function openLightbox(meal, idx) {
   const arr = (rec.photos && rec.photos[meal]) || [];
   if (!arr[idx]) return;
   lightbox = { meal, index: idx };
-  $('#lbImg').src = arr[idx].data;
+  $('#lbImg').removeAttribute('src');
+  setPhotoSrc($('#lbImg'), arr[idx]);   // v1.70: ファイル保存の写真は読めた時点で入る
   renderLbPanel();
   $('#lightbox').classList.add('open');
 }
@@ -4916,7 +4932,7 @@ async function manualSyncHealthField(field, btn) {
   rec[field] = data[field];
   rec[field + 'Source'] = 'auto';
   commit();
-  toast(t('toast.health.applied'));
+  if (!saveFailed) toast(t('toast.health.applied'));
 }
 $('#stepSyncBtn').addEventListener('click', () => manualSyncHealthField('steps', $('#stepSyncBtn')));
 $('#sleepSyncBtn').addEventListener('click', () => manualSyncHealthField('sleepHours', $('#sleepSyncBtn')));
@@ -5067,7 +5083,8 @@ async function runMealAnalysis() {
   renderPhotos();                                          // 解析中バッジを即反映
   try {
     const bodyReq = {};
-    if (arr.length) bodyReq.images = arr.map(e => e.data);
+    // v1.70: ファイル保存の写真は読み出してから送る
+    if (arr.length) bodyReq.images = (await Promise.all(arr.map(photoData))).filter(Boolean);
     if (note) bodyReq.text = note;
     if (fullness) bodyReq.fullness = fullness;
     const analysis = await callAnalyzeAPI(bodyReq);
@@ -5170,12 +5187,123 @@ $('#lbDel').addEventListener('click', () => {
   if (meal == null) return;
   if (confirm(t('ui.meal.confirmDelete'))) {
     const rec = getRec(sel, true);
-    if (Array.isArray(rec.photos[meal])) rec.photos[meal].splice(index, 1);
+    if (Array.isArray(rec.photos[meal])) {
+      const [removed] = rec.photos[meal].splice(index, 1);
+      if (removed && removed.file) deletePhotoFile(removed.file);   // v1.70: 実ファイルも消す
+    }
     $('#lightbox').classList.remove('open');
     lightbox = { meal:null, index:null };
     commit();
   }
 });
+/* ============ 写真の保存先（v1.70） ============
+   ネイティブでは写真をファイルとして置き、記録には場所（file）だけ持たせる。
+   写真を記録の中に文字列（data）で持つと localStorage の5MB上限に当たり、
+   それ以降おかしくなる。2026-09-05 に実際に上限へ到達して記録が保存できなくなった。
+   ウェブ版は Filesystem が無いので従来どおり data を持つ。両方の形を読めるようにしてある。 */
+const PHOTO_DIR = 'photos';
+const photoCache = new Map();   // ファイルパス → data URL（描画用の一時キャッシュ）
+
+function nativeFilesystem() {
+  const cap = window.Capacitor;
+  if (!cap || typeof cap.isNativePlatform !== 'function' || !cap.isNativePlatform()) return null;
+  return (cap.Plugins && cap.Plugins.Filesystem) || null;
+}
+// data URL から base64 の中身だけを取り出す
+function dataUrlBody(dataUrl) {
+  const i = String(dataUrl).indexOf(',');
+  return i < 0 ? '' : String(dataUrl).slice(i + 1);
+}
+// 写真をファイルに書いて、その置き場所を返す。書けなければ null（呼び出し側が data のまま持つ）
+async function writePhotoFile(dataUrl) {
+  const FS = nativeFilesystem();
+  if (!FS) return null;
+  const name = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const path = `${PHOTO_DIR}/${name}`;
+  await FS.writeFile({ path, data: dataUrlBody(dataUrl), directory: 'DATA', recursive: true });
+  photoCache.set(path, dataUrl);
+  return path;
+}
+// 置き場所から data URL を読み出す。読めなければ null
+async function readPhotoFile(path) {
+  if (photoCache.has(path)) return photoCache.get(path);
+  const FS = nativeFilesystem();
+  if (!FS || !path) return null;
+  try {
+    const r = await FS.readFile({ path, directory: 'DATA' });
+    const url = 'data:image/jpeg;base64,' + r.data;
+    photoCache.set(path, url);
+    return url;
+  } catch (e) { console.error('[photo] read', path, e); return null; }
+}
+async function deletePhotoFile(path) {
+  const FS = nativeFilesystem();
+  if (!FS || !path) return;
+  photoCache.delete(path);
+  try { await FS.deleteFile({ path, directory: 'DATA' }); } catch (e) { console.error('[photo] delete', path, e); }
+}
+// 新旧どちらの形の写真でも data URL を返す（解析・拡大表示用）
+async function photoData(entry) {
+  if (!entry) return null;
+  if (entry.data) return entry.data;
+  if (entry.file) return await readPhotoFile(entry.file);
+  return null;
+}
+// 描画用。同期で分かるものは即入れ、ファイルのものは読めた時点で差し込む
+function setPhotoSrc(img, entry) {
+  if (!entry) return;
+  if (entry.data) { img.src = entry.data; return; }
+  const cached = entry.file && photoCache.get(entry.file);
+  if (cached) { img.src = cached; return; }
+  readPhotoFile(entry.file).then(url => { if (url) img.src = url; });
+}
+// 既存データの移行。記録の中に data で入っている写真をファイルへ移す。
+// 1枚ごとに保存するので、途中で落ちても続きから再開できる。
+async function migratePhotosToFiles() {
+  if (!nativeFilesystem()) return;
+  let moved = 0;
+  for (const date of Object.keys(DB.days || {})) {
+    const rec = DB.days[date];
+    if (!rec || !rec.photos) continue;
+    for (const meal of Object.keys(rec.photos)) {
+      const arr = rec.photos[meal];
+      if (!Array.isArray(arr)) continue;
+      for (const entry of arr) {
+        if (!entry || !entry.data || entry.file) continue;
+        try {
+          const path = await writePhotoFile(entry.data);
+          if (!path) return;
+          entry.file = path;
+          delete entry.data;
+          moved++;
+          save();   // 1枚ごとに確定させる（ここで容量が空いていく）
+        } catch (e) { console.error('[photo] migrate', date, meal, e); return; }
+      }
+    }
+  }
+  if (moved) console.log('[photo] migrated', moved);
+}
+// 書き出し用。ファイルに置いた写真を読み直して data に戻した控えを作る。
+// これでバックアップは今までどおり「1個のJSONに全部入り」になる。
+async function dbForExport() {
+  if (!nativeFilesystem()) return DB;
+  const copy = JSON.parse(JSON.stringify(DB));
+  for (const date of Object.keys(copy.days || {})) {
+    const rec = copy.days[date];
+    if (!rec || !rec.photos) continue;
+    for (const meal of Object.keys(rec.photos)) {
+      const arr = rec.photos[meal];
+      if (!Array.isArray(arr)) continue;
+      for (const entry of arr) {
+        if (!entry || !entry.file || entry.data) continue;
+        const url = await readPhotoFile(entry.file);
+        if (url) { entry.data = url; delete entry.file; }
+      }
+    }
+  }
+  return copy;
+}
+
 async function resizeImage(file, max = 800) {
   const url = URL.createObjectURL(file);
   try {
@@ -5200,7 +5328,13 @@ async function addPhotoFile(file) {
   try {
     const data = await resizeImage(file);
     const first = rec.photos[photoSlot].length === 0;
-    rec.photos[photoSlot].push({ data, analysis: null });
+    // v1.70: ネイティブではファイルに置き、記録には場所だけ持たせる（localStorage を写真で埋めない）
+    let entry = { data, analysis: null };
+    try {
+      const path = await writePhotoFile(data);
+      if (path) entry = { file: path, analysis: null };
+    } catch (e) { console.error('[photo] write', e); }   // 書けなければ従来どおり data で持つ
+    rec.photos[photoSlot].push(entry);
     // 最初の1枚アップで対応する食事TODOを自動チェック（例：朝の写真→野菜ジュース）
     let autoMsg = '';
     if (first) {
@@ -5218,7 +5352,7 @@ async function addPhotoFile(file) {
       }
     }
     commit();
-    toast(autoMsg || t('toast.photo.saved'));
+    if (!saveFailed) toast(autoMsg || t('toast.photo.saved'));
   } catch {
     toast(t('toast.photo.failed'));
   }
@@ -6310,7 +6444,7 @@ function medFinish() {
     const rec = getRec(today, true);  // 瞑想は「今」やったので今日の記録に付ける
     if (!rec.checked.includes(item.id)) rec.checked.push(item.id);
     commit();
-    toast(t('toast.med.done', { act: item.act, inc: item.inc }));
+    if (!saveFailed) toast(t('toast.med.done', { act: item.act, inc: item.inc }));
   }
   medStop();
 }
@@ -6420,7 +6554,7 @@ async function scheduleNativeReminder() {
     await LN.schedule({
       notifications: [{
         id: REMINDER_NOTIF_ID,
-        title: 'ミトコンドリア・ダイエット',
+        title: 'ミトコンドリア・ライフ',
         body: t('ui.notify.bodyNative'),
         channelId: REMINDER_CHANNEL_ID,
         schedule: { on: { hour: hh || 0, minute: mm || 0 }, repeats: true, allowWhileIdle: true },
@@ -6496,7 +6630,7 @@ function fireTodoReminder() {
   save();
   toast(t('toast.reminder.left'));
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    try { new Notification('ミトコンドリア・ダイエット', { body: t('ui.notify.body') }); } catch {}
+    try { new Notification('ミトコンドリア・ライフ', { body: t('ui.notify.body') }); } catch {}
   }
 }
 let reminderTimer = null;
@@ -6520,33 +6654,58 @@ function scheduleTodoReminder() {
   if (diff <= 0) { fireTodoReminder(); return; }
   reminderTimer = setTimeout(fireTodoReminder, Math.min(diff, 2147483647));
 }
-$('#btnExport').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+// テキストをファイルとして書き出す。
+// ウェブ版: <a download> でブラウザのダウンロードに落とす。
+// ネイティブ版（Capacitor）: WebView は <a download> を処理しないので、
+// Filesystem でキャッシュに書いてから共有シートを出す（ドライブ/ファイルに保存してもらう）。
+// 2026-09-05: アプリ版で成功トーストだけ出てファイルができない不具合の修正。
+// 失敗・キャンセル時は例外を投げるので、呼び出し側は成功時だけ lastExport を更新する。
+async function exportTextFile(filename, text) {
+  const cap = window.Capacitor;
+  const native = !!(cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform());
+  if (native) {
+    const FS = cap.Plugins && cap.Plugins.Filesystem;
+    const SH = cap.Plugins && cap.Plugins.Share;
+    if (!FS || !SH) throw new Error('export: Filesystem/Share plugin not available');
+    const written = await FS.writeFile({ path: filename, data: text, directory: 'CACHE', encoding: 'utf8', recursive: true });
+    await SH.share({ title: filename, files: [written.uri] });
+    return;
+  }
+  const blob = new Blob([text], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `mito-data-${todayStr()}.json`;
+  a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  DB.lastExport = todayStr();
-  save();
-  toast(t('toast.export.done'));
+}
+$('#btnExport').addEventListener('click', async () => {
+  try {
+    // v1.70: ファイルに置いた写真を読み直して埋め戻す（バックアップは1個のJSONに全部入り）
+    await exportTextFile(`mito-data-${todayStr()}.json`, JSON.stringify(await dbForExport(), null, 2));
+    DB.lastExport = todayStr();
+    save();
+    toast(t('toast.export.done'));
+  } catch (e) {
+    console.error('[export]', e);
+    toast(t('toast.export.failed'));
+  }
 });
 // 写真を含まない軽量な書き出し。外部（Obsidian等）への取り込み用。
-// 既存の #btnExport（写真込みのフルバックアップ）とは別物で、あちらには触っていない。
-$('#btnExportSummary').addEventListener('click', () => {
+// 既存の #btnExport（写真込みのフルバックアップ）とは別物。
+$('#btnExportSummary').addEventListener('click', async () => {
   // 選び直しで DB.items から外れた項目も過去の記録には残るので、CATALOG 側も見る
   const nameOf = (id) => {
     const it = (DB.items || []).find(x => x.id === id) || CATALOG.find(x => x.id === id);
     return it ? itemName(it) : id;
   };
   const payload = { generated: todayStr(), days: buildSummary(DB, todayStr(), nameOf) };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `mito-summary-${todayStr()}.json`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  toast(t('toast.exportSummary.done'));
+  try {
+    await exportTextFile(`mito-summary-${todayStr()}.json`, JSON.stringify(payload, null, 2));
+    toast(t('toast.exportSummary.done'));
+  } catch (e) {
+    console.error('[exportSummary]', e);
+    toast(t('toast.export.failed'));
+  }
 });
 $('#btnImport').addEventListener('click', () => {
   const input = document.createElement('input');
@@ -6569,6 +6728,8 @@ $('#btnImport').addEventListener('click', () => {
         commit();
         openSettings();
         toast(t('toast.import.ok'));
+        // v1.70: 読み込んだデータの写真は data で入っているので、ファイルへ移してから使う
+        migratePhotosToFiles().then(() => renderAll());
       } catch {
         toast(t('toast.import.failed'));
       }
@@ -6588,7 +6749,7 @@ $('#btnReset').addEventListener('click', () => {
   DB = freshDB();
   sel = today; weekOffset = 0;
   commit();
-  toast(t('toast.reset.done'));
+  if (!saveFailed) toast(t('toast.reset.done'));
 });
 document.querySelectorAll('.modal').forEach(m => {
   m.addEventListener('click', e => {
@@ -7151,6 +7312,10 @@ autoSyncHealthData();
 checkAutoAchievements();
 scheduleTodoReminder();
 startStage();
+
+// v1.70: 記録の中に入っている写真をファイルへ移す（localStorage の5MB上限に当たらないようにする）
+// 起動のたびに呼ぶが、移すものが無ければ何もしない
+migratePhotosToFiles().then(() => renderAll()).catch(e => console.error('[photo] migrate', e));
 
 // v1.8: バックアップ促し（1日1回まで）
 (function backupNudgeOnLoad() {

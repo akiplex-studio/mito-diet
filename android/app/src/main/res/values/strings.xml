@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ミトコンドリア・ダイエット</string>
-    <string name="title_activity_main">ミトコンドリア・ダイエット</string>
+    <string name="app_name">ミトコンドリア・ライフ</string>
+    <string name="title_activity_main">ミトコンドリア・ライフ</string>
     <string name="package_name">com.akiplex.mitodiet</string>
     <string name="custom_url_scheme">com.akiplex.mitodiet</string>
 </resources>

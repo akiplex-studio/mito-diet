@@ -37,3 +37,6 @@ keystore.properties*
 **/keystore.properties*
 *.jks
 *.keystore
+
+# 2026-09-05: 個人データ（食事写真入りのバックアップ）とビルド生成物。コミットしない
+backup/
