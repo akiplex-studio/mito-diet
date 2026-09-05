@@ -22,6 +22,11 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- 通信はOS提供のHTTPSだけで、独自の暗号は実装していない（輸出規制の免除対象）。
+	     これを書いておくと、アップロードのたびにApp Store Connectで
+	     暗号化の申告（Missing Compliance）を手で答えなくて済む。2026-09-06 追加 -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
