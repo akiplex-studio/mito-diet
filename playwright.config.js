@@ -26,6 +26,11 @@ module.exports = defineConfig({
   },
   // ja-JP と en-US の2ロケールで同じスモークを走らせる
   projects: [
+    ...['ja-JP', 'en-US'].map(locale => ({
+      name: `ipad-webkit-${locale}`,
+      testMatch: 'tests/ipad-layout.spec.js',
+      use: { browserName: 'webkit', locale, hasTouch: true, deviceScaleFactor: 2 },
+    })),
     {
       name: 'ja-JP',
       use: { ...devices['Desktop Chrome'], locale: 'ja-JP' },
