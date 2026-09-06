@@ -5611,7 +5611,7 @@ function renderWeightGraph() {
     ${dots}
     ${tapLabel}
   </svg>`;
-  const legend = `<div class="wt-legend"><span><i></i>体重</span>${
+  const legend = `<div class="wt-legend"><span><i></i>${esc(t('ui.records.weight'))}</span>${
     goal != null ? `<span><i class="goal"></i>${esc(t('ui.weight.goalLine', { v: Number(goal).toFixed(1) }))}</span>` : ''
   }</div>`;
   body.innerHTML = head + svg + legend;

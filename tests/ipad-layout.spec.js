@@ -46,3 +46,20 @@ for (const [width, height] of [[820,1180], [1180,820], [1024,1366], [1366,1024],
     expect(errors).toEqual([]);
   });
 }
+
+test('populated weight chart translates its legend into English', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const previous = new Date(today + 'T12:00:00');
+    previous.setDate(previous.getDate() - 1);
+    DB.startDate = fmtDate(previous);
+    getRec(fmtDate(previous), true).weight = 72;
+    getRec(today, true).weight = 71.8;
+    setLang('en');
+    renderAll();
+    switchTab('records');
+  });
+  await expect(page.locator('#weightBody .wt-legend')).toContainText('Weight');
+  await expect(page.locator('#weightBody')).not.toContainText('体重');
+});
