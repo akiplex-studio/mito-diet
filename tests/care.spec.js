@@ -159,3 +159,25 @@ test('day rollover offers a new visit without expiring banked food', async({page
   expect(result.afterPopulation).toBe(result.population);
   expect(result.visit).toBe(1);
 });
+
+test('native notification listener handles do not interrupt startup', async ({page}) => {
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>{
+    window.healthPromptCalls=0;
+    window.Capacitor={isNativePlatform:()=>true,getPlatform:()=> 'android',Plugins:{Health:{
+      checkAuthorization:async()=>({readAuthorized:[]}),
+      requestAuthorization:async()=>{window.healthPromptCalls++;}
+    },LocalNotifications:{
+      addListener:()=>({remove:async()=>{}}),
+      checkPermissions:async()=>({display:'prompt'})
+    }}};
+  });
+  await page.goto('/index.html');
+  await expect(page.locator('#tutorial')).toBeVisible();
+  await expect(page.locator('.tut-choice',{hasText:'English'})).toBeVisible();
+  await page.locator('.tut-choice',{hasText:'English'}).click();
+  await expect(page.locator('#carePurpose')).toBeVisible();
+  await page.evaluate(()=>careSyncPromise);
+  expect(await page.evaluate(()=>window.healthPromptCalls)).toBe(0);
+  expect(errors).toEqual([]);
+});

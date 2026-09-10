@@ -5173,14 +5173,15 @@ function nativeHealthPlugin() {
   if (platform !== 'android' && platform !== 'ios') return null;
   return (cap.Plugins && cap.Plugins.Health) || null;
 }
-async function fetchHealthDataNative(date) {
+async function fetchHealthDataNative(date, askPermission = true) {
   const Health = nativeHealthPlugin();
   if (!Health) return null;
   try {
     const need = ['steps', 'weight', 'sleep'];
     const status = await Health.checkAuthorization({ read: need });
     const missing = need.filter(t => !(status.readAuthorized || []).includes(t));
-    if (missing.length) await Health.requestAuthorization({ read: need });
+    if (missing.length && askPermission) await Health.requestAuthorization({ read: need });
+    if (!askPermission && !(status.readAuthorized || []).length) return null;
 
     const dayStart = new Date(date + 'T00:00:00');
     const dayEnd = new Date(date + 'T23:59:59.999');
@@ -5216,8 +5217,8 @@ async function fetchHealthDataNative(date) {
   }
 }
 // v1.44: サーバー経由（Tasker→サーバー）のフォールバックは廃止し、ネイティブプラグイン経由のみに単純化
-async function fetchHealthData(date) {
-  return await fetchHealthDataNative(date);
+async function fetchHealthData(date, askPermission = true) {
+  return await fetchHealthDataNative(date, askPermission);
 }
 // v1.20: 「手入力した項目」だけは死守しつつ、自動取得どうしなら何度でも上書きして最新化する。
 // rec.{field}Source が 'manual' の項目だけスキップし、それ以外（未設定/'auto'）は自動で上書きする。
@@ -5231,7 +5232,7 @@ async function autoSyncHealthData() {
     let changed = false;
     for (let index = 0, date = syncToday; index < 8; index++, date = prevDate(date)) {
       if (date < DB.care.since) break;
-      const data = await fetchHealthData(date);
+      const data = await fetchHealthData(date, false);
       if (DB !== targetDB) return;
       if (!data) continue;
       const rec = getRec(date, true);
@@ -7846,7 +7847,7 @@ window.addEventListener('orientationchange', () => setTimeout(layoutHome, 200));
 
 const careNotifications = nativeLocalNotifications();
 if (careNotifications && careNotifications.addListener) {
-  careNotifications.addListener('localNotificationActionPerformed', () => { checkDayChange(); switchTab('home'); autoSyncHealthData(); }).catch(() => {});
+  Promise.resolve().then(() => careNotifications.addListener('localNotificationActionPerformed', () => { checkDayChange(); switchTab('home'); autoSyncHealthData(); })).catch(() => {});
 }
 stage.canvas = $('#mitoCanvas');
 stage.ctx = stage.canvas.getContext('2d');
