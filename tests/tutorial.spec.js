@@ -21,8 +21,10 @@ async function answerChoice(page, label) {
   await page.locator('.tut-choice', { hasText: label }).click();
 }
 
-test('初回起動でチュートリアルが出て、答えた内容が保存される', async ({ page }) => {
-  await page.goto('/index.html');   // まっさらな状態
+test('プロフィールの見直しで答えた内容が保存される', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => startTutorial('replay'));   // まっさらな状態
 
   await expect(page.locator('#tutorial')).toBeVisible();
   await chooseJa(page);
@@ -45,7 +47,7 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
   await page.waitForTimeout(400);
   await page.locator('#tutNext').click();
   await page.waitForTimeout(400);
-  await expect(page.locator('#tutNext')).toHaveText('はじめる');
+  await expect(page.locator('#tutNext')).toHaveText('とじる');
   await page.locator('#tutNext').click();
 
   // v1.56: 最後にミッションを選ばせない。閉じたらそのままホームで始まる
@@ -102,6 +104,7 @@ test('tipsは「次へ」で1枚ずつめくれ、最後だけボタンが変わ
 
 test('ブラウザ版では連携の画面を出さない', async ({ page }) => {
   await page.goto('/index.html');
+  await page.evaluate(() => startTutorial('replay'));
   await chooseJa(page);
   await page.locator('#tutNext').click();   // ようこそ → 呼び名
   await page.locator('#tutBody input[type="text"]').fill('ひらい');
@@ -115,6 +118,7 @@ test('ブラウザ版では連携の画面を出さない', async ({ page }) => 
 
 test('途中でやめたら、次に開いたときまた出る', async ({ page }) => {
   await page.goto('/index.html');
+  await page.evaluate(() => startTutorial('replay'));
   await chooseJa(page);
   await page.locator('#tutNext').click();
   await page.locator('#tutBody input[type="text"]').fill('ひらい');
@@ -144,6 +148,7 @@ test('既存ユーザーにはチュートリアルが出ない', async ({ page 
 
 test('最初に呼び名を聞き、次のセリフでその名前を呼ぶ', async ({ page }) => {
   await page.goto('/index.html');
+  await page.evaluate(() => startTutorial('replay'));
   await chooseJa(page);
   await page.locator('#tutNext').click();          // ようこそ → 呼び名
 
@@ -192,7 +197,7 @@ test('最初に言語を選ぶ画面が出て、選ぶとその場で切り替�
 
   expect(await page.evaluate(() => DB.lang)).toBe('en');
   // 次の画面（ようこそ）に進み、下のボタンが英語になっている
-  await expect(page.locator('#tutNext')).toHaveText('Start');
+  await expect(page.locator('#carePurpose')).toBeVisible();
   await expect(page.locator('#tutSkip')).toHaveText('Skip');
   await expect(page.locator('#tutBack')).toHaveText('Back');
 });

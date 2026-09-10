@@ -357,9 +357,8 @@ test('達成のセリフは画面の中央に出る', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
 
-  // セリフ側の分岐に必ず入るよう、乱数を固定してからチェックする
-  await page.evaluate(() => { Math.random = () => 0.1; });
-  await page.locator('#todoRowManual .todo-card', { hasText: '糖分' }).click();
+  // Explicit speech remains centered; care missions no longer interrupt with a modal.
+  await page.evaluate(() => { mitoSpeakCentered('sugarCtrl'); });
   await page.waitForTimeout(1600);
 
   const box = await page.evaluate(() => {

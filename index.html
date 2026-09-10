@@ -850,6 +850,56 @@ nav.footer {
   #tabHome #todoCard { align-self:center; padding:var(--space-5); }
 }
 
+
+/* Care: a close companion, a food bowl and an earned world. */
+html { scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom)); scroll-padding-top:100px; }
+#tabHome #todoCard { overflow:hidden; }
+
+:root { --radius-xl:32px; --space-10:64px; --color-secondary:var(--primary-500); --color-text-on-primary:var(--neutral-0); --color-info:var(--info-500); --care-hero:112px; --care-space-height:260px; --care-feed-duration:1400ms; }
+.care-top { display:flex; justify-content:space-between; align-items:center; gap:var(--space-3); }
+.care-top h2 { margin:0; color:var(--color-primary); font-size:var(--space-4); }
+.care-sub, .care-small { font-size:12px; color:var(--color-text-muted); line-height:1.6; }
+.care-wallet { border-radius:var(--radius-full); padding:var(--space-2) var(--space-3); background:var(--primary-100); color:var(--primary-900); font-weight:700; white-space:nowrap; }
+#tabHome .mito-stage { border-radius:var(--radius-xl); background:linear-gradient(var(--color-surface-warm),var(--primary-50)); padding:var(--space-4); overflow:hidden; }
+#tabHome .mito-stage[data-theme="pond"] { background:linear-gradient(var(--color-surface),var(--primary-100)); box-shadow:inset 0 0 var(--space-8) var(--color-info); }
+#tabHome .mito-stage[data-theme="night"] { background:linear-gradient(var(--primary-900),var(--primary-700)); }
+#tabHome .mito-stage[data-theme="night"] .care-top h2, #tabHome .mito-stage[data-theme="night"] .care-small, #tabHome .mito-stage[data-theme="night"] .care-sub { color:var(--color-text-on-primary); }
+#tabHome .mito-canvas-wrap { min-height:var(--care-space-height); margin:0; }
+#mitoCanvas { opacity:.32; pointer-events:none; }
+.care-companion { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--space-3); pointer-events:none; }
+.care-companion img { width:var(--care-hero); height:var(--care-hero); object-fit:contain;  animation:care-float 4s ease-in-out infinite; }
+.care-caption { max-width:90%; text-align:center; padding:var(--space-2) var(--space-3); border-radius:var(--radius-lg); background:var(--color-surface); color:var(--color-primary); font-size:14px; box-shadow:var(--shadow-sm); }
+.care-bowl { font-size:24px; width:var(--space-10); text-align:center; border-bottom:var(--space-2) solid var(--color-primary); border-radius:var(--radius-lg); color:var(--warning-500); }
+.care-actions { display:grid; gap:var(--space-2); }
+.care-actions .btn { width:100%; }
+.care-actions [hidden] { display:none !important; }
+.care-progress { width:100%; height:var(--space-2); accent-color:var(--color-secondary); border:0; }
+.care-journal { margin-top:var(--space-3); border-radius:var(--radius-lg); padding:var(--space-3); background:var(--color-surface); font-size:12px; line-height:1.6; }
+.care-journal summary { min-height:var(--space-6); cursor:pointer; font-weight:600; color:var(--color-primary); }
+.care-source { display:flex; justify-content:space-between; gap:var(--space-3); padding:var(--space-1) 0; }
+.care-themes { display:flex; gap:var(--space-2); flex-wrap:wrap; margin-block:var(--space-2); }
+.care-themes button { padding:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-full); background:var(--color-surface); color:var(--color-primary); }
+.care-themes button[aria-pressed="true"] { background:var(--primary-100); border-color:var(--color-primary); }
+.care-feeding .care-companion img, .care-feeding .tut-mito { animation:care-eat var(--care-feed-duration) ease-in-out; }
+.care-feeding .care-bowl { animation:care-food var(--care-feed-duration) ease-in-out; }
+.care-companion img.care-baby { position:absolute; width:var(--space-8); height:var(--space-8); left:calc(50% + var(--space-8)); top:40%; animation:care-float 3s ease-in-out infinite; }
+.care-progress { appearance:none; border-radius:var(--radius-full); overflow:hidden; background:var(--neutral-200); }
+.care-progress::-webkit-progress-bar { background:var(--neutral-200); }
+.care-progress::-webkit-progress-value { background:var(--color-secondary); border-radius:var(--radius-full); }
+.care-progress::-moz-progress-bar { background:var(--color-secondary); }
+.care-actions .btn:disabled { opacity:.6; cursor:default; }
+.care-meal-fields textarea:focus-visible { outline:none; box-shadow:var(--shadow-focus); }
+@keyframes care-float { 50% { transform:translateY(calc(-1 * var(--space-2))) rotate(3deg); } }
+@keyframes care-eat { 25% { transform:translateY(var(--space-4)) scale(.92,1.06); } 50%,75% { transform:scale(1.15,.9) rotate(-4deg); } 65% { transform:scale(.95,1.1) rotate(4deg); } }
+@keyframes care-food { 35% { transform:translateY(calc(-1 * var(--space-5))); } 65% { opacity:0; transform:scale(.3); } }
+.care-meal-fields { display:grid; gap:var(--space-3); width:100%; }
+.care-meal-fields label { display:grid; gap:var(--space-1); font-size:12px; color:var(--color-text-muted); }
+.care-meal-fields input, .care-meal-fields select { min-height:44px; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-2); background:var(--color-surface); color:var(--color-text); font:inherit; }
+.care-purpose { display:grid; gap:var(--space-2); }
+.care-purpose .btn { min-height:48px; }
+@media (min-width:1024px) { #tabHome .mito-stage { align-self:start; } }
+@media (prefers-reduced-motion:reduce) { .care-companion img, .care-feeding .care-companion img, .care-feeding .tut-mito, .care-feeding .care-bowl { animation:none; } }
+
 </style>
 </head>
 <body>
@@ -878,6 +928,8 @@ nav.footer {
     <div class="tab-page" id="tabHome">
       <!-- ③ ミトコンドリア表示（匹数・活性ゲージ・今日のミト知識を一言だけ添える） -->
       <section class="card mito-stage">
+        <div class="care-top"><h2 data-i18n="care.home.title"></h2><span id="careWallet" class="care-wallet"></span></div>
+        <p class="care-sub" data-i18n="care.home.sub"></p>
         <div class="hdr-row mito-hdr-row">
           <!-- v1.51: 匹数の下に、その日の歩数を出す（歩くことが匹数に直結するので目に入る位置に置く） -->
           <div class="hdr-left">
@@ -891,8 +943,20 @@ nav.footer {
         </div>
         <div class="mito-canvas-wrap">
           <canvas id="mitoCanvas"></canvas>
+          <div class="care-companion"><img id="careBaby" class="care-baby" alt="" hidden><img id="careHero" alt="" draggable="false"><div class="care-bowl" aria-hidden="true">● ● ●</div><div class="care-caption" id="careCaption" role="status" aria-live="polite"></div></div>
           <div class="change-overlay" id="changeOverlay" hidden></div>
         </div>
+        <div class="care-actions">
+          <div class="care-small" id="careProgressLabel"></div><progress id="careProgress" class="care-progress" max="3"></progress>
+          <button id="careFeed" class="btn btn-primary"></button>
+          <button id="careRecord" class="btn btn-secondary" data-i18n="care.home.record"></button>
+          <button id="careClaim" class="btn btn-secondary"></button>
+        </div>
+        <details class="care-journal" id="careJournal"><summary data-i18n="care.home.rules"></summary><div id="careSources"></div>
+          <p data-i18n="care.home.wait"></p><p data-i18n="care.home.rulesText"></p><p id="careHistory"></p>
+          <b data-i18n="care.theme.title"></b><div class="care-themes" id="careThemes"></div><p id="careThemeNext"></p>
+          <p data-i18n="care.home.disclaimer"></p>
+        </details>
         <div id="mitoBubble" class="mito-bubble" role="status" aria-live="polite" hidden>
           <div class="mito-bubble-face"><img id="mitoBubbleFaceImg" alt=""></div>
           <div class="mito-bubble-text" id="mitoBubbleText"></div>
@@ -975,6 +1039,9 @@ nav.footer {
 
     <!-- 設定: 他のタブと同じくmain内の1タブとして表示 -->
     <div class="tab-page" id="tabSettings" hidden>
+      <section class="card"><label for="carePurposeSetting" data-i18n="care.goal.setting"></label>
+        <div class="care-meal-fields"><select id="carePurposeSetting"></select></div><p class="care-small" id="carePurposeWhy"></p>
+      </section>
       <!-- v1.49: デイリーミッションのカスタマイズ。生活は人によって違うので、同じ狙いの別の手段に入れ替えられる -->
       <div class="set-section">
         <h4 data-i18n="ui.set.missions">デイリーミッション</h4>
@@ -1245,6 +1312,69 @@ nav.footer {
    日本語を直したら `npm run i18n:check` が「英語が古い」と教えてくれる（i18n.lock.json） */
 const I18N = {
   ja: {
+    "care.effort.food": "餌 +{n}個（翌日の便り）",
+    "care.mission.done": "できたね。今日の取り組みが、明日の餌になるよ。",
+    "care.day.title": "この日の餌",
+    "care.meal.past": "記録を保存しました。餌は育成の新しい仕組みを始めた日以降が対象です。",
+
+    "care.home.title": "マイトとの暮らし",
+    "care.home.sub": "きみの毎日が、この子を育てる。",
+    "care.home.wallet": "餌 {n}個",
+    "care.home.feed": "餌を{n}個あげる",
+    "care.home.empty": "食事を残して、餌をもらおう",
+    "care.home.progress": "あと{n}個で、新しい仲間が生まれる",
+    "care.home.level": "いっしょに育てた仲間 {n}匹",
+    "care.home.record": "食事を記録して餌をもらう",
+    "care.home.claim": "朝の便りを受け取る · {n}個",
+    "care.home.claimed": "今日の便りは受け取り済み",
+    "care.home.received": "餌を{n}個受け取ったよ。マイトにあげよう！",
+    "care.home.thanks": "もぐもぐ。きみの記録、おいしいね！",
+    "care.home.born": "新しい仲間が生まれた！ きみが育てたんだね。",
+    "care.home.wait": "明日の便りには、今日の歩数や運動の餌が届くよ。受け取り忘れても残ります。",
+    "care.home.deliveryDetails": "便りの内訳・餌のもらい方",
+    "care.home.rules": "餌のもらい方・育ち方",
+    "care.home.rulesText": "食事は1食3個（朝・昼・晩それぞれ1回）。写真でも文章でも同じ。歩数は1日最大4個、睡眠は目標達成で2個、手動ミッションは最大4個。訪問で1個、前日の活動を今日受け取ると追加1個。餌を3個あげると仲間が1匹増えます。獲得済みの餌は消えず、同じ記録の修正・削除・再登録でも重複しません。",
+    "care.home.disclaimer": "匹数と活性はゲームの表現で、体内の測定値ではありません。",
+    "care.source.meal": "食事の記録",
+    "care.source.steps": "歩いた分",
+    "care.source.sleep": "眠れた分",
+    "care.source.mission": "できたミッション",
+    "care.source.visit": "今日の訪問",
+    "care.source.fresh": "翌日受け取りのおまけ",
+    "care.home.history": "これまでにあげた餌 {n}個",
+    "care.theme.title": "マイトの住む場所",
+    "care.theme.garden": "木漏れ日の庭",
+    "care.theme.pond": "静かな水辺",
+    "care.theme.night": "星あかりの庭",
+    "care.theme.locked": "餌をあと{n}個あげると、新しい住む場所が選べる",
+    "care.meal.saved": "記録できたよ。餌を{n}個もらった！",
+    "care.meal.savedAgain": "記録を保存しました。この食事の餌は受け取り済みです。",
+    "care.meal.save": "保存して餌をもらう",
+    "care.meal.hint": "写真を撮り忘れても大丈夫。ことばだけで餌がもらえます。AI解析はあとからでも。",
+    "care.meal.noteSaved": "記録済み · 解析は任意",
+    "care.meal.first": "さっき、何を食べた？",
+    "care.meal.lead": "ひとこと残すと、餌が3個もらえるよ。",
+    "care.meal.date": "食べた日",
+    "care.meal.slot": "どの食事？",
+    "care.meal.sample": "思い出せないので、練習の餌で試す",
+    "care.goal.ask": "どんな毎日を送りたい？",
+    "care.goal.weight": "体重を管理したい",
+    "care.goal.fitness": "体力をつけたい",
+    "care.goal.balance": "健康的な生活を続けたい",
+    "care.goal.collect": "マイトを育てて楽しみたい",
+    "care.goal.weightWhy": "食事を振り返り、体を動かす習慣を少しずつ。細胞のエネルギーづくりを担うミトコンドリアを、マイトの育成で身近に感じよう。体重や栄養の設定はあとからできます。",
+    "care.goal.fitnessWhy": "体を動かす習慣を、マイトと一緒に。ミトコンドリアは筋肉のエネルギーづくりを支えています。歩いた分が餌になり、きみだけの仲間が育ちます。",
+    "care.goal.balanceWhy": "食事・運動・休息を、無理なく続けるために。体のエネルギーづくりを担うミトコンドリアを相棒に、毎日の小さな取り組みを育てる楽しさに変えよう。",
+    "care.goal.collectWhy": "きみの食事や散歩が、マイトの餌になるよ。あげると仲間が増え、住む場所も広がります。まずは最初の餌やりを試そう。",
+    "care.tut.hello": "ぼくはマイト。きみの毎日で育つ、小さな相棒だよ。",
+    "care.tut.feed": "はじめての餌やり",
+    "care.tut.feedLead": "受け取った餌をあげてみよう。",
+    "care.tut.done": "きみが育てた、最初の仲間。",
+    "care.tut.doneLead": "次の食事も、写真かことばで残してね。歩いた分の餌は、翌日の便りで受け取れます。",
+    "care.tut.begin": "マイトと暮らす",
+    "care.tut.welcome": "食事や歩いた記録を、マイトの餌にしていこう。",
+    "care.goal.setting": "暮らしの目的",
+
     "ui.ana.disabled": "いまAI解析を一時的に止めています。写真とことばの記録はそのまま使えます。",
     "ui.ana.quotaOutIp": "この回線からの解析が多かったため、今日はここまでです。明日また使えます。",
     "aria.mito": "マイト",
@@ -1264,7 +1394,7 @@ const I18N = {
     "ui.meal.reAnalysing": "再解析中…",
     "ui.meal.reAnalysingLong": "🔬 再解析中…",
     "ui.meal.staleNote": "⟳ 解析後に写真の枚数が変わっています。再解析すると正確になります",
-    "ui.notify.bodyNative": "今日のデイリーミッション、まだ残ってない？マイトのためにチェックしよう🌙",
+    "ui.notify.bodyNative": "マイトへの朝の便り。昨日の取り組みを振り返って、餌を受け取ろう。",
     "ui.notify.channelDesc": "指定時刻に今日のデイリーミッションを知らせます",
     "ui.tut.allow": "許可する",
     "ui.tut.you": "きみ",
@@ -1281,7 +1411,7 @@ const I18N = {
     "aria.rename": "名前を変える",
     "toast.autoChecked": "「{name}」を自動チェックしました",
     "toast.backup.since": "最後のバックアップから{n}日。設定の「書き出す」で保存しておこう",
-    "toast.med.done": "呼吸瞑想 完了！ 活+{act}・+{inc}匹 ✨",
+    "toast.med.done": "呼吸瞑想 完了！ 活性+{act} ✨",
     "toast.photo.max": "この食事は最大{n}枚までです",
     "ui.ana.quota": "AI解析 今日あと{n}回",
     "ui.ana.score": "マイトスコア {n}",
@@ -1354,7 +1484,7 @@ const I18N = {
     "ui.med.out": "ゆっくり吐いて（8秒）",
     "ui.med.ready2": "準備はいい？",
     "ui.name.needName": "名前を入れてください",
-    "ui.notify.body": "今日のデイリーミッションをチェックし忘れていませんか？",
+    "ui.notify.body": "マイトへの便りを開いて、餌を受け取ろう。",
     "ui.tut.linkHealth": "ヘルスデータと連携する",
     "ui.tut.linkHealthWhy": "歩数・体重・睡眠を自動で取り込みます。毎日の手入力が要らなくなります",
     "ui.tut.linkNotifyWhy": "決めた時刻に「今日のミッション、まだ残ってる？」とお知らせします",
@@ -1413,15 +1543,15 @@ const I18N = {
     "ui.pick.useOff": "もう一度押すと、この項目をやめます",
     "ui.pick.useOn": "押すと今日から使います",
     "st.hara7Left": "{n}/{need}食が腹七分目以下（食事解析で「軽め」「腹七分目くらい」を選ぶと集計されます）",
-    "st.hara7Done": "✓ {n}食が腹七分目以下（活+{act}・+{inc}匹）",
+    "st.hara7Done": "✓ {n}食が腹七分目以下（活性+{act}）",
     "st.needWeight": "体重を記録すると自動判定されます",
-    "st.proteinDone": "✓ {p}g / 目安{target}g（活+{act}・+{inc}匹）",
+    "st.proteinDone": "✓ {p}g / 目安{target}g（活性+{act}）",
     "st.proteinGuide": "✓ タンパク質の目安 約{g}g/日（体重×1.6）",
     "st.proteinLeft": "{p}g / 目安{target}g（あと{left}g）",
     "st.sleepShort": "△ 睡眠{line}時間未満（活{act}）— 今夜はゆっくり休もう",
     "st.sleepWait": "翌朝に入力（{line}時間未満は 活{act}）",
     "st.sleptWell": "✓ しっかり眠れました",
-    "st.stepsDone": "✓ {name} 達成（活+{act}・+{inc}匹）",
+    "st.stepsDone": "✓ {name} 達成（活性+{act}）",
     "st.stepsLeft": "{goal}歩で達成（あと{left}歩）",
     "ui.pick.current": "今の基準：{v}",
     "ui.pick.notUsing": "使っていません",
@@ -1956,13 +2086,13 @@ const I18N = {
     "ui.set.note.howto": "「マイトの基本」は3枚の図解だけ、「最初から見直す」は身長・年齢などの入力からやり直せます。",
     "ui.set.note.missions": "自重トレを筋トレに、禁酒を休肝日に、といった入れ替えができます。選び直しても過去の記録と匹数は変わりません。",
     "ui.set.note.profile": "体重は「きょうの記録」の最新値を使います。維持カロリーはMifflin-St Jeor式で計算します。",
-    "ui.set.note.reminder": "指定した時刻に、その日のデイリーミッションをチェックするよう通知します。時刻を変えると自動で反映されます。",
+    "ui.set.note.reminder": "指定した時刻に、餌の受け取りと振り返りをお知らせします。朝がおすすめ。時刻の変更はすぐ反映されます。",
     "ui.set.notifyTime": "通知する時刻",
     "ui.set.pickMissions": "デイリーミッションを選ぶ",
     "ui.set.profile": "からだのプロフィール（必要カロリー計算に使用）",
     "ui.set.ratio": "食事量の目標",
     "ui.set.readTips": "マイトの基本を読む",
-    "ui.set.reminder": "デイリーミッションのリマインダー",
+    "ui.set.reminder": "マイトへの便り",
     "ui.set.replayTutorial": "最初から見直す",
     "ui.set.reset": "全データを初期化",
     "ui.set.saveClose": "保存して閉じる",
@@ -1982,6 +2112,69 @@ const I18N = {
     "unit.steps": "歩",
   },
   en: {
+    "care.effort.food": "+{n} food in tomorrow’s delivery",
+    "care.mission.done": "Nicely done. Today’s effort becomes tomorrow’s food.",
+    "care.day.title": "Food from this day",
+    "care.meal.past": "Record saved. Food rewards apply from the start of the new care system.",
+
+    "care.home.title": "Life with Mito",
+    "care.home.sub": "Your everyday moments help Mito grow.",
+    "care.home.wallet": "{n} food",
+    "care.home.feed": "Give {n} food",
+    "care.home.empty": "Log a meal to earn food",
+    "care.home.progress": "{n} more food until a new friend arrives",
+    "care.home.level": "{n} friends raised together",
+    "care.home.record": "Log a meal · earn food",
+    "care.home.claim": "Collect your daily delivery · {n}",
+    "care.home.claimed": "Today’s delivery collected",
+    "care.home.received": "You received {n} food. Time to feed Mito!",
+    "care.home.thanks": "Munch, munch. Thanks for sharing your day!",
+    "care.home.born": "A new friend is here! You helped them grow.",
+    "care.home.wait": "Today’s activity becomes tomorrow’s food. Your earned food stays until you collect it.",
+    "care.home.deliveryDetails": "Inside your delivery · food guide",
+    "care.home.rules": "How food and growth work",
+    "care.home.rulesText": "Each meal earns 3 food, once per breakfast, lunch and dinner, with a photo or text. Steps earn up to 4 daily, sleep meeting your goal earns 2, and manual missions earn up to 4. A daily visit gives 1; collecting yesterday’s activity today gives 1 extra. Every 3 food you give raises a new friend. Earned food stays, and editing, deleting or re-adding the same record never earns it twice.",
+    "care.home.disclaimer": "Population and vitality are game values, not measurements of your body.",
+    "care.source.meal": "Meal records",
+    "care.source.steps": "Walking",
+    "care.source.sleep": "Sleep",
+    "care.source.mission": "Completed missions",
+    "care.source.visit": "Today’s visit",
+    "care.source.fresh": "Next-day extra",
+    "care.home.history": "Food shared so far: {n}",
+    "care.theme.title": "Mito’s home",
+    "care.theme.garden": "Sunlit garden",
+    "care.theme.pond": "Quiet pond",
+    "care.theme.night": "Starlit garden",
+    "care.theme.locked": "Share {n} more food to unlock a new home",
+    "care.meal.saved": "Meal saved. You earned {n} food!",
+    "care.meal.savedAgain": "Meal saved. Food for this meal has already been collected.",
+    "care.meal.save": "Save & earn food",
+    "care.meal.hint": "Forgot the photo? Words earn the same food. AI analysis can wait.",
+    "care.meal.noteSaved": "Saved · analysis is optional",
+    "care.meal.first": "What did you eat recently?",
+    "care.meal.lead": "A few words earn 3 food for Mito.",
+    "care.meal.date": "Meal date",
+    "care.meal.slot": "Which meal?",
+    "care.meal.sample": "Try with practice food instead",
+    "care.goal.ask": "What would you like more of?",
+    "care.goal.weight": "Manage my weight",
+    "care.goal.fitness": "Build my fitness",
+    "care.goal.balance": "Keep healthy habits",
+    "care.goal.collect": "Enjoy raising Mito",
+    "care.goal.weightWhy": "Start with small habits: reflect on meals and move your body. Meet mitochondria, the energy producers in your cells, through Mito. Weight and nutrition settings can come later.",
+    "care.goal.fitnessWhy": "Build a movement habit with Mito. Mitochondria help supply energy to your muscles. Your walks earn food to raise your own little friends.",
+    "care.goal.balanceWhy": "Make room for meals, movement and rest. With a little companion inspired by your cells’ energy producers, everyday efforts become something you can nurture.",
+    "care.goal.collectWhy": "Your meals and walks become food for Mito. Feed them to welcome new friends and unlock places to live. Let’s try your first feeding.",
+    "care.tut.hello": "I’m Mito, a little friend who grows with your everyday life.",
+    "care.tut.feed": "Your first feeding",
+    "care.tut.feedLead": "Let’s share the food you received.",
+    "care.tut.done": "Your first new friend.",
+    "care.tut.doneLead": "Next meal, take a photo or leave a few words. Food from your walks arrives in the next day’s delivery.",
+    "care.tut.begin": "Make yourself at home",
+    "care.tut.welcome": "Turn your meals and walks into food for Mito.",
+    "care.goal.setting": "Your purpose",
+
     "ui.ana.disabled": "AI analysis is paused right now. Photos and notes still work as usual.",
     "ui.ana.quotaOutIp": "Too many analyses from this network today. It resets tomorrow.",
     "aria.mito": "Mito",
@@ -2001,7 +2194,7 @@ const I18N = {
     "ui.meal.reAnalysing": "Re-analysing…",
     "ui.meal.reAnalysingLong": "🔬 Re-analysing…",
     "ui.meal.staleNote": "⟳ The number of photos changed after analysis. Re-analyse for accurate numbers",
-    "ui.notify.bodyNative": "Missions still open today? Tick them off for Mito 🌙",
+    "ui.notify.bodyNative": "Your daily delivery for Mito. Review yesterday and collect food.",
     "ui.notify.channelDesc": "Reminds you about today’s missions at the time you set",
     "ui.tut.allow": "Allow",
     "ui.tut.you": "you",
@@ -2018,7 +2211,7 @@ const I18N = {
     "aria.rename": "Rename",
     "toast.autoChecked": "“{name}” ticked automatically",
     "toast.backup.since": "{n} days since your last backup. Save one with “Export” in settings",
-    "toast.med.done": "Breathing done! Energy +{act}, +{inc} mito ✨",
+    "toast.med.done": "Breathing done! Energy +{act} ✨",
     "toast.photo.max": "Up to {n} photos per meal",
     "ui.ana.quota": "AI analysis: {n} left today",
     "ui.ana.score": "Mito score {n}",
@@ -2091,7 +2284,7 @@ const I18N = {
     "ui.med.out": "Breathe out slowly (8s)",
     "ui.med.ready2": "Ready?",
     "ui.name.needName": "Please enter a name",
-    "ui.notify.body": "Did you forget to check off today’s missions?",
+    "ui.notify.body": "Open your daily delivery and collect food for Mito.",
     "ui.tut.linkHealth": "Connect health data",
     "ui.tut.linkHealthWhy": "Steps, weight and sleep come in automatically. No more typing them each day",
     "ui.tut.linkNotifyWhy": "At the time you choose, we’ll remind you that missions are still open",
@@ -2150,15 +2343,15 @@ const I18N = {
     "ui.pick.useOff": "Tap again to stop using it",
     "ui.pick.useOn": "Tap to start using it today",
     "st.hara7Left": "{n} of {need} meals eaten lightly (choose “light” or “about 70% full” when logging a meal)",
-    "st.hara7Done": "✓ {n} meals eaten lightly (energy +{act}, +{inc} mito)",
+    "st.hara7Done": "✓ {n} meals eaten lightly (energy +{act})",
     "st.needWeight": "Log your weight and this is worked out for you",
-    "st.proteinDone": "✓ {p}g of {target}g (energy +{act}, +{inc} mito)",
+    "st.proteinDone": "✓ {p}g of {target}g (energy +{act})",
     "st.proteinGuide": "✓ Protein target about {g}g a day (1.6g per kg)",
     "st.proteinLeft": "{p}g of {target}g ({left}g to go)",
     "st.sleepShort": "△ Under {line}h of sleep (energy {act}) — take it easy tonight",
     "st.sleepWait": "Log it in the morning (under {line}h costs energy {act})",
     "st.sleptWell": "✓ You slept well",
-    "st.stepsDone": "✓ {name} done (energy +{act}, +{inc} mito)",
+    "st.stepsDone": "✓ {name} done (energy +{act})",
     "st.stepsLeft": "{goal} steps to go ({left} left)",
     "ui.pick.current": "Current: {v}",
     "ui.pick.notUsing": "Not in use",
@@ -2699,7 +2892,7 @@ const I18N = {
     "ui.set.profile": "Your body (used to work out calories)",
     "ui.set.ratio": "How much to eat",
     "ui.set.readTips": "Read the basics",
-    "ui.set.reminder": "Daily mission reminder",
+    "ui.set.reminder": "Daily delivery for Mito",
     "ui.set.replayTutorial": "Start the intro again",
     "ui.set.reset": "Erase all data",
     "ui.set.saveClose": "Save and close",
@@ -2755,7 +2948,7 @@ const DOW_KEYS = ['dow.mon','dow.tue','dow.wed','dow.thu','dow.fri','dow.sat','d
    @logic-start  純粋ロジック（DOM非依存・テスト可能）
    ================================================================== */
 // v1.68: 画面に出すバージョン。ここだけ直せばよいようにする
-const APP_VERSION = '1.68';
+const APP_VERSION = '1.72';
 const CFG = {
   ACT_START: 50,       // 活性ゲージ初期値・回帰の目標
   REGRESS: 0.3,        // 毎朝、50へ戻す割合
@@ -3038,6 +3231,7 @@ function computeState(db, todayStr) {
     peak = Math.max(peak, mito);
     perDay[d] = { points: ev.points };
   }
+  if (db.care) { mito = carePopulation(db.care); peak = Math.max(db.care.legacyPeak, mito); }
   return { activation: act, mito, peak, perDay };
 }
 
@@ -3323,6 +3517,79 @@ function buildSummary(db, todayStr, nameOf) {
   return out;
 }
 
+
+// Care v1: all reward arithmetic is independent of DOM, clocks and storage.
+const CARE_MEALS = ['breakfast', 'lunch', 'dinner'];
+function careMealPresent(rec, meal) {
+  const entry = (rec.mealAnalysis || {})[meal];
+  return !!((rec.photos && Array.isArray(rec.photos[meal]) && rec.photos[meal].length) ||
+    (entry && (entry.analysis || String(entry.note || '').trim())));
+}
+function careEffortFood(item, rec) {
+  if (!Array.isArray(item.efforts)) return 1;
+  const level = clamp(Math.floor(Number((rec.effort || {})[item.id]) || 0), 0, 4);
+  return [1,2,3,3,4][level];
+}
+function careOffers(db, date) {
+  const rec = (db.days || {})[date] || {};
+  const active = (db.items || []).filter(it => isItemActiveOn(it, date));
+  const stepItem = active.find(it => it.auto === 'steps');
+  const goal = Math.max(1000, Number(stepItem && stepItem.threshold) || 3000);
+  const sleepItem = active.find(it => it.auto === 'sleepLack');
+  const sleepGoal = Math.max(4, Number(sleepItem && sleepItem.threshold) || 6);
+  const manual = active.filter(it => it.inTodo && !it.auto && !it.ng && isItemDone(it, rec));
+  return [
+    ...CARE_MEALS.map(meal => ({ id:date + ':meal:' + meal, date, kind:'meal', meal,
+      amount:careMealPresent(rec, meal) ? 3 : 0 })),
+    { id:date + ':steps', date, kind:'steps', amount:Math.min(4, Math.floor(Math.max(0, Number(rec.steps) || 0) / goal)) },
+    { id:date + ':sleep', date, kind:'sleep', amount:Number(rec.sleepHours) >= sleepGoal ? 2 : 0 },
+    { id:date + ':mission', date, kind:'mission', amount:Math.min(4, manual.reduce((sum,it) => sum + careEffortFood(it, rec), 0)) },
+  ];
+}
+function createCare(db, date) {
+  const legacy = computeState(db, date);
+  const claims = {};
+  // Existing records have already contributed to the legacy population.
+  if (db.onboarded) [prevDate(date),date].forEach(day => careOffers(db, day).forEach(o => { if (o.amount) claims[o.id] = o.amount; }));
+  return { version:1, since:prevDate(date), legacy:legacy.mito,
+    legacyPeak:legacy.peak, claims, openingSpent:Object.values(claims).reduce((sum,v) => sum + v, 0),
+    feedings:[], welcome:db.onboarded ? 3 : 0, visits:{}, fresh:{}, theme:'garden', purpose:db.onboarded ? 'weight' : 'balance' };
+}
+function careFed(care) { return care.feedings.reduce((sum,event) => sum + event.amount, 0); }
+function careBalance(care) {
+  return Math.max(0, care.welcome + Object.values(care.claims).reduce((sum,v) => sum + v, 0) +
+    Object.values(care.visits).reduce((sum,v) => sum + v, 0) +
+    Object.values(care.fresh).reduce((sum,v) => sum + v, 0) - care.openingSpent - careFed(care));
+}
+function carePending(db, date) {
+  if (!db.care) return [];
+  return Object.keys(db.days || {}).filter(day => day >= db.care.since && day <= date).sort()
+    .flatMap(day => careOffers(db, day)).filter(o => o.kind === 'meal' || o.date < date)
+    .map(o => ({...o, amount:Math.max(0, o.amount - (db.care.claims[o.id] || 0))})).filter(o => o.amount > 0);
+}
+function settleCareMeals(db, date) {
+  const list = carePending(db, date).filter(o => o.kind === 'meal');
+  list.forEach(o => { db.care.claims[o.id] = (db.care.claims[o.id] || 0) + o.amount; });
+  return list.reduce((sum,o) => sum + o.amount, 0);
+}
+function claimCare(db, date) {
+  const list = carePending(db, date);
+  let earned = list.reduce((sum,o) => sum + o.amount, 0);
+  list.forEach(o => { db.care.claims[o.id] = (db.care.claims[o.id] || 0) + o.amount; });
+  if (!db.care.visits[date]) { db.care.visits[date] = 1; earned++; }
+  const previous = prevDate(date);
+  if (!db.care.fresh[previous] && list.some(o => o.date === previous && o.kind !== 'meal')) {
+    db.care.fresh[previous] = 1; earned++;
+  }
+  return earned;
+}
+function feedCare(db, date) {
+  const amount = Math.min(3, careBalance(db.care));
+  if (amount) db.care.feedings.push({date:date || db.care.since, amount});
+  return amount;
+}
+function carePopulation(care) { return Math.min(CFG.MITO_MAX, care.legacy + Math.floor(careFed(care) / 3)); }
+
 /* @logic-end */
 
 /* ============ 初期項目データ（仕様書 §3 スプレッドシート由来） ============ */
@@ -3574,8 +3841,12 @@ const BLURB = {
 
 function catalogById(id) { return CATALOG.find(c => c.id === id) || null; }
 // 手で選ぶ項目だけ（自動判定の項目は AUTO_ITEMS 側で別に扱う）
-function catalogByMech(mechId) { return CATALOG.filter(c => c.mech === mechId && c.kind !== 'auto'); }
-function autoCatalog() { return AUTO_ITEMS.map(a => Object.assign({}, a, catalogById(a.id))).filter(a => a.id); }
+function careCatalogEntry(entry) {
+  if (typeof DB !== 'undefined' && DB.care && DB.care.purpose !== 'weight' && ['hara7','nightfast','sugarCtrl'].includes(entry.id)) return {...entry, required:false, optional:true};
+  return entry;
+}
+function catalogByMech(mechId) { return CATALOG.filter(c => c.mech === mechId && c.kind !== 'auto').map(careCatalogEntry); }
+function autoCatalog() { return AUTO_ITEMS.map(a => careCatalogEntry(Object.assign({}, a, catalogById(a.id)))).filter(a => a.id); }
 
 // v1.49: 新規ユーザーの初期セットはカタログの isDefault から生成する。
 // 既存ユーザーの DB.items はそのまま（migrate は act/inc を上書きしない）ので、
@@ -3762,7 +4033,7 @@ function freshDB() {
   // v1.49: 新規ユーザーは初回にやることを選ぶ（onboarded:false）。既存ユーザーには出さない（migrate参照）
   return { version:5, startDate: todayStr(), items: structuredClone(DEFAULT_ITEMS), days:{}, onboarded:false, goalWeight:null,
            profile:{ name:null, heightCm:null, age:null, sex:null, activity:1.375, targetRatio:0.7 },
-           lastExport: null, reminderTime: '22:00' };
+           lastExport: null, reminderTime: '08:00' };
 }
 // v1→v3 マイグレーション：写真を {data, analysis} オブジェクトの配列に統一（既存の記録は保持）
 const MEAL_KEYS = ['breakfast','lunch','dinner'];
@@ -3912,6 +4183,14 @@ function migrate(d) {
     d.onboarded = Object.keys(d.days || {}).length > 0;
   }
   d.version = 5;
+  if (d.care) {
+    const care = d.care;
+    const validMap = value => value && typeof value === 'object' && !Array.isArray(value) && Object.values(value).every(n => Number.isFinite(n) && n >= 0);
+    if (care.version !== 1 || !Array.isArray(care.feedings) || !care.feedings.every(event => event && /^\d{4}-\d{2}-\d{2}$/.test(event.date) && Number.isInteger(event.amount) && event.amount > 0 && event.amount <= 3) || !/^\d{4}-\d{2}-\d{2}$/.test(care.since) ||
+      !['legacy','legacyPeak','openingSpent','welcome'].every(key => Number.isFinite(care[key]) && care[key] >= 0) ||
+      !['claims','visits','fresh'].every(key => validMap(care[key]))) throw new Error('Invalid care data');
+  }
+  if (!d.care) d.care = createCare(d, todayStr());
   return d;
 }
 function load() {
@@ -3948,6 +4227,7 @@ let DB = load();
 let today = todayStr();
 let sel = today;          // 選択中の日付
 let weekOffset = 0;       // 週カレンダーの表示オフセット
+if (!DB.care) DB.care = createCare(DB, today);
 let computed = computeState(DB, today);
 let photoSlot = null;     // 撮影対象スロット
 
@@ -3968,6 +4248,8 @@ function getRec(d, create) {
 
 function recompute() { computed = computeState(DB, today); }
 function commit() {
+  if (!DB.care) DB.care = createCare(DB, today);
+  settleCareMeals(DB, today);
   const before = { mito: computed.mito, act: computed.activation };
   recompute();
   save();
@@ -4281,7 +4563,7 @@ function planOrbs(count) {
 const SWARM_GROUP_SIZE = 3;
 function buildOrbs() {
   const w = stage.canvas.clientWidth, h = stage.canvas.clientHeight;
-  const sizes = planOrbs(computed.mito);
+  const sizes = DB.care ? Array(Math.min(24, Math.floor(computed.mito))).fill(14) : planOrbs(computed.mito);
   stage.swarmGroups = {};
   stage.orbs = sizes.map((r, i) => {
     // 挙動を抽選: 12%=素早く漂う「drift」／10%=群れで移動する「swarm」／残りは通常の「idle」（たまにダッシュ）
@@ -4611,6 +4893,8 @@ function renderPhotos() {
       const stale = ma.photoCount != null && ma.photoCount !== arr.length;
       ab.className = 'meal-ana-btn done';
       ab.textContent = t('ui.ana.score', { n: Number(ma.analysis.mito_score) || 0 }) + (stale ? ' ⟳' : '');
+    } else if (ma && ma.note) {
+      ab.className = 'meal-ana-btn'; ab.textContent = t('care.meal.noteSaved');
     } else if (arr.length) {
       ab.className = 'meal-ana-btn';
       ab.textContent = t('ui.ana.run');
@@ -4687,6 +4971,10 @@ function renderPhotos() {
         c.addEventListener('click', () => openMealModal(key));
         content.appendChild(c);
       }
+    } else if (ma && ma.note) {
+      const noteLine = document.createElement('button');
+      noteLine.className = 'dish-lines'; noteLine.textContent = ma.note;
+      noteLine.addEventListener('click', () => openMealModal(key)); content.appendChild(noteLine);
     } else if (!arr.length) {
       const hint = document.createElement('div');
       hint.className = 'dish-lines-hint';
@@ -4934,23 +5222,28 @@ async function fetchHealthData(date) {
 // v1.20: 「手入力した項目」だけは死守しつつ、自動取得どうしなら何度でも上書きして最新化する。
 // rec.{field}Source が 'manual' の項目だけスキップし、それ以外（未設定/'auto'）は自動で上書きする。
 // アプリを開くたび（visibilitychange含む）に呼ぶ。1日1回だけの制限は撤廃（Taskerが朝昼晩など複数回同期する想定のため）
+let careSyncPromise = null;
 async function autoSyncHealthData() {
   if (!nativeHealthPlugin()) return;
-  const data = await fetchHealthData(today);
-  if (!data) return;
-  const rec = getRec(today, true);
-  let changed = false;
-  if (rec.stepsSource !== 'manual' && typeof data.steps === 'number' && rec.steps !== data.steps) {
-    rec.steps = data.steps; rec.stepsSource = 'auto'; changed = true;
-  }
-  if (rec.sleepHoursSource !== 'manual' && typeof data.sleepHours === 'number' && rec.sleepHours !== data.sleepHours) {
-    rec.sleepHours = data.sleepHours; rec.sleepHoursSource = 'auto'; changed = true;
-  }
-  if (rec.weightSource !== 'manual' && typeof data.weight === 'number' && rec.weight !== data.weight) {
-    rec.weight = data.weight; rec.weightSource = 'auto'; changed = true;
-  }
-  if (changed) commit();
-  checkAutoAchievements();
+  if (careSyncPromise) return careSyncPromise;
+  careSyncPromise = (async () => {
+    const syncToday = today, targetDB = DB;
+    let changed = false;
+    for (let index = 0, date = syncToday; index < 8; index++, date = prevDate(date)) {
+      if (date < DB.care.since) break;
+      const data = await fetchHealthData(date);
+      if (DB !== targetDB) return;
+      if (!data) continue;
+      const rec = getRec(date, true);
+      for (const field of ['steps','sleepHours','weight']) {
+        if (rec[field + 'Source'] !== 'manual' && typeof data[field] === 'number' && rec[field] !== data[field]) {
+          rec[field] = data[field]; rec[field + 'Source'] = 'auto'; changed = true;
+        }
+      }
+    }
+    if (changed) commit();
+  })().finally(() => { careSyncPromise = null; });
+  return careSyncPromise;
 }
 // 🔄ボタン：表示中の日について明示的に取得し直す（既存値があっても上書き＝ユーザーの意図的操作）。
 // 以後その項目は自動更新の対象に戻す（手入力ロックを解除）
@@ -5018,15 +5311,18 @@ function renderMealForm() {
     : `<div class="ana-note" style="text-align:left">${esc(t('ui.meal.noPhoto'))}</div>`;
   body.innerHTML =
     strip +
+    `<p class="care-small">${esc(t('care.meal.hint'))}</p>` +
     `<textarea id="mealNote" class="meal-textarea" placeholder="${esc(t(arr.length ? 'ph.mealNoteExtra' : 'ph.mealNote'))}"${pending ? ' disabled' : ''}>${esc((ma && ma.note) || '')}</textarea>` +
     `<div class="ful-label">${esc(t('ui.meal.fullness'))}</div>` +
     `<div class="ful-chips" id="mealFul"></div>` +
     `<div class="btn-row" style="margin-top:14px">` +
-      `<button class="btn btn-primary" id="mealRun"${pending ? ' disabled' : ''}>${pending ? t('ui.ana.running') : esc(t('ui.meal.analyseBtn'))}</button>` +
+      `<button class="btn btn-primary" id="mealSave"${pending ? ' disabled' : ''}>${esc(t('care.meal.save'))}</button>` +
+      `<button class="btn btn-secondary" id="mealRun"${pending ? ' disabled' : ''}>${pending ? t('ui.ana.running') : esc(t('ui.meal.analyseBtn'))}</button>` +
       `<button class="btn btn-secondary" data-close>${esc(t('ui.common.cancel'))}</button>` +
     `</div>` +
     `<div class="ana-note" id="mealMsg" style="text-align:left; min-height:1.4em"></div>`;
   renderMealFul();
+  $('#mealSave').addEventListener('click', () => saveMealLocally(true));
   $('#mealRun').addEventListener('click', runMealAnalysis);
   // v1.6: 解析中/直前のエラーをモーダル内メッセージに反映
   if (pending) {
@@ -5108,6 +5404,7 @@ async function runMealAnalysis() {
     return;
   }
   const fullness = mealFulSel;
+  if (!saveMealLocally(false)) return;
   mealPending[sk] = true;
   delete mealError[sk];
   $('#mealModal').classList.remove('open');               // 即クローズ。通信は裏で継続
@@ -5353,26 +5650,28 @@ async function resizeImage(file, max = 800) {
 }
 async function addPhotoFile(file) {
   if (!file || !photoSlot) return;
-  const rec = getRec(sel, true);
+  const capturedDate = sel, capturedMeal = photoSlot;
+  const beforeFood = DB.care.claims[capturedDate + ':meal:' + capturedMeal] || 0;
+  const rec = getRec(capturedDate, true);
   if (!rec.photos || typeof rec.photos !== 'object') rec.photos = { breakfast:[], lunch:[], dinner:[] };
-  if (!Array.isArray(rec.photos[photoSlot])) rec.photos[photoSlot] = [];
-  if (rec.photos[photoSlot].length >= MAX_PHOTOS) { toast(t('toast.photo.max', { n: MAX_PHOTOS })); return; }
+  if (!Array.isArray(rec.photos[capturedMeal])) rec.photos[capturedMeal] = [];
+  if (rec.photos[capturedMeal].length >= MAX_PHOTOS) { toast(t('toast.photo.max', { n: MAX_PHOTOS })); return; }
   try {
     const data = await resizeImage(file);
-    const first = rec.photos[photoSlot].length === 0;
+    const first = rec.photos[capturedMeal].length === 0;
     // v1.70: ネイティブではファイルに置き、記録には場所だけ持たせる（localStorage を写真で埋めない）
     let entry = { data, analysis: null };
     try {
       const path = await writePhotoFile(data);
       if (path) entry = { file: path, analysis: null };
     } catch (e) { console.error('[photo] write', e); }   // 書けなければ従来どおり data で持つ
-    rec.photos[photoSlot].push(entry);
+    rec.photos[capturedMeal].push(entry);
     // 最初の1枚アップで対応する食事TODOを自動チェック（例：朝の写真→野菜ジュース）
     let autoMsg = '';
     if (first) {
       for (const it of DB.items) {
-        if (!isItemActiveOn(it, sel)) continue;  // v1.49: 外した項目は自動チェックしない
-        if (it.autoPhoto === photoSlot && it.inTodo && !rec.checked.includes(it.id)) {
+        if (!isItemActiveOn(it, capturedDate)) continue;  // v1.49: 外した項目は自動チェックしない
+        if (it.autoPhoto === capturedMeal && it.inTodo && !rec.checked.includes(it.id)) {
           rec.checked.push(it.id);
           autoMsg = t('toast.autoChecked', { name: itemName(it) });
           // v1.5: 写真で自動チェックされたときのミトの一言・演出
@@ -5384,7 +5683,11 @@ async function addPhotoFile(file) {
       }
     }
     commit();
-    if (!saveFailed) toast(autoMsg || t('toast.photo.saved'));
+    if (!saveFailed) {
+      const earned = (DB.care.claims[capturedDate + ':meal:' + capturedMeal] || 0) - beforeFood;
+      toast(earned ? t('care.meal.saved', {n:earned}) : t(capturedDate < DB.care.since ? 'care.meal.past' : 'care.meal.savedAgain'));
+      if (earned) { switchTab('home'); $('#careCaption').textContent = t('care.meal.saved', {n:earned}); }
+    }
   } catch {
     toast(t('toast.photo.failed'));
   }
@@ -5935,6 +6238,7 @@ function celebrateAchievement(item, beforeMito, afterMito, beforeAct, afterAct, 
 // アプリを開く／フォアグラウンド復帰するたびにチェックする。1日1回だけ祝う。
 // 複数同時に達成していた場合は変化量を合算して1回のオーバーレイで見せ、ダイアログは順番に出す
 function checkAutoAchievements() {
+  if (DB.care) return;
   const rec = getRec(today, true);
   if (!rec.celebratedAuto || typeof rec.celebratedAuto !== 'object') rec.celebratedAuto = {};
   const newly = DB.items.filter(it => isItemActiveOn(it, today) && it.auto && !it.ng && isItemDone(it, rec) && !rec.celebratedAuto[it.id]);
@@ -5956,8 +6260,8 @@ function checkAutoAchievements() {
 //        任意に変えた項目（タンパク質＝optional）は勝手に足さない
 function ensureRequiredItems() {
   let added = false;
-  const need = AUTO_ITEMS.filter(a => !a.optional).map(a => a.id)
-    .concat(CATALOG.filter(c => c.required).map(c => c.id));
+  const need = AUTO_ITEMS.map(careCatalogEntry).filter(a => !a.optional).map(a => a.id)
+    .concat(CATALOG.map(careCatalogEntry).filter(c => c.required).map(c => c.id));
   for (const id of need) {
     if (DB.items.some(it => it.id === id && isItemActiveOn(it, today))) continue;
     const c = catalogById(id);
@@ -6260,7 +6564,7 @@ function openEffortPick(item, onPick) {
         `<span class="effort-name">${esc(eLabel)}</span>` +
         (eHint ? `<span class="effort-hint">${esc(eHint)}</span>` : '') +
       `</span>` +
-      `<span class="effort-inc">${esc(t('ui.effort.inc', { n: e.inc }))}</span>`;
+      `<span class="effort-inc">${esc(DB.care ? t('care.effort.food', {n:[1,2,3,3,4][idx]}) : t('ui.effort.inc', { n: e.inc }))}</span>`;
     b.addEventListener('click', () => {
       const r = getRec(sel, true);
       if (!r.effort) r.effort = {};
@@ -6308,6 +6612,7 @@ function applyCheck(item, srcEl) {
   commit();
   // v1.26: プラスの変化があったときだけ、段階1（変化量オーバーレイ）→段階2（反応ダイアログ＋セリフ）の演出
   // v1.49: がんばり度がある項目は素の inc ではなくその日の実効値で判定する
+  if (DB.care) { if (checking && !saveFailed) toast(t('care.mission.done')); return; }
   const eff = itemEffect(item, rec);
   if (checking && !item.ng && (eff.act > 0 || eff.inc > 0)) {
     celebrateAchievement(item, beforeMito, computed.mito, beforeAct, computed.activation, k);
@@ -6361,6 +6666,12 @@ function dayContributions(dateStr) {
 }
 function renderBreakdown() {
   const box = $('#breakdown');
+  if (DB.care) {
+    const offers = careOffers(DB,sel).filter(o => o.amount > 0);
+    box.innerHTML = `<div class="bd-sec">${esc(t('care.day.title'))}</div>` + offers.map(o => `<div class="care-source"><span>${esc(t(CARE_SOURCE_LABELS[o.kind]))}${o.meal ? ' · ' + esc(mealLabel(o.meal)) : ''}</span><b>+${o.amount}</b></div>`).join('') +
+      `<p class="care-small">${esc(t(sel < DB.care.since ? 'care.meal.past' : 'care.home.wait'))}</p>`;
+    return;
+  }
   const b = dayContributions(sel);
   if (!b) { box.innerHTML = `<div class="bd-empty">${esc(t('ui.bd.empty'))}</div>`; return; }
   const row = (g, v, cls) => `<div class="bd-row"><span class="g">${esc(g)}</span><span class="v ${cls}">${v}</span></div>`;
@@ -6407,6 +6718,7 @@ function openInfo(item) {
     const lo = Math.min(...incs), hi = Math.max(...incs);
     incTxt = hi > 0 ? t('ui.info.incRange', { lo, hi }) : '';
   }
+  if (DB.care) incTxt = '';
   const scoreTxt = t('ui.info.act', { n: (item.act > 0 ? '+' : '') + item.act }) + incTxt;
   $('#infoBody').innerHTML =
     `<div class="info-score">${esc(scoreTxt)}</div>` +
@@ -6657,10 +6969,10 @@ function fireTodoReminder() {
   //（reminded を立てる前に抜けるので、選び終えたあとの本来のリマインドは生きる）
   if (!DB.onboarded) return;
   const rec = getRec(today, true);
-  if (rec.reminded || allManualTodoDone(rec)) return;
+  if (rec.reminded || DB.care.visits[today]) return;
   rec.reminded = true;
   save();
-  toast(t('toast.reminder.left'));
+  toast(t('ui.notify.body'));
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     try { new Notification('ミトコンドリア・ライフ', { body: t('ui.notify.body') }); } catch {}
   }
@@ -6949,6 +7261,10 @@ function startTutorial(mode) {
     });
   }
   steps.push({ type:'tips' });
+  if (mode === 'onboarding') {
+    steps.splice(0, steps.length, ...['lang','carePurpose','careWhy','careMeal','careFeed','careDone'].map(type => ({type})));
+    if (nativeHealthPlugin() || nativeLocalNotifications()) steps.push({type:'link'});
+  }
   tut = { mode, steps, i:0, answers:{}, tipIdx:0, animating:false, healthOk:false, notifyOk:false };
   // 既に入っている値は初期値として見せる（設定から見直すときのため）
   TUT_QUESTIONS.forEach(q => { const v = q.load(); if (v != null && v !== '') tut.answers[q.key] = v; });
@@ -6989,9 +7305,9 @@ function tutRender() {
   const s = tut.steps[tut.i];
   const body = $('#tutBody');
   const next = $('#tutNext');
-  body.innerHTML = '';
+  body.innerHTML = ''; body.classList.remove('care-feeding');
   // 進み具合。tipsは1ステップだが中で3枚めくるので、その分を足して数える
-  const total = tut.steps.length + (tipsImgs().length - 1);
+  const total = tut.steps.length + (tut.mode === 'onboarding' ? 0 : tipsImgs().length - 1);
   const cur = tut.i + (s.type === 'tips' ? tut.tipIdx : 0);
   $('#tutProgress').innerHTML = Array.from({ length: total },
     (_, i) => `<span class="tut-dot${i === cur ? ' on' : ''}"></span>`).join('');
@@ -7000,6 +7316,7 @@ function tutRender() {
   next.disabled = false;
   next.textContent = t('ui.tut.next');
 
+  if (s.type.startsWith('care')) { renderCareTutorial(s.type, body, next); return; }
   if (s.type === 'lang') {
     body.innerHTML = `<div class="tut-title">${esc(t('ui.lang.title'))}</div>`;
     const list = document.createElement('div');
@@ -7214,6 +7531,9 @@ function tutFlip(delta) {
 function tutNext() {
   if (!tut || tut.animating) return;
   const s = tut.steps[tut.i];
+  if (s.type === 'carePurpose') return;
+  if (s.type === 'careMeal') { if (!saveCareFirstMeal()) return; }
+  if (s.type === 'careFeed' && !DB.care.firstFed) { if (!performCareFeed()) return; tut.fed = true; }
   if (s.type === 'q' && !tutQValid(s.q)) return;
   if (s.type === 'tips') {
     if (tut.tipIdx < tipsImgs().length - 1) tutFlip(1);
@@ -7230,7 +7550,8 @@ function tutBack() {
 // 入力はここでまとめて保存する（途中でやめたときに中途半端な値を残さないため）
 function tutFinish() {
   const mode = tut.mode;
-  if (mode !== 'tips') {
+  if (mode === 'onboarding' && !DB.care.firstFed && !careBalance(DB.care)) DB.care.claims.practice = 3;
+  if (mode !== 'tips' && mode !== 'onboarding') {
     TUT_QUESTIONS.forEach(q => {
       const v = tut.answers[q.key];
       if (v == null || v === '') return;
@@ -7247,7 +7568,7 @@ function tutFinish() {
   }
   commit();
   if (mode === 'onboarding') {
-    setTimeout(() => toast(t('toast.tutorial.editHint')), 600);
+    setTimeout(() => toast(t('care.tut.welcome')), 600);
   }
 }
 $('#btnReadTips').addEventListener('click', () => startTutorial('tips'));
@@ -7273,6 +7594,204 @@ $('#pickDone').addEventListener('click', () => {
   $('#pickModal').querySelector('.sheet-close').style.display = '';
 });
 
+/* Care interaction layer. Persist before celebrating; roll back on storage failure. */
+const CARE_GOALS = [
+  {id:'balance', label:'care.goal.balance', why:'care.goal.balanceWhy'},
+  {id:'weight', label:'care.goal.weight', why:'care.goal.weightWhy'},
+  {id:'fitness', label:'care.goal.fitness', why:'care.goal.fitnessWhy'},
+  {id:'collect', label:'care.goal.collect', why:'care.goal.collectWhy'},
+];
+const CARE_THEMES = [
+  {id:'garden', at:0, label:'care.theme.garden'},
+  {id:'pond', at:18, label:'care.theme.pond'},
+  {id:'night', at:45, label:'care.theme.night'},
+];
+const CARE_SOURCE_LABELS = {meal:'care.source.meal', steps:'care.source.steps', sleep:'care.source.sleep', mission:'care.source.mission'};
+let careFeeding = false;
+let careCaptionTimer;
+function persistCareChange(change) {
+  const previous = deepClone(DB.care);
+  const result = change();
+  recompute();
+  if (!save()) { DB.care = previous; recompute(); renderCare(); return false; }
+  renderAll();
+  return result;
+}
+function renderCare() {
+  if (!DB.care || !$('#careWallet')) return;
+  const bank = careBalance(DB.care), fed = careFed(DB.care);
+  const snapshot = {...DB, care:deepClone(DB.care)};
+  const delivery = claimCare(snapshot, today);
+  $('#tabHome .care-bowl').textContent = bank ? '● '.repeat(Math.min(3,bank)).trim() : '○';
+  $('#careWallet').textContent = t('care.home.wallet', {n:bank});
+  $('#careFeed').textContent = bank ? t('care.home.feed', {n:Math.min(3,bank)}) : t('care.home.empty');
+  $('#careFeed').disabled = careFeeding;
+  $('#careRecord').hidden = !bank;
+  $('#careClaim').disabled = delivery === 0;
+  $('#careJournal summary').textContent = delivery > 1 ? t('care.home.deliveryDetails') : t('care.home.rules');
+  $('#careClaim').textContent = delivery ? t('care.home.claim', {n:delivery}) : t('care.home.claimed');
+  $('#careProgressLabel').textContent = t('care.home.progress', {n:3 - fed % 3});
+  $('#careProgress').value = fed % 3;
+  $('#careProgress').setAttribute('aria-label', $('#careProgressLabel').textContent);
+  if (!careFeeding) $('#careCaption').textContent = t('care.home.level', {n:Math.floor(fed / 3)});
+  $('#careHero').src = MITO_IMG_SRC;
+  $('#careHero').alt = t('aria.mito');
+  $('#careBaby').src = MITO_IMG_SRC; $('#careBaby').hidden = fed < 3;
+  $('#careHistory').textContent = t('care.home.history', {n:fed});
+  const theme = CARE_THEMES.find(option => option.id === DB.care.theme && option.at <= fed) || CARE_THEMES[0];
+  $('#tabHome .mito-stage').dataset.theme = theme.id;
+  $('#careThemes').innerHTML = '';
+  CARE_THEMES.filter(option => option.at <= fed).forEach(option => {
+    const button = document.createElement('button');
+    button.textContent = t(option.label); button.type = 'button';
+    button.setAttribute('aria-pressed', String(option.id === theme.id));
+    button.addEventListener('click', () => persistCareChange(() => { DB.care.theme = option.id; return true; }));
+    $('#careThemes').appendChild(button);
+  });
+  const upcoming = CARE_THEMES.find(option => option.at > fed);
+  $('#careThemeNext').textContent = upcoming ? t('care.theme.locked', {n:upcoming.at - fed}) : '';
+  const sources = carePending(DB, today);
+  $('#careSources').innerHTML = sources.map(o => `<div class="care-source"><span>${esc(o.date)} · ${esc(t(CARE_SOURCE_LABELS[o.kind]))}${o.meal ? ' · ' + esc(mealLabel(o.meal)) : ''}</span><b>+${o.amount}</b></div>`).join('') +
+    (!DB.care.visits[today] ? `<div class="care-source"><span>${esc(t('care.source.visit'))}</span><b>+1</b></div>` : '') +
+    (!DB.care.fresh[prevDate(today)] && sources.some(o => o.date === prevDate(today) && o.kind !== 'meal') ? `<div class="care-source"><span>${esc(t('care.source.fresh'))}</span><b>+1</b></div>` : '');
+  const selector = $('#carePurposeSetting');
+  if (selector) {
+    selector.innerHTML = CARE_GOALS.map(goal => `<option value="${goal.id}">${esc(t(goal.label))}</option>`).join('');
+    selector.value = DB.care.purpose;
+    const selectedGoal = CARE_GOALS.find(goal => goal.id === DB.care.purpose) || CARE_GOALS[0];
+    $('#carePurposeWhy').textContent = t(selectedGoal.why);
+  }
+}
+function performCareFeed() {
+  if (careFeeding || !careBalance(DB.care)) return false;
+  checkDayChange();
+  const before = Math.floor(computed.mito);
+  const result = persistCareChange(() => { const amount = feedCare(DB, today); DB.care.firstFed = true; return amount; });
+  if (!result) return false;
+  careFeeding = true;
+  const target = $('#tabHome .mito-stage');
+  target.classList.remove('care-feeding'); void target.offsetWidth; target.classList.add('care-feeding');
+  if (tut) $('#tutBody').classList.add('care-feeding');
+  $('#careFeed').disabled = true;
+  $('#careCaption').textContent = t('care.home.thanks');
+  clearTimeout(careCaptionTimer);
+  careCaptionTimer = setTimeout(() => {
+    $('#careCaption').textContent = t(Math.floor(computed.mito) > before ? 'care.home.born' : 'care.home.thanks');
+    if (!stage.reduced) spawnBurst(20);
+    if (navigator.vibrate && !stage.reduced) navigator.vibrate(20);
+    careFeeding = false;
+    target.classList.remove('care-feeding');
+    $('#careFeed').disabled = false;
+  }, stage.reduced ? 0 : 1400);
+  return true;
+}
+function careChooseMeal() {
+  switchTab('meals');
+  const rec = getRec(sel, false);
+  const hour = new Date().getHours();
+  const preferred = hour < 11 ? 'breakfast' : hour < 17 ? 'lunch' : 'dinner';
+  const meal = !careMealPresent(rec, preferred) ? preferred : CARE_MEALS.find(key => !careMealPresent(rec, key)) || preferred;
+  openAddChoice(meal);
+}
+function saveMealLocally(close) {
+  const date = sel, meal = mealModalKey;
+  const rec = getRec(date, true);
+  const note = ($('#mealNote') ? $('#mealNote').value.trim().slice(0,2000) : '');
+  const photos = (rec.photos || {})[meal] || [];
+  if (!note && !photos.length) { $('#mealMsg').textContent = t('ui.meal.needText'); return false; }
+  const old = deepClone(rec), oldCare = deepClone(DB.care), before = careBalance(DB.care);
+  const entry = (rec.mealAnalysis || {})[meal] || {};
+  rec.mealAnalysis = rec.mealAnalysis || {};
+  rec.mealAnalysis[meal] = {...entry, note:note || null, fullness:mealFulSel || null,
+    analysis:entry.note === (note || null) && entry.fullness === (mealFulSel || null) ? entry.analysis : null};
+  commit();
+  if (saveFailed) { DB.days[date] = old; DB.care = oldCare; recompute(); renderAll(); return false; }
+  if (close) {
+    $('#mealModal').classList.remove('open');
+    const earned = careBalance(DB.care) - before;
+    switchTab('home');
+    toast(earned ? t('care.meal.saved', {n:earned}) : t(date < DB.care.since ? 'care.meal.past' : 'care.meal.savedAgain'));
+    $('#careCaption').textContent = earned ? t('care.meal.saved', {n:earned}) : t('care.home.thanks');
+  }
+  return true;
+}
+function setCarePurpose(purpose) {
+  if (!CARE_GOALS.some(goal => goal.id === purpose)) return;
+  const previous = deepClone(DB);
+  DB.care.purpose = purpose;
+  // Changing the purpose never erases historic check-ins.
+  if (purpose !== 'weight') {
+    DB.profile.targetRatio = 1;
+    ['hara7','nightfast','sugarCtrl'].forEach(id => unpickItem(DB.items, id, today));
+  }
+  if (purpose === 'weight') {
+    ['hara7','nightfast','sugarCtrl'].forEach(id => { const item = catalogById(id); if (item) pickItem(DB.items,item,today); });
+  }
+  commit();
+  if (saveFailed) { DB = previous; recompute(); renderAll(); }
+}
+function careMealFields(container) {
+  const saved = tut.mealDraft || {date:today, meal:'dinner', note:''};
+  container.innerHTML = `<div class="tut-title">${esc(t('care.meal.first'))}</div><p class="tut-lead">${esc(t('care.meal.lead'))}</p>` +
+    `<div class="care-meal-fields"><label>${esc(t('care.meal.date'))}<input id="careMealDate" type="date" min="${DB.care.since}" max="${today}" value="${saved.date}"></label>` +
+    `<label>${esc(t('care.meal.slot'))}<select id="careMealSlot">${CARE_MEALS.map(meal => `<option value="${meal}"${meal === saved.meal ? ' selected' : ''}>${esc(mealLabel(meal))}</option>`).join('')}</select></label>` +
+    `<textarea id="careMealNote" class="meal-textarea" maxlength="2000" placeholder="${esc(t('ph.mealNote'))}">${esc(saved.note)}</textarea></div>` +
+    `<p id="careMealError" class="care-small" role="status"></p><button id="carePractice" class="btn btn-secondary">${esc(t('care.meal.sample'))}</button>`;
+  $('#careMealNote').setAttribute('aria-label', t('care.meal.first'));
+  container.querySelectorAll('input,select,textarea').forEach(el => el.addEventListener('input', () => {
+    tut.mealDraft = {date:$('#careMealDate').value, meal:$('#careMealSlot').value, note:$('#careMealNote').value};
+  }));
+  $('#carePractice').addEventListener('click', () => {
+    if (!persistCareChange(() => { DB.care.claims.practice = 3; return true; })) return;
+    tutGo(1);
+  });
+}
+function saveCareFirstMeal() {
+  const date = $('#careMealDate').value, meal = $('#careMealSlot').value, note = $('#careMealNote').value.trim();
+  if (!note || date < DB.care.since || date > today || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    $('#careMealError').textContent = t('ui.meal.needText'); return false;
+  }
+  const rec = getRec(date, true), previous = deepClone(rec), previousCare = deepClone(DB.care);
+  rec.mealAnalysis = rec.mealAnalysis || {};
+  // Re-entering the tutorial does not overwrite an existing meal.
+  if (!careMealPresent(rec, meal)) rec.mealAnalysis[meal] = {note, analysis:null, fullness:null};
+  commit();
+  if (saveFailed) { DB.days[date] = previous; DB.care = previousCare; recompute(); renderAll(); return false; }
+  return true;
+}
+function renderCareTutorial(type, body, next) {
+  const goal = CARE_GOALS.find(option => option.id === DB.care.purpose) || CARE_GOALS[0];
+  if (type === 'carePurpose') {
+    body.innerHTML = `<img class="tut-mito" src="${MITO_IMG_SRC}" alt=""><p class="tut-lead">${esc(t('care.tut.hello'))}</p><div class="tut-title">${esc(t('care.goal.ask'))}</div><div class="care-purpose" id="carePurpose"></div>`;
+    CARE_GOALS.forEach(option => {
+      const button = document.createElement('button'); button.className = 'btn btn-secondary';
+      button.textContent = t(option.label);
+      button.addEventListener('click', () => { setCarePurpose(option.id); if (!saveFailed) tutGo(1); });
+      $('#carePurpose').appendChild(button);
+    });
+    next.disabled = true;
+  } else if (type === 'careWhy') {
+    body.innerHTML = `<div class="tut-title">${esc(t(goal.label))}</div><p class="tut-lead">${esc(t(goal.why))}</p><p class="care-small">${esc(t('care.home.disclaimer'))}</p>`;
+  } else if (type === 'careMeal') {
+    careMealFields(body); next.textContent = t('care.meal.save');
+  } else if (type === 'careFeed') {
+    body.innerHTML = `<div class="tut-title">${esc(t('care.tut.feed'))}</div><img class="tut-mito" src="${MITO_IMG_SRC}" alt=""><div class="care-bowl" aria-hidden="true">● ● ●</div><p class="tut-lead">${esc(t('care.tut.feedLead'))}</p>`;
+    next.textContent = DB.care.firstFed ? t('ui.tut.next') : t('care.home.feed', {n:Math.min(3,careBalance(DB.care))});
+  } else if (type === 'careDone') {
+    body.classList.add('care-feeding');
+    body.innerHTML = `<div class="tut-title">${esc(t('care.tut.done'))}</div><img class="tut-mito" src="${MITO_IMG_SRC}" alt=""><p class="tut-lead">${esc(t('care.tut.doneLead'))}</p>`;
+    next.textContent = t('care.tut.begin');
+  }
+}
+$('#carePurposeSetting').addEventListener('change', event => setCarePurpose(event.target.value));
+$('#careFeed').addEventListener('click', () => { if (careBalance(DB.care)) performCareFeed(); else careChooseMeal(); });
+$('#careRecord').addEventListener('click', careChooseMeal);
+$('#careClaim').addEventListener('click', () => {
+  checkDayChange();
+  const result = persistCareChange(() => claimCare(DB, today));
+  if (result) { toast(t('care.home.received', {n:result})); $('#careCaption').textContent = t('care.home.received', {n:result}); }
+});
+
 /* ============ 全体描画・初期化 ============ */
 // v1.51: ヘッダーの高さ（セーフエリア・週カレンダー・日付バナーで変わる）と、
 // フッター分に確保してある #app の下パディングを画面高から引き、ホームが使える高さを渡す。
@@ -7287,6 +7806,7 @@ function layoutHome() {
 }
 
 function renderAll() {
+  renderCare();
   renderHeader();
   renderCalendar();
   renderPhotos();
@@ -7324,6 +7844,10 @@ window.addEventListener('resize', () => {
 });
 window.addEventListener('orientationchange', () => setTimeout(layoutHome, 200));
 
+const careNotifications = nativeLocalNotifications();
+if (careNotifications && careNotifications.addListener) {
+  careNotifications.addListener('localNotificationActionPerformed', () => { checkDayChange(); switchTab('home'); autoSyncHealthData(); }).catch(() => {});
+}
 stage.canvas = $('#mitoCanvas');
 stage.ctx = stage.canvas.getContext('2d');
 // v1.37: ミトの群れをタップすると、近くの子たちが逃げる
@@ -7331,6 +7855,7 @@ stage.canvas.addEventListener('click', e => {
   const rect = stage.canvas.getBoundingClientRect();
   triggerFlee(e.clientX - rect.left, e.clientY - rect.top);
 });
+settleCareMeals(DB, today);
 recompute();
 save();
 applyI18n();   // v1.63: HTMLに書いた日本語を、選ばれている言語で置き換える

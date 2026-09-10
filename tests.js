@@ -489,5 +489,30 @@ eq('体重 値が数値でない行は無視', pickWeightForDate([{ value:'x', s
 }
 
 
+{
+ const day='2026-09-10', previous='2026-09-09';
+ const db={startDate:previous,items:[],days:{},onboarded:true};
+ const legacy=computeState(db,day); db.care=createCare(db,day);
+ eq('care preserves legacy',computeState(db,day).mito,legacy.mito);
+ eq('care never auto-grows after absence',computeState(db,'2026-10-01').mito,legacy.mito);
+ db.days[day]={mealAnalysis:{lunch:{note:'rice'}}};
+ eq('care meal immediate',settleCareMeals(db,day),3);
+ eq('care meal repeated',settleCareMeals(db,day),0);
+ delete db.days[day].mealAnalysis.lunch;
+ settleCareMeals(db,day);
+ db.days[day].mealAnalysis.lunch={note:'new'};
+ eq('care meal delete readd',settleCareMeals(db,day),0);
+ eq('care food before feed',careBalance(db.care),6);
+ feedCare(db); eq('care feeding growth',computeState(db,day).mito,legacy.mito+1);
+ feedCare(db); eq('care empty feeding',feedCare(db),0);
+ const saved=JSON.parse(JSON.stringify(db));
+ eq('care roundtrip food',careBalance(saved.care),0);
+ eq('care roundtrip growth',computeState(saved,day).mito,legacy.mito+2);
+ const entries=careOffers({items:[],days:{[day]:{steps:999999,sleepHours:20}}},day);
+ eq('care steps cap',entries.find(o=>o.kind==='steps').amount,4);
+ eq('care sleep cap',entries.find(o=>o.kind==='sleep').amount,2);
+ eq('care future has no rewards',carePending({...db,days:{'2026-12-01':{steps:99999}}},day).length,0);
+}
+
 print(`RESULT: ${pass} passed, ${fail} failed`);
 if (fail > 0) quit(1);
