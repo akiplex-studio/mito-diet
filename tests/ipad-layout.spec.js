@@ -17,16 +17,14 @@ for (const [width, height] of [[820,1180], [1180,820], [1024,1366], [1366,1024],
     await page.goto('/index.html', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#hdrCount')).toHaveText(/\d/);
     const assertFits = async () => {
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      // Rotation can overlap the existing mission-card transition; check the settled layout.
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     };
     await assertFits();
     const stage = await page.locator('.mito-stage').boundingBox();
     const missions = await page.locator('#todoCard').boundingBox();
     const footer = await page.locator('nav.footer').boundingBox();
-    // Care introduces deliberate vertical scrolling on compact displays.
-    await page.locator('#btnEditMissions').scrollIntoViewIfNeeded();
-    const edit = await page.locator('#btnEditMissions').boundingBox();
-    expect(edit.y + edit.height).toBeLessThanOrEqual(footer.y + 1);
+    expect(missions.y + missions.height).toBeLessThanOrEqual(footer.y + 1);
     if (width >= 1024) expect(stage.x + stage.width).toBeLessThan(missions.x);
     else expect(stage.y + stage.height).toBeLessThanOrEqual(missions.y + 1);
     for (const tab of ['meals', 'records', 'settings', 'home']) {

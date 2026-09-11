@@ -14,7 +14,7 @@ const { skipOnboarding, pickItems } = require('./helpers');
 //   - がんばり度モーダル: #effortModal / #effortList .effort-btn
 //   - やることカード:     .todo-card
 
-test('新規ユーザー: 運動項目をチェックするとがんばり度を聞かれ、選んだ段階が翌日の餌に反映される', async ({ page }) => {
+test('新規ユーザー: 運動項目をチェックするとがんばり度を聞かれ、選んだ段階が匹数に反映される', async ({ page }) => {
   /** @type {string[]} */
   const pageErrors = [];
   page.on('pageerror', (err) => { pageErrors.push(err.message); });
@@ -46,8 +46,7 @@ test('新規ユーザー: 運動項目をチェックするとがんばり度を
   expect(after.checked).toContain('bodyweight');
   expect(after.effort).toBe(4);                 // 選んだ段階が記録されている
   // 活性+6で基礎+0.5、がんばり度「追い込んだ」で+3.5 → 合計+4
-  expect(after.mito).toBe(before);
-  expect(await page.evaluate(() => careOffers(DB,today).find(o => o.kind === 'mission').amount)).toBe(4);    // before には当日の基礎+0.5が既に入っているため
+  expect(after.mito - before).toBe(4 - 0.5);    // before には当日の基礎+0.5が既に入っているため
 
   expect(pageErrors, `pageerror が発生: ${pageErrors.join(' / ')}`).toEqual([]);
 });
@@ -101,7 +100,7 @@ test('既存ユーザー: 保存済みの効果値(inc:15)が維持され、が�
   expect(checked).toContain('bodyweight');
 });
 
-test('旧計算の移行を維持し、餌育成の開始時点を固定する', async ({ page }) => {
+test('v1.61: 保存済みの項目にも新しい効果値が反映され、過去の匹数も下がる', async ({ page }) => {
   // 旧い効果値（自重トレ 追い込んだ=8匹）で3日ぶん育てた既存ユーザー
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
@@ -126,8 +125,7 @@ test('旧計算の移行を維持し、餌育成の開始時点を固定する',
 
   const after = await page.evaluate(() => ({
     efforts: DB.items.find(i => i.id === 'bodyweight').efforts.map(e => e.inc),
-    mito: computeState({...DB,care:null}, '2026-07-03').mito,
-    preserved: computed.mito === DB.care.legacy,
+    mito: computeState(DB, '2026-07-03').mito,
   }));
   // 新しい値に置き換わっている
   expect(after.efforts).toEqual([0.5, 1, 1.5, 2.5, 3.5]);
@@ -135,5 +133,4 @@ test('旧計算の移行を維持し、餌育成の開始時点を固定する',
   // 旧値（追い込んだ=8匹・基礎+2）のままなら3日で30匹まで伸びていたところが14匹になる
   // （v1.61で効果値を半分に、v1.68で基礎増加も半分にした）
   expect(after.mito).toBe(14);
-  expect(after.preserved).toBe(true);
 });
