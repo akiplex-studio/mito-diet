@@ -230,16 +230,30 @@ test('英語に切り替えたとき、画面に日本語が残っていない',
   await page.goto('/index.html');
   await page.evaluate(() => setLang('en'));
 
-  /** 表示中の要素から日本語の文字を拾う（言語名の「日本語」だけは意図的に残す） */
+  /** 表示中の要素から日本語の文字を拾う（言語名の「日本語」だけは意図的に残す）
+      v1.72: 全角記号（「・」「、」「。」「（）」や全角英数・記号）を見落としていたのと、
+      title/placeholder/aria-label属性、子要素を持つ要素の直接の文言（子要素と混在するテキスト）
+      を見ていなかったのを直した。 */
   const scan = () => page.evaluate(() => {
-    const JA = /[ぁ-んァ-ヴ一-龥]/;
-    const ok = ['日本語', 'Language / 言語', 'ことばを選ぶ / Choose language'];
+    // ぁ-ん/ァ-ヴ/一-龥 に加えて、「・」（U+30FB。カタカナのすぐ上でカタカナ範囲から漏れていた）、
+    // 全角記号（U+3000-303F。、。（）など）、全角英数・記号（U+FF00-FFEF。＋Ａ１等）も拾う
+    const JA = /[ぁ-んァ-ヴ一-龥・　-〿＀-￯]/;
+    const ok = ['日本語', 'Language / 言語', 'ことばを選ぶ / Choose language', '中文（简体）'];
     const out = [];
-    document.querySelectorAll('body *').forEach(el => {
-      if (el.children.length) return;
-      if (!el.offsetParent && el.tagName !== 'OPTION') return;   // 隠れている要素は見ない
-      const s = (el.textContent || '').trim();
+    const add = (s) => {
+      s = (s || '').trim();
       if (s && JA.test(s) && !ok.includes(s) && !out.includes(s)) out.push(s);
+    };
+    document.querySelectorAll('body *').forEach(el => {
+      if (!el.offsetParent && el.tagName !== 'OPTION') return;   // 隠れている要素は見ない
+      // 子要素の有無に関わらず、その要素自身の直接のテキストノードだけを見る
+      // （子要素を持つ要素の「本文＋子要素」の混在テキストも、子孫の重複カウントも両方避けられる）
+      let own = '';
+      el.childNodes.forEach(n => { if (n.nodeType === 3) own += n.textContent; });
+      add(own);
+      ['title', 'placeholder', 'aria-label'].forEach(attr => {
+        if (el.hasAttribute(attr)) add(el.getAttribute(attr));
+      });
     });
     return out;
   });
@@ -302,6 +316,12 @@ test('英語では解説とマイトのセリフも英語になる', async ({ pa
     why: infoWhy('walk'), tips: infoTips('walk'),
     speech: speechLines('walk')[0], tip: whyLines('walk')[0],
     name: itemName({ id: 'bodyweight' }), blurb: itemBlurb('hiit'),
+    // v1.72: 廃止済みの旧項目（カタログには無く、既存ユーザーの保存データにだけ残る）。
+    // 辞書にキーが無いと itemName/itemShort が保存値（日本語）へフォールバックしていた
+    darknightName: itemName({ id: 'darknight', name: '夜は暗くしてスマホを避ける' }),
+    darknightShort: itemShort({ id: 'darknight', name: '夜は暗くしてスマホを避ける', short: '夜は暗く' }),
+    sugarName: itemName({ id: 'sugar', name: '砂糖・甘い飲料・お菓子をとった' }),
+    sugarShort: itemShort({ id: 'sugar', name: '砂糖・甘い飲料・お菓子をとった', short: '砂糖NG' }),
   }));
   const JA = /[ぁ-んァ-ヴ一-龥]/;
   for (const [k, v] of Object.entries(texts)) {
@@ -309,4 +329,84 @@ test('英語では解説とマイトのセリフも英語になる', async ({ pa
   }
   expect(texts.why).toContain('AMPK');
   expect(texts.name).toContain('Bodyweight');
+});
+
+// v1.72: 全項目・写真解析結果・カレンダーまで含めた広い検査。
+// 上の「画面に日本語が残っていない」テストは主要画面しか触れておらず、
+// renderPhotos/analysisHTML/dishesToText/analysisComment/renderPickBody（全機序の選択肢展開）
+// のような「データが無いと出ない」経路は素通りしていた。
+test('全項目を選び、写真解析結果を仕込んだ状態でも英語に日本語が残っていない', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+
+  const JA = /[ぁ-んァ-ヴ一-龥・　-〿＀-￯]/;
+  const ok = ['日本語', 'Language / 言語', 'ことばを選ぶ / Choose language', '中文（简体）'];
+  const scan = () => page.evaluate(({ JA_SOURCE, ok }) => {
+    const JA = new RegExp(JA_SOURCE, 'u');
+    const out = [];
+    const add = (s) => {
+      s = (s || '').trim();
+      if (s && JA.test(s) && !ok.includes(s) && !out.includes(s)) out.push(s);
+    };
+    document.querySelectorAll('body *').forEach(el => {
+      if (!el.offsetParent && el.tagName !== 'OPTION') return;
+      let own = '';
+      el.childNodes.forEach(n => { if (n.nodeType === 3) own += n.textContent; });
+      add(own);
+      ['title', 'placeholder', 'aria-label'].forEach(attr => {
+        if (el.hasAttribute(attr)) add(el.getAttribute(attr));
+      });
+    });
+    return out;
+  }, { JA_SOURCE: JA.source, ok });
+
+  const TINY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+  await page.evaluate((dataUrl) => {
+    // 全カタログ項目を選ぶ（がんばり度・自分で決める枠も含む）
+    CATALOG.forEach(c => pickItem(DB.items, c, today));
+    // 写真つきの食事解析結果を仕込む（renderPhotos/analysisHTML/dishesToText/analysisCommentを踏む）
+    const rec = getRec(today, true);
+    rec.photos = { breakfast: [{ data: dataUrl }], lunch: [], dinner: [] };
+    rec.mealAnalysis = {
+      breakfast: {
+        analysis: {
+          mito_score: 80, confidence: 'high',
+          dishes: [{ name: 'Omelette', amount: '2 eggs' }, { name: 'Rice', amount: '1 bowl' }],
+          nutrition: { calories_kcal: 450, protein_g: 20, fat_g: 15, carbs_g: 50 },
+          good_points: ['Balanced protein', 'Plenty of vegetables'],
+          advice: 'Add more colour to the plate',
+        },
+        fullness: '普通', note: 'test note',
+        analyzedAt: new Date().toISOString(), photoCount: 1,
+      },
+      lunch: null, dinner: null,
+    };
+    commit();
+    setLang('en');
+    renderAll();
+  }, TINY_PNG);
+
+  expect(await scan(), 'ホーム（全項目選択）').toEqual([]);
+
+  await page.locator('nav.footer button[data-tab="meals"]').click();
+  expect(await scan(), '食事タブ（解析結果・料理・コメントあり）').toEqual([]);
+
+  await page.evaluate(() => openMealModal('breakfast'));
+  expect(await scan(), '食事解析結果モーダル').toEqual([]);
+  await page.locator('#mealFixStart').click();
+  expect(await scan(), '食事解析結果モーダル（修正編集中のテキストエリアを含む）').toEqual([]);
+  await page.evaluate(() => document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open')));
+
+  await page.locator('nav.footer button[data-tab="records"]').click();
+  expect(await scan(), '記録タブ（カレンダーの記録なし表示を含む）').toEqual([]);
+
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnPickItems').click();
+  await page.evaluate(() => {
+    MECHANISMS.forEach(m => pickOpen.add('mech:' + m.id));
+    autoCatalog().forEach(a => pickOpen.add('auto:' + a.id));
+    renderPickBody();
+  });
+  expect(await scan(), 'ミッション選択（全項目・全機序展開。「選択中：a・b」の一覧を含む）').toEqual([]);
 });

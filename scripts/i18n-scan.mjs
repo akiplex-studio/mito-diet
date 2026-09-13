@@ -23,6 +23,8 @@ const JA = /[ぁ-んァ-ヴ一-龥]/;
 // 日本語のままで正しいもの
 const ALLOW = [
   '日本語',                      // 言語の選択肢は両言語で出す
+  '中文（简体）',                 // 言語の選択肢（中国語簡体字の自称表記）
+  'Bahasa Melayu',               // 言語の選択肢（マレー語の自称表記。ASCIIだが明示しておく）
   'ミトコンドリア・ライフ',   // アプリ名（PWAマニフェスト・通知タイトル）。2026-09-05 に「ダイエット」から改名
   'マイト',                      // キャラクター名（PWAマニフェストのshort_name）
   '軽め', '腹七分目くらい', '普通', '満腹', '食べ過ぎ',  // 保存される値（表示はfullnessLabel経由）
@@ -33,7 +35,7 @@ const ALLOW = [
   '自己申告（廃止・sugarCtrlに統合）',                   // migrate: 同上
 ];
 // これらで始まる文字列は開発用のログなので対象外
-const ALLOW_PREFIX = ['[i18n]', '[health]', '[reminder]', '[cap]'];
+const ALLOW_PREFIX = ['[i18n]', '[health]', '[reminder]', '[cap]', '[analyze]'];
 
 // 「控え」のデータ定義。画面表示は辞書経由なので中の日本語は許す
 const DATA_BLOCKS = [

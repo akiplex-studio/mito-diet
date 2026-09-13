@@ -64,3 +64,22 @@ test('populated weight chart translates its legend into English', async ({ page 
   await expect(page.locator('#weightBody .wt-legend')).toContainText('Weight');
   await expect(page.locator('#weightBody')).not.toContainText('体重');
 });
+
+// v1.72: aria-labelが `t('aria.weightChart')` の文字列そのまま（未評価）で出ていたバグの回帰確認。
+// テンプレートリテラル内で `${}` を忘れると、属性値がクォートも無いまま関数呼び出しの生テキストになる。
+test('体重グラフのaria-labelは翻訳された文字列になる（t()の生テキストのままにならない）', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const previous = new Date(today + 'T12:00:00');
+    previous.setDate(previous.getDate() - 1);
+    DB.startDate = fmtDate(previous);
+    getRec(fmtDate(previous), true).weight = 72;
+    getRec(today, true).weight = 71.8;
+    renderAll();
+    switchTab('records');
+  });
+  const ariaLabel = await page.locator('#wtGraph').getAttribute('aria-label');
+  expect(ariaLabel).toBe('体重推移グラフ');
+  expect(ariaLabel).not.toContain("t(");
+});

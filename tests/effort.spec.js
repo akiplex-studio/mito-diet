@@ -51,6 +51,35 @@ test('新規ユーザー: 運動項目をチェックするとがんばり度を
   expect(pageErrors, `pageerror が発生: ${pageErrors.join(' / ')}`).toEqual([]);
 });
 
+// v1.72: CARDIO_EFFORTS（サイクリング・スイミング用）と WALK_EFFORTS（歩数用）の
+// inc の並びがたまたま同じ([0.3,0.5,0.8,1.2,1.8])だったため、effortTableName() の
+// 見分けがincだけを見ていた実装だと walk に上書きされ、サイクリング・スイミングの
+// がんばり度選択に「3,000歩」等の歩数表記が出てしまっていたバグの回帰確認。
+test('サイクリングのがんばり度は時間表記（歩数表記にならない）', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await pickItems(page, ['cycling']);
+
+  await page.getByText('サイクリング', { exact: true }).first().click();
+  await expect(page.locator('#effortModal')).toHaveClass(/open/);
+
+  const labels = await page.locator('#effortList .effort-name').allTextContents();
+  expect(labels).toEqual(['10分', '20分', '30分', '45分', '60分以上']);
+  expect(labels.join('')).not.toContain('歩');
+});
+
+test('スイミングのがんばり度も時間表記（歩数表記にならない）', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await pickItems(page, ['swim']);
+
+  await page.getByText('スイミング', { exact: true }).first().click();
+  await expect(page.locator('#effortModal')).toHaveClass(/open/);
+
+  const labels = await page.locator('#effortList .effort-name').allTextContents();
+  expect(labels).toEqual(['10分', '20分', '30分', '45分', '60分以上']);
+});
+
 test('チェックを外すときはがんばり度を聞かない', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');

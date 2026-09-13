@@ -1,0 +1,2 @@
+/* v1.72: 日本語以外の表示名は「Mito Life」。日本語（既定のInfo.plist）は「ミトコンドリア・ライフ」のまま */
+"CFBundleDisplayName" = "Mito Life";
