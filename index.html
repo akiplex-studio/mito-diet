@@ -733,6 +733,10 @@ nav.footer {
 .info-block { margin-bottom:var(--space-4); }
 .info-block .lbl { font-size:12px; font-weight:700; color:var(--primary-700); display:flex; align-items:center; gap:6px; margin-bottom:var(--space-1); }
 .info-block p { font-size:14px; line-height:1.8; color:var(--neutral-700); }
+/* v1.72: 研究メモ。本文（why/tips）より一段控えめだが、老眼に配慮して極小にはしない */
+.info-note { background:var(--neutral-50); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); }
+.info-note .lbl { color:var(--info-500); }
+.info-note p { font-size:13px; line-height:1.7; color:var(--neutral-600); }
 .info-disclaimer { font-size:11px; color:var(--color-text-muted); border-top:1px solid var(--color-border); padding-top:var(--space-3); line-height:1.6; }
 
 /* 設定：目標体重フィールド */
@@ -1441,6 +1445,7 @@ const I18N = {
     "ui.info.disclaimer": "※ 一般的な健康情報であり、医療上の助言ではありません。持病や治療中の方は主治医にご相談ください。",
     "ui.info.inc": "　+{n}匹",
     "ui.info.incRange": "　+{lo}〜{hi}匹",
+    "ui.info.noteLabel": "研究メモ",
     "ui.info.tipsLabel": "実践のコツ",
     "ui.info.whyLabel": "なぜミトコンドリアに効くの？",
     "ui.pick.max": "「{name}」で選べるのは最大{n}つまでです。他をはずしてから選んでください。",
@@ -1509,8 +1514,9 @@ const I18N = {
     "info.darknight.why": "夜の強い光やスマホはメラトニン（睡眠ホルモン）を抑え、体内時計と睡眠の質を乱します。眠る時間そのものが削られると、翌日の元気に響きます。",
     "info.gymtrain.tips": "2〜3種目を各10〜15回×2〜3セット。週2回でも、同じ部位は中1〜2日あけましょう。",
     "info.gymtrain.why": "マシンやダンベルは負荷を数字で細かく上げられるので、「少しきつい」を毎回狙えます。筋肉が増えると、その中のミトコンドリアも一緒に増えていきます。",
+    "info.hara7.note": "空腹でマイトファジーが進むことは主に細胞や動物で示されたもので、ヒトの筋肉ではまだ直接確かめられていません（絶食で目印が増えなかった報告もあります）。",
     "info.hara7.tips": "よく噛んでゆっくり。腹七分で箸を置く習慣を。",
-    "info.hara7.why": "軽い空腹（食べ過ぎない）は、AMPKやサーチュインを介して、古くなったミトコンドリアを掃除する「マイトファジー」を促すと考えられています。逆に食べ過ぎると、余ったエネルギーがミトコンドリアの負担になります。",
+    "info.hara7.why": "軽い空腹（食べ過ぎない）は、古くなったミトコンドリアを掃除する「マイトファジー」を促すと考えられています。逆に食べ過ぎると、余ったエネルギーがミトコンドリアの負担になるとみられています。",
     "info.hiit.tips": "20秒全力＋10秒休みを8本＝合計4分（タバタ式）。週2〜3回まで、中1〜2日あけてください。",
     "info.hiit.why": "全力に近い運動を短くくり返すと、AMPKの反応が強く出て、時間あたりの効率は持久運動の2〜3倍とも報告されています。ただし回復に時間が要ります。",
     "info.jog.tips": "20〜30分、会話ができるくらいの速さで。膝が不安なら1分走って1分歩くを繰り返す形から。",
@@ -1709,11 +1715,11 @@ const I18N = {
     "speech.darkNight.2": "部屋を暗くしてくれると、ぼくらの整備がちゃんと進むんだ",
     "speech.darkNight.3": "夜の暗さは、ぼくらのメンテナンス開始の合図なんだ",
     "speech.darkNight.4": "スマホをお休みすると、眠りのホルモンが出やすくなるよ",
-    "speech.hara7.0": "お腹に少し空きがあると、傷んだ仲間を掃除する時間ができるんだ",
-    "speech.hara7.1": "腹七分目は、ぼくらの掃除スイッチ(マイトファジー)が入る合図だよ",
-    "speech.hara7.2": "食べ過ぎないと、ぼくら古い部品を片づけて身軽になれるんだ",
-    "speech.hara7.3": "少しの空腹は、ぼくらのメンテナンスの時間。ありがとう",
-    "speech.hara7.4": "七分目でやめると、次のごはんまでに掃除が進むんだ",
+    "speech.hara7.0": "お腹に少し空きがあると、傷んだ仲間を掃除する時間ができるって考えられてるんだ",
+    "speech.hara7.1": "腹七分目は、ぼくらの掃除(マイトファジー)を後押しすると考えられてるんだ",
+    "speech.hara7.2": "食べ過ぎないと、ぼくら古い部品を片づけて身軽になれるみたいなんだ",
+    "speech.hara7.3": "少しの空腹は、ぼくらのメンテナンスの時間になるんだって。ありがとう",
+    "speech.hara7.4": "七分目でやめるのは、ぼくらの掃除を助ける習慣なんだって",
     "speech.juice.0": "色の濃い野菜の抗酸化パワーが、ぼくらをサビから守ってくれるんだ",
     "speech.juice.1": "緑や赤や紫の色は、ぼくらを守る成分の印。虹色だと嬉しいな",
     "speech.juice.2": "発電のときに出るサビを、野菜のビタミンが中和してくれるんだ",
@@ -1806,9 +1812,9 @@ const I18N = {
     "why.bodyweight.0": "筋肉はミトコンドリアの密集地帯||筋肉は、体の中でもミトコンドリアがぎっしり詰まった組織です。腕立てやスクワットで負荷をかけると、細胞内でカルシウムやAMPKが働き、新生と質の向上が同時に進むと報告されています。器具がなくても、自重だけで持久力の土台はしっかり育てられます。",
     "why.bodyweight.1": "筋肉を増やすと、休んでいる間の燃焼力も上がる||筋肉が増えると、じっと座っている間も消費されるエネルギー——基礎代謝の土台が大きくなります。つまり自重トレは「今この瞬間」だけでなく、動いていない時間の燃焼力まで底上げする投資。中高年のミトコンドリアにこそ、よく効くと考えられています。",
     "why.bodyweight.2": "「ややきつい」まで動くのが効くサイン||ポイントは、息が少し弾む「ややきつい」ところまで動くこと。この負荷が、発電所を増やせという指令を強く鳴らします。回数を数えるより、呼吸と動きを合わせる「動く瞑想」のつもりで。きつさの正体は、ミトコンドリアへのサインです。",
-    "why.hara7.0": "軽い空腹が、古い発電所の掃除を促す||軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つための習慣です。",
-    "why.hara7.1": "食べ過ぎは発電所への過重労働||食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかり、活性酸素も出やすくなります。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分ですが、七分ならなお静かに整います。",
-    "why.hara7.2": "空腹の時間が、点検の時間になる||満腹が続くと、細胞は「掃除」より「処理」に追われ続けます。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれる。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。",
+    "why.hara7.0": "軽い空腹は、古い発電所の掃除を促すと考えられている||軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つことをねらった習慣です。",
+    "why.hara7.1": "食べ過ぎは発電所への過重労働||食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかると考えられています。実際、ヒトに1〜4週間食べ過ぎてもらった試験では、体のサビ（酸化ストレス）の目印が増えました。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分です。七分は、その少し手前を目指す目安です。",
+    "why.hara7.2": "空腹の時間を、点検の時間に||満腹が続くと、細胞は「掃除」より「処理」に追われ続けると考えられています。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれやすくなる——それが今の考え方です。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。",
     "why.juice.0": "野菜の抗酸化成分が、発電の「火の粉」を受け止める||ミトコンドリアはエネルギーを作るたびに、副産物として活性酸素——いわば「火の粉」も出します。野菜のビタミンやポリフェノールは、この火の粉を受け止め、発電所そのものが錆びるのを防ぐ役割を担うと考えられています。彩りの多い一杯ほど頼りになります。",
     "why.juice.1": "活性酸素はゼロが正解ではない。だから食事から||面白いのは、活性酸素はゼロが正解ではないこと。運動時の適度な活性酸素は「増えろ」のシグナルにもなります。だからサプリの大量摂取より、食事からほどよく抗酸化成分を補うのが理にかなっている。野菜ジュースは、その「ほどよさ」にちょうどいい形です。",
     "why.juice.2": "錆びにくい体は、こつこつの積み重ね||錆びにくい体は、一日で作られるものではありません。日々こつこつ補う抗酸化成分が、少しずつミトコンドリアの守りを厚くしていきます。今日の一杯は、その積み重ねの一歩。飲むたびに、発電所の防護服を少し新調している感覚です。",
@@ -2198,6 +2204,7 @@ const I18N = {
     "ui.info.disclaimer": "General health information, not medical advice. If you have a condition or are under treatment, please talk to your doctor.",
     "ui.info.inc": "  +{n} mito",
     "ui.info.incRange": "  +{lo}–{hi} mito",
+    "ui.info.noteLabel": "Research note",
     "ui.info.tipsLabel": "How to do it",
     "ui.info.whyLabel": "Why it helps your mitochondria",
     "ui.pick.max": "You can pick at most {n} under “{name}”. Remove one first.",
@@ -2266,8 +2273,9 @@ const I18N = {
     "info.darknight.why": "Bright light and phones at night suppress melatonin, the sleep hormone, and throw off both your body clock and sleep quality. When sleep time itself gets cut, the next day pays for it.",
     "info.gymtrain.tips": "2–3 exercises, 10–15 reps × 2–3 sets. Twice a week is fine — just leave a day or two before working the same area again.",
     "info.gymtrain.why": "Machines and dumbbells let you raise the load in small measured steps, so you can aim for “slightly hard” every time. As muscle grows, the mitochondria inside it grow with it.",
+    "info.hara7.note": "Hunger-driven mitophagy has been shown mainly in cells and animals; it hasn’t yet been confirmed directly in human muscle, and some fasting studies found no rise in its markers.",
     "info.hara7.tips": "Chew well and eat slowly. Build the habit of putting your chopsticks down at about 70% full.",
-    "info.hara7.why": "Mild hunger — not overeating — is thought to promote mitophagy, the clean-up that clears out worn mitochondria, via AMPK and sirtuins. Overeat and the leftover energy becomes a burden on your mitochondria instead.",
+    "info.hara7.why": "Mild hunger — not overeating — is thought to promote mitophagy, the clean-up that clears out worn mitochondria. Overeat, and the leftover energy is thought to become a burden on your mitochondria instead.",
     "info.hiit.tips": "20s hard + 10s rest × 8 = 4 minutes (the Tabata format). Up to 2–3 times a week, with a day or two between.",
     "info.hiit.why": "Repeating short near-maximal efforts produces a strong AMPK response; per minute spent, it has been reported as two to three times as efficient as steady endurance work. It does need recovery time, though.",
     "info.jog.tips": "20–30 minutes at a pace where you could still hold a conversation. If your knees worry you, start with one minute running, one minute walking.",
@@ -2466,11 +2474,11 @@ const I18N = {
     "speech.darkNight.2": "Darken the room and our servicing actually gets done",
     "speech.darkNight.3": "The dark of night is our signal to start maintenance",
     "speech.darkNight.4": "Give your phone a rest and the sleep hormone comes more easily",
-    "speech.hara7.0": "A little room in your stomach gives us time to clear out the damaged ones",
-    "speech.hara7.1": "Stopping at about 70% is the cue for our clean-up switch — mitophagy",
-    "speech.hara7.2": "When you don’t overeat, we can tidy the old parts away and travel light",
-    "speech.hara7.3": "A little hunger is our maintenance window. Thank you",
-    "speech.hara7.4": "Stop at seven tenths and the cleaning gets done before your next meal",
+    "speech.hara7.0": "A little room in your stomach is thought to give us time to clear out the damaged ones",
+    "speech.hara7.1": "Stopping at about 70% is thought to help our clean-up — mitophagy",
+    "speech.hara7.2": "When you don’t overeat, it seems we can tidy the old parts away and travel light",
+    "speech.hara7.3": "A little hunger may be our maintenance window. Thank you",
+    "speech.hara7.4": "Stopping at seven tenths is a habit that’s thought to help our cleaning",
     "speech.juice.0": "The antioxidants in deep-coloured vegetables keep the rust off us",
     "speech.juice.1": "Green, red, purple — those colours mark the things that protect us. A rainbow makes me happy",
     "speech.juice.2": "The rust thrown off while we generate power gets neutralised by those vitamins",
@@ -2563,9 +2571,9 @@ const I18N = {
     "why.bodyweight.0": "Muscle is where mitochondria are packed tightest||Muscle is the tissue in your body most densely packed with mitochondria. Load the fibres with push-ups or squats and calcium and AMPK go to work inside the cell, driving new mitochondria and better quality ones at the same time. With no equipment at all, bodyweight work builds a real base of endurance.",
     "why.bodyweight.1": "More muscle raises what you burn while resting||As muscle grows, so does the floor of energy you spend even sitting still — your base metabolism. Bodyweight training is an investment not just in this moment but in the burning power of all the hours you aren’t moving. It’s thought to pay off most for mitochondria in middle age and beyond.",
     "why.bodyweight.2": "“Slightly hard” is the sign it’s working||The point is to move until it feels slightly hard and your breathing picks up. That load is what rings the order to build more power plants. Rather than counting reps, treat it as moving meditation — breath matched to movement. What that hardness really is, is a signal to your mitochondria.",
-    "why.hara7.0": "Mild hunger prompts the clearing of old power plants||Time spent mildly hungry is thought to promote mitophagy — the process that picks out worn mitochondria and clears them away. Rather than leaving failing power plants standing, it sends them for recycling. Stopping at about 70% full is a different road from raising your numbers: it’s the habit that keeps quality up.",
-    "why.hara7.1": "Overeating is overtime for your power plants||Overeat and your mitochondria carry the load of processing the surplus, and free radicals come more easily with it. Stopping at seven tenths is the opposite state: no strain on the plants, capacity left in hand. Eight tenths is plenty, but seven settles things more quietly still.",
-    "why.hara7.2": "Time spent hungry becomes time spent on inspection||When fullness never lets up, your cells stay busy processing rather than cleaning. Leave a little hunger in between and your mitochondria get time to tidy and inspect. Stopping at seven tenths isn’t deprivation — it’s a positive choice to give the plants a maintenance window.",
+    "why.hara7.0": "Mild hunger is thought to prompt the clearing of old power plants||Time spent mildly hungry is thought to promote mitophagy — the process that picks out worn mitochondria and clears them away. Rather than leaving failing power plants standing, it sends them for recycling. Stopping at about 70% full is a different road from raising your numbers: it’s a habit aimed at keeping quality up.",
+    "why.hara7.1": "Overeating is overtime for your power plants||Overeating is thought to load your mitochondria with the work of processing the surplus. In human trials where people overate for one to four weeks, markers of oxidative stress — the body’s ‘rust’ — went up. Stopping at about 70% full is the opposite state: no strain on the plants, capacity left in hand. Eighty percent is plenty; seventy is simply a target a little short of that.",
+    "why.hara7.2": "Let time spent hungry become time for inspection||When fullness never lets up, cells are thought to stay busy processing rather than cleaning. The current thinking is that a little hunger in between makes it easier for your mitochondria to find time to tidy and inspect. Stopping at seven tenths isn’t deprivation — it’s a positive choice to give the plants a maintenance window.",
     "why.juice.0": "Antioxidants in vegetables catch the sparks of power generation||Every time mitochondria make energy, they throw off free radicals as a by-product — sparks, if you like. The vitamins and polyphenols in vegetables are thought to catch those sparks and keep the power plants themselves from rusting. The more colours in the glass, the more you can rely on it.",
     "why.juice.1": "Zero free radicals isn’t the right answer — which is why food works||Here’s the interesting part: zero free radicals is not the goal. A moderate amount during exercise is itself a “grow” signal. That’s why topping up antioxidants sensibly through food makes more sense than swallowing supplements by the handful. Vegetable juice is a neat fit for that middle ground.",
     "why.juice.2": "A rust-resistant body is built up little by little||A body that resists rust isn’t built in a day. Antioxidants topped up steadily thicken your mitochondria’s defences bit by bit. Today’s glass is one step in that accumulation — every time, you’re refreshing a little of the power plant’s protective gear.",
@@ -3211,11 +3219,11 @@ const SPEECH = {
     '筋肉が保たれると、ぼくらの住みかも守られる。ありがとう',
   ],
   hara7: [
-    'お腹に少し空きがあると、傷んだ仲間を掃除する時間ができるんだ',
-    '腹七分目は、ぼくらの掃除スイッチ(マイトファジー)が入る合図だよ',
-    '食べ過ぎないと、ぼくら古い部品を片づけて身軽になれるんだ',
-    '少しの空腹は、ぼくらのメンテナンスの時間。ありがとう',
-    '七分目でやめると、次のごはんまでに掃除が進むんだ',
+    'お腹に少し空きがあると、傷んだ仲間を掃除する時間ができるって考えられてるんだ',
+    '腹七分目は、ぼくらの掃除(マイトファジー)を後押しすると考えられてるんだ',
+    '食べ過ぎないと、ぼくら古い部品を片づけて身軽になれるみたいなんだ',
+    '少しの空腹は、ぼくらのメンテナンスの時間になるんだって。ありがとう',
+    '七分目でやめるのは、ぼくらの掃除を助ける習慣なんだって',
   ],
   juice: [
     '色の濃い野菜の抗酸化パワーが、ぼくらをサビから守ってくれるんだ',
@@ -3711,7 +3719,7 @@ const INFO = {
     tips:'朝・昼・晩に分けてとると使われやすい。卵・魚・鶏肉・大豆・乳製品が手軽です。'
   },
   hara7: {
-    why:'軽い空腹（食べ過ぎない）は、AMPKやサーチュインを介して、古くなったミトコンドリアを掃除する「マイトファジー」を促すと考えられています。逆に食べ過ぎると、余ったエネルギーがミトコンドリアの負担になります。',
+    why:'軽い空腹（食べ過ぎない）は、古くなったミトコンドリアを掃除する「マイトファジー」を促すと考えられています。逆に食べ過ぎると、余ったエネルギーがミトコンドリアの負担になるとみられています。',
     tips:'よく噛んでゆっくり。腹七分で箸を置く習慣を。'
   },
   juice: {
@@ -3798,9 +3806,9 @@ const WHY_VARIANTS = {
     '目安は体重×1.6g||目安は体重×1.6g。多すぎず、でも不足させない量です。せっかく歩いてトレーニングして「増やせ」の号令を出したのに、材料不足で作れなかった——そんなもったいない状態を防ぐための、いちばん確実な下支えになります。',
   ],
   hara7: [
-    '軽い空腹が、古い発電所の掃除を促す||軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つための習慣です。',
-    '食べ過ぎは発電所への過重労働||食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかり、活性酸素も出やすくなります。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分ですが、七分ならなお静かに整います。',
-    '空腹の時間が、点検の時間になる||満腹が続くと、細胞は「掃除」より「処理」に追われ続けます。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれる。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。',
+    '軽い空腹は、古い発電所の掃除を促すと考えられている||軽い空腹の時間は、古くなったミトコンドリアを選んで片づける「マイトファジー」を促すと考えられています。壊れかけの発電所を放置せず、リサイクルに回す掃除機能です。腹七分目は、数を増やすのとは別の道——質を保つことをねらった習慣です。',
+    '食べ過ぎは発電所への過重労働||食べ過ぎると、余ったエネルギーの処理でミトコンドリアに負担がかかると考えられています。実際、ヒトに1〜4週間食べ過ぎてもらった試験では、体のサビ（酸化ストレス）の目印が増えました。腹七分目はその逆の状態。発電所に無理をさせず、余力を持って回してもらう。腹八分でも十分です。七分は、その少し手前を目指す目安です。',
+    '空腹の時間を、点検の時間に||満腹が続くと、細胞は「掃除」より「処理」に追われ続けると考えられています。少しの空腹を挟むことで、ミトコンドリアに片づけと点検の時間が生まれやすくなる——それが今の考え方です。腹七分目は、我慢ではなく、発電所にメンテナンス時間を贈る前向きな選択です。',
   ],
   juice: [
     '野菜の抗酸化成分が、発電の「火の粉」を受け止める||ミトコンドリアはエネルギーを作るたびに、副産物として活性酸素——いわば「火の粉」も出します。野菜のビタミンやポリフェノールは、この火の粉を受け止め、発電所そのものが錆びるのを防ぐ役割を担うと考えられています。彩りの多い一杯ほど頼りになります。',
@@ -6510,9 +6518,11 @@ function openInfo(item) {
     incTxt = hi > 0 ? t('ui.info.incRange', { lo, hi }) : '';
   }
   const scoreTxt = t('ui.info.act', { n: (item.act > 0 ? '+' : '') + item.act }) + incTxt;
+  const noteTxt = infoNoteText(item.id);
   $('#infoBody').innerHTML =
     `<div class="info-score">${esc(scoreTxt)}</div>` +
     `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.34 6.34-.7-.7"/><path d="M2 12h4"/><circle cx="12" cy="14" r="4"/></svg>${esc(t('ui.info.whyLabel'))}</div><p>${esc(infoWhy(item.id))}</p></div>` +
+    (noteTxt ? `<div class="info-block info-note"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>${esc(t('ui.info.noteLabel'))}</div><p>${esc(noteTxt)}</p></div>` : '') +
     `<div class="info-block"><div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12c.7.7 1 1.5 1 2h6c0-.5.3-1.3 1-2a7 7 0 0 0-4-12Z"/></svg>${esc(t('ui.info.tipsLabel'))}</div><p>${esc(infoTips(item.id))}</p></div>` +
     `<div class="info-disclaimer">${esc(t('ui.info.disclaimer'))}</div>`;
   $('#infoModal').classList.add('open');
@@ -6944,6 +6954,18 @@ function itemBlurb(id) { return tOr('item.' + id + '.blurb', BLURB[id] || ''); }
 function itemMethod(it){ return tOr('item.' + it.id + '.method', it.method || ''); }
 function infoWhy(id)   { return tOr('info.' + id + '.why',  (INFO[id] || {}).why  || ''); }
 function infoTips(id)  { return tOr('info.' + id + '.tips', (INFO[id] || {}).tips || ''); }
+// v1.72: 研究メモ。info.<id>.note キーを持つ項目だけに出す仕組み。
+// t()/tOr()は未定義キーでも空文字にフォールバックするため「無い」と「空」を区別できない。
+// ここでは辞書オブジェクトを直接見てキーの有無を判定する（選択中の言語→en→jaの順。zh/msはenへ）。
+function infoNoteText(id) {
+  const key = 'info.' + id + '.note';
+  const lang = appLang();
+  for (const l of [lang, 'en', 'ja']) {
+    const dict = I18N[l];
+    if (dict && Object.prototype.hasOwnProperty.call(dict, key)) return dict[key];
+  }
+  return null;
+}
 function mechName(m)   { return tOr('mech.' + m.id + '.name', m.name); }
 function mechLead(m)   { return tOr('mech.' + m.id + '.lead', m.lead); }
 function autoName(a)   { return tOr('auto.' + a.id + '.name', a.name); }
