@@ -46,8 +46,10 @@ const ja = I18N.ja || {};
 const dicts = { en: I18N.en || {}, zh: I18N.zh || {}, ms: I18N.ms || {} };
 const h = (s) => createHash('sha1').update(String(s)).digest('hex').slice(0, 8);
 // ひらがな・カタカナ（「・」等の記号含む）・全角記号・全角英数の取り残し検査。
-// 漢字（一-龥）は対象外（zhは漢字を使うため）
+// 漢字（一-龥）は対象外（zhは漢字を使うため）。
+// zh は中国語の全角句読点（，。：（）“” 等）を正しく使うので、かなだけを取り残しとみなす
 const LEAK_RE = /[぀-ヿ　-〿＀-￯]/;
+const LEAK_RE_BY_LANG = { en: LEAK_RE, ms: LEAK_RE, zh: /[぀-ヿ]/ };
 
 /* ロックは言語ごとに { key: hash(ja[key]) } を持つ。
    旧形式（v1.71以前・enだけをフラットに持つ {key: hash}）を検出したら、
@@ -100,7 +102,7 @@ for (const lang of LANGS) {
   for (const k of Object.keys(dict)) if (!(k in ja)) orphan.push(k);
   for (const [k, v] of Object.entries(dict)) {
     if (typeof v !== 'string' || LEAK_ALLOW.has(k)) continue;
-    if (LEAK_RE.test(v)) leaked.push(k);
+    if ((LEAK_RE_BY_LANG[lang] || LEAK_RE).test(v)) leaked.push(k);
   }
 
   const isPending = PENDING.includes(lang);
