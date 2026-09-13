@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
-import { analyzeMeal, BadImageError } from "./analyze.js";
+import { analyzeMeal, BadImageError, type Lang } from "./analyze.js";
 import { estimateCostUSD, logUsage } from "./usage.js";
 import { buildQuotaStore, checkAndConsume, issueDeviceId, recordCost, validateDeviceId, verifyDeviceId } from "./quota.js";
 import {
@@ -103,6 +103,10 @@ app.post("/api/analyze-meal", async (req, res) => {
   const rawImage = req.body?.image;
   const rawText = req.body?.text;
   const rawFullness = req.body?.fullness;
+  // v1.7x: アプリの言語設定を反映した結果を返すため。'en'|'ms'|'zh'のときだけその言語、
+  // それ以外（未指定・'ko'含む不正値・旧クライアント含む）は今まで通り日本語
+  const rawLang = req.body?.lang;
+  const lang: Lang = rawLang === "en" || rawLang === "ms" || rawLang === "zh" ? rawLang : "ja";
   const images = (Array.isArray(rawImages) ? rawImages : typeof rawImage === "string" ? [rawImage] : [])
     .filter((x): x is string => typeof x === "string" && x.length >= 100)
     .slice(0, 4);
@@ -115,6 +119,7 @@ app.post("/api/analyze-meal", async (req, res) => {
     images,
     text: hasText ? String(rawText).trim().slice(0, 500) : undefined,
     fullness: typeof rawFullness === "string" && rawFullness.trim() ? rawFullness.trim().slice(0, 30) : undefined,
+    lang,
   };
 
   // 3-0. IPごとの日次上限。デバイスIDを変えて回避されても、同じ回線ならここで頭打ちになる
