@@ -5013,7 +5013,7 @@ function renderMealForm() {
   const ma = (rec.mealAnalysis || {})[mealModalKey];
   const pending = mealPending[mealStateKey(sel, mealModalKey)];
   const strip = arr.length
-    ? `<div class="meal-strip">${arr.map(e => `<img src="${e.data}" alt="">`).join('')}</div>` +
+    ? `<div class="meal-strip">${arr.map(() => `<img class="meal-strip-img" alt="">`).join('')}</div>` +
       `<div class="ana-note" style="text-align:left">${esc(t('ui.meal.batchNote', { n: arr.length }))}</div>`
     : `<div class="ana-note" style="text-align:left">${esc(t('ui.meal.noPhoto'))}</div>`;
   body.innerHTML =
@@ -5026,6 +5026,8 @@ function renderMealForm() {
       `<button class="btn btn-secondary" data-close>${esc(t('ui.common.cancel'))}</button>` +
     `</div>` +
     `<div class="ana-note" id="mealMsg" style="text-align:left; min-height:1.4em"></div>`;
+  // v1.72: file形式（ネイティブ保存）の写真はdata URLが無いので、挿入後にsetPhotoSrcで読み込んで差し込む
+  body.querySelectorAll('.meal-strip-img').forEach((img, i) => setPhotoSrc(img, arr[i]));
   renderMealFul();
   $('#mealRun').addEventListener('click', runMealAnalysis);
   // v1.6: 解析中/直前のエラーをモーダル内メッセージに反映
@@ -5057,7 +5059,7 @@ function renderMealResult() {
   let editSection;
   if (editing) {
     const photosHtml = arr.length
-      ? `<div class="meal-strip">${arr.map(e => `<img src="${e.data}" alt="">`).join('')}</div>`
+      ? `<div class="meal-strip">${arr.map(() => `<img class="meal-strip-img" alt="">`).join('')}</div>`
       : '';
     editSection =
       photosHtml +
@@ -5077,8 +5079,10 @@ function renderMealResult() {
     editSection +
     `<div class="btn-row" style="margin-top:14px">` +
       `<button class="btn btn-secondary" id="mealRedo">${esc(t('ui.meal.redo'))}</button>` +
-      `<button class="btn btn-primary" data-close>${esc(t('ui.common.close2'))}</button>` +
+      `<button class="btn btn-primary" data-close>${esc(t('ui.common.close'))}</button>` +
     `</div>`;
+  // v1.72: file形式（ネイティブ保存）の写真はdata URLが無いので、挿入後にsetPhotoSrcで読み込んで差し込む
+  if (editing) body.querySelectorAll('.meal-strip-img').forEach((img, i) => setPhotoSrc(img, arr[i]));
   $('#mealRedo').addEventListener('click', renderMealForm);
   if (editing) {
     $('#mealFixRun').addEventListener('click', runMealReanalysisFromText);
