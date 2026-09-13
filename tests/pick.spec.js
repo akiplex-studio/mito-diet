@@ -241,7 +241,7 @@ test('推奨セットで始まり、必須項目は外せない', async ({ page 
   await skipOnboarding(page);
   await page.goto('/index.html');
 
-  // 初期状態の手動ミッションは最小構成（糖分・夜は食べない・ストレッチ）
+  // 初期状態の手動ミッションは最小構成（糖分・寝る前2時間・ストレッチ）
   const manual = await page.evaluate(() =>
     DB.items.filter(it => isItemActiveOn(it, today) && it.inTodo).map(it => it.id).sort());
   expect(manual).toEqual(['nightfast', 'stretch', 'sugarCtrl', 'walking']);
@@ -312,13 +312,13 @@ test('過去日でも今のミッションをチェックでき、その日の�
   expect(after.pt).toBe(2);              // 集計にも乗る（活+2）
 });
 
-test('保存済みの古い表示名がv1.53の名前に移行される', async ({ page }) => {
+test('保存済みの古い表示名が現行の名前に移行される', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('mito-data', JSON.stringify({
       version: 5, lang: 'ja', startDate: '2026-07-01', onboarded: true, days: { '2026-07-01': {} },
       items: [
-        { id: 'nightfast', name: '夜間空白', short: '夜間空白', inTodo: true, act: 3, inc: 0,
-          periods: [{ from: '2026-07-01', until: null }] },
+        { id: 'nightfast', name: '夜間空白', short: '夜間空白', method: '自己申告（夕食のあとは翌朝まで何も食べない）',
+          inTodo: true, act: 3, inc: 0, periods: [{ from: '2026-07-01', until: null }] },
         { id: 'custom1', name: 'ヨガ', short: 'ヨガ', customName: 'ヨガ', custom: true,
           inTodo: true, act: 5, inc: 2, periods: [{ from: '2026-07-01', until: null }] },
       ],
@@ -328,9 +328,11 @@ test('保存済みの古い表示名がv1.53の名前に移行される', async 
 
   const names = await page.evaluate(() => ({
     nightfast: DB.items.find(i => i.id === 'nightfast').short,
+    nightfastMethod: DB.items.find(i => i.id === 'nightfast').method,
     custom1: DB.items.find(i => i.id === 'custom1').short,
   }));
-  expect(names.nightfast).toBe('夜食べない');   // 旧名から移行される
+  expect(names.nightfast).toBe('寝る前2時間');   // 旧名から移行される
+  expect(names.nightfastMethod).toBe('自己申告（寝る前2時間は何も食べなかった）'); // methodも移行される
   expect(names.custom1).toBe('ヨガ');           // 自分でつけた名前は守られる
 });
 

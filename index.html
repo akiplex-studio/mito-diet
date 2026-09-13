@@ -1518,8 +1518,8 @@ const I18N = {
     "info.meditate.why": "ゆっくりした呼吸は自律神経を整え、ストレスホルモンを下げます。ストレスと体の消耗の関係はまだ研究の途中ですが、意識して休む時間そのものが、続けるための助けになります。",
     "info.morninglight.tips": "起きて1時間以内に5〜15分。窓ぎわでも構いません。曇りの日でも屋外の光は室内よりずっと強いです。",
     "info.morninglight.why": "朝の光が体内時計を合わせます。ミトコンドリアの働きや修復は一日のリズムに従って増減するので、時計が合うと代謝のリズムも整います。",
-    "info.nightfast.tips": "夕食から翌朝まで12時間ほどあくのが目安。夜食をやめるだけで自然に届きます。極端な絶食は逆効果です。",
-    "info.nightfast.why": "食べない時間が続くと、体は傷んだミトコンドリアを片づける掃除モードに入りやすくなります。数が増えるわけではなく、質を整える時間です。",
+    "info.nightfast.tips": "基準は時計ではなく「自分が寝る時刻」。夕食が遅くなる日は、夕方に軽く食べて夜は控えめに。夜勤の日は無理に合わせなくて大丈夫です。",
+    "info.nightfast.why": "食べた脂肪を燃やすのはミトコンドリアの仕事。ところが寝る直前に食べると、その夜の血糖が上がりやすく、食事の脂肪を燃やす割合も下がることがヒトの実験で分かっています。次の日にお腹がすきやすくなるという結果もあります。",
     "info.nosake.tips": "まずは週2日の休肝日から。飲む日も水を挟むと負担が減ります。",
     "info.nosake.why": "アルコールの分解は、最後の仕上げがミトコンドリアの中で行われます。飲んだ夜、マイトはその仕事で手いっぱい。脂肪を燃やす作業は、しばらく後回しになります。",
     "info.nosmoke.tips": "吸いたくなる場面（コーヒー・飲み会・休憩）を先に把握しておくと切り抜けやすくなります。",
@@ -1622,10 +1622,10 @@ const I18N = {
     "item.morninglight.method": "自己申告",
     "item.morninglight.name": "朝の光を浴びる",
     "item.morninglight.short": "朝の光",
-    "item.nightfast.blurb": "夕食のあとは翌朝まで何も食べない（水・お茶はOK）",
-    "item.nightfast.method": "自己申告（夕食のあとは翌朝まで何も食べない）",
-    "item.nightfast.name": "夜は食べない",
-    "item.nightfast.short": "夜食べない",
+    "item.nightfast.blurb": "夕食は食べてOK。寝る2時間前までに食べ終えて、そのあとは何も食べない（水・お茶はOK）",
+    "item.nightfast.method": "自己申告（寝る前2時間は何も食べなかった）",
+    "item.nightfast.name": "寝る前2時間は食べない",
+    "item.nightfast.short": "寝る前2時間",
     "item.nosake.blurb": "その日はまったく飲まない",
     "item.nosake.method": "自己申告",
     "item.nosake.name": "お酒を飲まない",
@@ -2257,8 +2257,8 @@ const I18N = {
     "info.meditate.why": "Slow breathing settles your nervous system and lowers stress hormones. How stress wears on the body is still being worked out, but taking deliberate time to rest helps you keep going.",
     "info.morninglight.tips": "5–15 minutes within an hour of waking. By a window is fine. Even on a cloudy day, outdoor light is far stronger than indoors.",
     "info.morninglight.why": "Morning light sets your body clock. Mitochondrial work and repair rise and fall on a daily rhythm, so a clock that’s set keeps your metabolism on rhythm too.",
-    "info.nightfast.tips": "About 12 hours from dinner to breakfast is the mark. Simply dropping late-night snacks gets you there. Extreme fasting works against you.",
-    "info.nightfast.why": "When you go without food for a while, your body slips more easily into the clean-up mode that clears out damaged mitochondria. It doesn’t raise the count; it’s time spent on quality.",
+    "info.nightfast.tips": "Count back from your own bedtime, not the clock. On late days, have a light snack in the early evening and keep dinner small. Skip this on night-shift days.",
+    "info.nightfast.why": "Burning the fat you eat is your mitochondria’s job. Studies in people show that eating right before bed keeps blood sugar higher that night and lowers how much of that meal’s fat gets burned. Late meals also left people hungrier the next day.",
     "info.nosake.tips": "Start with two alcohol-free days a week. On drinking days, a glass of water between drinks lightens the load.",
     "info.nosake.why": "The last step of clearing alcohol happens inside your mitochondria. On a night you drink, they have their hands full with it, and burning fat waits its turn.",
     "info.nosmoke.tips": "Knowing in advance where the urge hits — coffee, drinks, breaks — makes it easier to get past.",
@@ -2361,10 +2361,10 @@ const I18N = {
     "item.morninglight.method": "You tick it",
     "item.morninglight.name": "Get morning light",
     "item.morninglight.short": "Morning light",
-    "item.nightfast.blurb": "Nothing from after dinner until morning (water and tea are fine)",
-    "item.nightfast.method": "You tick it (nothing after dinner until morning)",
-    "item.nightfast.name": "Nothing after dinner",
-    "item.nightfast.short": "No late food",
+    "item.nightfast.blurb": "Dinner is fine. Finish eating 2 hours before bed, then nothing more (water and tea are fine).",
+    "item.nightfast.method": "You tick it (nothing eaten in the 2 hours before bed)",
+    "item.nightfast.name": "No food 2h before bed",
+    "item.nightfast.short": "2h before bed",
     "item.nosake.blurb": "Nothing at all that day",
     "item.nosake.method": "You tick it",
     "item.nosake.name": "No alcohol",
@@ -3497,8 +3497,8 @@ const CATALOG = [
       { value:7, label:'7時間', hint:'しっかり寝たい' },
       { value:8, label:'8時間', hint:'8時間は寝ないと調子が出ない' },
     ] },
-  { id:'nightfast', mech:'cleanup', name:'夜は食べない', short:'夜食べない',
-    act:3, inc:0, inTodo:true, order:5, isDefault:true, required:true, method:'自己申告（夕食のあとは翌朝まで何も食べない）' },
+  { id:'nightfast', mech:'cleanup', name:'寝る前2時間は食べない', short:'寝る前2時間',
+    act:3, inc:0, inTodo:true, order:5, isDefault:true, required:true, method:'自己申告（寝る前2時間は何も食べなかった）' },
   // v1.50: 記録すること自体をやることにする。タンパク質・腹七分目はこれが前提なので土台扱い
   { id:'mealrec', kind:'auto', mech:'material', name:'食べたものを記録する', short:'食事の記録',
     act:2, inc:0, auto:'mealRec', threshold:2, inTodo:false, order:0, isDefault:true,
@@ -3562,7 +3562,7 @@ const BLURB = {
   hara7:        '満腹度の記録から自動で判定',
   sleeplack:    '選んだ時間を下回った日は減点になる',
   mealrec:      '写真かことばで残すと自動でチェック',
-  nightfast:    '夕食のあとは翌朝まで何も食べない（水・お茶はOK）',
+  nightfast:    '夕食は食べてOK。寝る2時間前までに食べ終えて、そのあとは何も食べない（水・お茶はOK）',
   juice:        'いつ飲んでもOK。朝の食事写真なら自動でチェックされる',
   colorveg:     '緑・赤・紫・橙の野菜を一品。色が濃いほど抗酸化成分が多い',
   nosake:       'その日はまったく飲まない',
@@ -3679,8 +3679,8 @@ const INFO = {
          「数を増やす」と書いてよいのは運動だけ。食事・入浴・瞑想は
          「守る・支える・整える」の言い回しに寄せている --- */
   nightfast: {
-    why:'食べない時間が続くと、体は傷んだミトコンドリアを片づける掃除モードに入りやすくなります。数が増えるわけではなく、質を整える時間です。',
-    tips:'夕食から翌朝まで12時間ほどあくのが目安。夜食をやめるだけで自然に届きます。極端な絶食は逆効果です。'
+    why:'食べた脂肪を燃やすのはミトコンドリアの仕事。ところが寝る直前に食べると、その夜の血糖が上がりやすく、食事の脂肪を燃やす割合も下がることがヒトの実験で分かっています。次の日にお腹がすきやすくなるという結果もあります。',
+    tips:'基準は時計ではなく「自分が寝る時刻」。夕食が遅くなる日は、夕方に軽く食べて夜は控えめに。夜勤の日は無理に合わせなくて大丈夫です。'
   },
   colorveg: {
     why:'色の濃い野菜に含まれる抗酸化成分が、エネルギーを作るときに出る活性酸素（サビ）からミトコンドリアを守ります。',
@@ -3795,10 +3795,12 @@ function migratePhotos(rec) {
   rec.photos = out;
 }
 // v1.53: 名前を変えた項目の移行表（保存済みの DB.items を新しい表示名に揃える）
+// nightfast は v1.72 で「夜は食べない」→「寝る前2時間は食べない」に再度改名（「夕食を抜く」と誤読されるため）。
+// method も文言が変わったので合わせて移す（無い項目は移行しない＝オプショナル）
 const RENAMED_V153 = {
   juice:      { name:'野菜ジュースを飲む',                       short:'ジュースを飲む' },
   colorveg:   { name:'色の濃い野菜を一品食べる',                 short:'色野菜を食べる' },
-  nightfast:  { name:'夜は食べない',                             short:'夜食べない' },
+  nightfast:  { name:'寝る前2時間は食べない',                    short:'寝る前2時間', method:'自己申告（寝る前2時間は何も食べなかった）' },
   gymtrain:   { name:'ジム・マシンでトレーニング',               short:'ジム・マシン' },
   bodyweight: { name:'自重トレ（家でできる腕立て・スクワット）', short:'自重トレ' },
   nosake:     { name:'お酒を飲まない',                           short:'禁酒' },
@@ -3853,6 +3855,8 @@ function migrate(d) {
       if (it && RENAMED_V153[it.id] && !it.customName) {
         it.name = RENAMED_V153[it.id].name;
         it.short = RENAMED_V153[it.id].short;
+        // v1.72: method の文言も変わった項目（nightfast）だけ合わせて移す
+        if (RENAMED_V153[it.id].method) it.method = RENAMED_V153[it.id].method;
       }
       // v1.49: チェック時の演出を項目データ駆動にしたので、既存ユーザーのjuiceにもeffectを補う
       //（無いと野菜ジュースのクリーン演出が出なくなる）
@@ -5963,7 +5967,7 @@ function checkAutoAchievements() {
    「項目のON/OFF」ではなく「同じ狙いの別の手段」を選ばせる。
    資料の黄金ルールにより運動枠だけは外せない（数を増やせるのは運動だけのため）。 */
 // v1.50: 外せない枠の項目が無ければ補う（既存ユーザーには mealrec が無い）
-// v1.53: 手動でも「外せない」項目（糖分・夜は食べない）ができたので、そちらも対象にする。
+// v1.53: 手動でも「外せない」項目（糖分・寝る前2時間は食べない）ができたので、そちらも対象にする。
 //        任意に変えた項目（タンパク質＝optional）は勝手に足さない
 function ensureRequiredItems() {
   let added = false;
@@ -6151,7 +6155,7 @@ function renderPickBody() {
       }
     }
     const picked = pickedInMech(m.id, ids);
-    // v1.53: 外せない項目（糖分・夜は食べない）は上限数に数えない。数えると選べる幅が減ってしまう
+    // v1.53: 外せない項目（糖分・寝る前2時間は食べない）は上限数に数えない。数えると選べる幅が減ってしまう
     const optionalPicked = picked.filter(c => !c.required);
     // v1.51: たたんだ状態でも「いま何を選んでいるか」が見えるようにする
     const summary = picked.length

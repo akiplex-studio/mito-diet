@@ -46,7 +46,7 @@ async function expandAllPick(page) {
 }
 
 /**
- * v1.53: 推奨セットは最小構成（糖分・夜は食べない・ストレッチ）になったので、
+ * v1.53: 推奨セットは最小構成（糖分・寝る前2時間・ストレッチ）になったので、
  * 特定の項目を前提にするテストは、その項目を明示的に選んでから始める。
  * @param {import('@playwright/test').Page} page
  * @param {string[]} ids
