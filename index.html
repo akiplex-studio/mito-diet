@@ -1885,6 +1885,18 @@ const I18N = {
     "dow.thu": "木",
     "dow.tue": "火",
     "dow.wed": "水",
+    "month.1": "1月",
+    "month.2": "2月",
+    "month.3": "3月",
+    "month.4": "4月",
+    "month.5": "5月",
+    "month.6": "6月",
+    "month.7": "7月",
+    "month.8": "8月",
+    "month.9": "9月",
+    "month.10": "10月",
+    "month.11": "11月",
+    "month.12": "12月",
     "opt.act.12": "低い（デスクワーク中心）",
     "opt.act.1375": "やや低い（軽い運動・散歩）",
     "opt.act.155": "ふつう（週数回の運動）",
@@ -2644,6 +2656,18 @@ const I18N = {
     "dow.thu": "Thu",
     "dow.tue": "Tue",
     "dow.wed": "Wed",
+    "month.1": "January",
+    "month.2": "February",
+    "month.3": "March",
+    "month.4": "April",
+    "month.5": "May",
+    "month.6": "June",
+    "month.7": "July",
+    "month.8": "August",
+    "month.9": "September",
+    "month.10": "October",
+    "month.11": "November",
+    "month.12": "December",
     "opt.act.12": "Low (mostly desk work)",
     "opt.act.1375": "Fairly low (light exercise or walks)",
     "opt.act.155": "Moderate (exercise a few times a week)",
@@ -2827,9 +2851,11 @@ function applyI18n(root) {
   document.title = appName();
   if (typeof updateManifest === 'function') updateManifest();
 }
-const MONTHS_EN = ['January','February','March','April','May','June',
-                   'July','August','September','October','November','December'];
 const DOW_KEYS = ['dow.mon','dow.tue','dow.wed','dow.thu','dow.fri','dow.sat','dow.sun'];
+// v1.72: 月名も辞書から引く（以前は英語決め打ちのMONTHS_ENを全言語に使っていたため、
+// zh/ms でも "14 September" のように英語の月名が出ていた）
+const MONTH_KEYS = ['month.1','month.2','month.3','month.4','month.5','month.6',
+                    'month.7','month.8','month.9','month.10','month.11','month.12'];
 
 /* ==================================================================
    @logic-start  純粋ロジック（DOM非依存・テスト可能）
@@ -4202,13 +4228,13 @@ function fmtJP(dstr) {
   const dow = [t('dow.sun'), t('dow.mon'), t('dow.tue'), t('dow.wed'),
                t('dow.thu'), t('dow.fri'), t('dow.sat')][d.getDay()];
   return t('ui.date.md', { m: d.getMonth() + 1, d: d.getDate(),
-                           mn: MONTHS_EN[d.getMonth()], w: dow });
+                           mn: t(MONTH_KEYS[d.getMonth()]), w: dow });
 }
 function renderCalendar() {
   const dates = weekDates(weekOffset);
   const mid = new Date(dates[3] + 'T12:00:00');  // 木曜の月を表示
   $('#hdrDate').textContent = t('ui.header.yearMonth',
-    { y: mid.getFullYear(), m: mid.getMonth() + 1, mn: MONTHS_EN[mid.getMonth()] });
+    { y: mid.getFullYear(), m: mid.getMonth() + 1, mn: t(MONTH_KEYS[mid.getMonth()]) });
   const grid = $('#calGrid');
   grid.innerHTML = '';
   dowLabels().forEach(w => {
