@@ -7,8 +7,8 @@
 
    v1.72: 対応言語を en の1つから en/zh/ms の3つ（+ja）に広げた。
    ロックは言語ごとに持つ（{ en:{...}, zh:{...}, ms:{...} }）。
-   zh/ms は翻訳待ち（PENDING）の間、「未翻訳」は警告に留めて exit 0 にする
-   （stale/orphan/日本語の取り残しは通常どおり検査する）。
+   zh/ms の翻訳は組み込み済み（PENDINGは空）。未翻訳・古い訳・ゴミは
+   通常どおりエラー扱い（exit 1）にする。
 
      npm run i18n:check              未翻訳／日本語が変わったのに英語(等)が古い／日本語側にないゴミ
      npm run i18n:accept              en のロックを更新する（既定）
@@ -20,7 +20,7 @@ import { createHash } from 'node:crypto';
 const SRC = 'index.html';
 const LOCK = 'i18n.lock.json';
 const LANGS = ['en', 'zh', 'ms'];   // ja以外の翻訳対象言語
-const PENDING = ['zh', 'ms'];       // 翻訳待ち：未翻訳(missing)は警告のみ（翻訳が入ったらここから外す）
+const PENDING = [];                 // 翻訳待ち：未翻訳(missing)は警告のみ。空なら全言語で通常どおりエラー扱い
 // 意図的に日本語（ひらがな・カタカナ・全角記号）を含めてよいキー（言語名の併記など）
 const LEAK_ALLOW = new Set(['ui.lang.title']);
 

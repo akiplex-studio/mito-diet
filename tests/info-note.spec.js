@@ -163,7 +163,9 @@ test('達成ポップアップ（openAchieveDialog）には研究メモを出さ
   expect(bodyText).not.toContain('研究メモ');
 });
 
-test('zh表示（辞書が空）でも、腹七分目の研究メモは日本語にならずenへフォールバックする', async ({ page }) => {
+// v1.72翻訳投入の回帰テスト: 修正前（I18N.zhにこのキーが無い）はここが必ず英語へフォールバックし
+// "Research note" になって落ちる。翻訳投入後は中国語の訳文になる。
+test('zh表示では、腹七分目の研究メモが中国語の訳文で出る（英語へフォールバックしない）', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
   await page.evaluate(() => {
@@ -173,8 +175,45 @@ test('zh表示（辞書が空）でも、腹七分目の研究メモは日本語
   });
   const note = page.locator('#infoBody .info-note');
   await expect(note).toHaveCount(1);
-  await expect(note).toContainText('Research note');
-  await expect(note).toContainText('hasn’t yet been confirmed directly in human muscle');
+  await expect(note).toContainText('研究备注');
+  await expect(note).toContainText('饥饿会促进线粒体自噬');
   const bodyText = await page.locator('#infoBody').textContent();
+  expect(bodyText).not.toContain('Research note');
   expect(bodyText).not.toMatch(/[ぁ-んァ-ヴ]/);
 });
+
+// v1.72: zh/ms でも研究メモがその言語で出る（腹七分目・睡眠の2項目を代表として確認）。
+// 修正前（I18N.zh/I18N.ms にこれらのキーが無い）は英語へフォールバックし "Research note" になって落ちる。
+const ZH_MS_NOTE_CHECK = {
+  hara7: {
+    zh: '饥饿会促进线粒体自噬',
+    ms: 'Mitofagi yang dipercepat oleh rasa lapar',
+  },
+  sleeplack: {
+    zh: '这一点已在人体肌肉中直接测量过',
+    ms: 'Ini telah diukur secara langsung pada otot manusia',
+  },
+};
+const NOTE_LABEL_BY_LANG = { zh: '研究备注', ms: 'Nota kajian' };
+
+for (const [id, byLang] of Object.entries(ZH_MS_NOTE_CHECK)) {
+  for (const [lang, expectedNote] of Object.entries(byLang)) {
+    test(`${id}(${lang})の説明シートに研究メモがその言語で出る（"Research note"は出ない）`, async ({ page }) => {
+      await skipOnboarding(page);
+      await page.goto('/index.html');
+      await page.evaluate(({ itemId, l }) => {
+        // @ts-ignore
+        setLang(l);
+        // @ts-ignore
+        openInfo(catalogById(itemId));
+      }, { itemId: id, l: lang });
+      await expect(page.locator('#infoModal')).toHaveClass(/open/);
+      const note = page.locator('#infoBody .info-note');
+      await expect(note).toHaveCount(1);
+      await expect(note.locator('.lbl')).toContainText(NOTE_LABEL_BY_LANG[lang]);
+      await expect(note).toContainText(expectedNote);
+      const bodyText = await page.locator('#infoBody').textContent();
+      expect(bodyText).not.toContain('Research note');
+    });
+  }
+}

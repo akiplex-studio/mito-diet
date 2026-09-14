@@ -1,7 +1,7 @@
 // @ts-check
-// v1.72: 4言語対応（zh/ms に翻訳を投入。ja が変わった9キー（腹七分目まわり）だけ未収録）。
-// ここで確認するのは：<html lang>の切り替え、翻訳の反映、未収録キーのフォールバック（zh/ms→en、jaへは落ちない）、
-// 端末の言語からの判定（zh-TW/ms-MY/ko-KR等）、解析APIへ送るlang。
+// v1.72: 4言語対応（zh/ms に全キー翻訳を投入。未収録キーは無い）。
+// ここで確認するのは：<html lang>の切り替え、翻訳の反映、フォールバックの仕組み（辞書からキーを一時的に
+// 消して確認。その言語→en、jaへは落ちない）、端末の言語からの判定（zh-TW/ms-MY/ko-KR等）、解析APIへ送るlang。
 const { test, expect } = require('@playwright/test');
 const { skipOnboarding } = require('./helpers');
 
@@ -87,15 +87,40 @@ test('zh/msでは日本語が残らず、通常キーは翻訳・アプリ名は
   }
 });
 
-test('tOrのfallback（ja変更で未収録のinfo.hara7.why）は、zh/msではenへ落ちる（jaへは落ちない）', async ({ page }) => {
+// v1.72翻訳投入の回帰テスト: info.hara7.why はzh/msどちらにも訳が入っている。
+// 修正前（I18N.zh/I18N.ms にこのキーが無い）はここが必ず英語(mitophagy)へフォールバックして落ちる。
+test('infoWhy("hara7")はzh/msそれぞれの言語の訳文が出る（辞書投入の回帰確認）', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  for (const [lang, expected] of [
+    ['zh', '据认为，轻微的饥饿感'],
+    ['ms', 'Rasa lapar ringan'],
+  ]) {
+    const r = await page.evaluate(({ l }) => {
+      setLang(l);
+      // @ts-ignore アプリ側のグローバル
+      return infoWhy('hara7');
+    }, { l: lang });
+    expect(r, `${lang}: infoWhy('hara7')`).toContain(expected);
+  }
+});
+
+// フォールバックの仕組み自体（その言語→en、jaへは落ちない）は、辞書に全キー揃った今は
+// 実データでは再現できないため、辞書からキーを一時的に消して確認する。
+test('tOrのfallback: 辞書からキーを一時的に消すと、zh/msではenへ落ちる（jaへは落ちない）', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
   const JA = /[ぁ-んァ-ヴ]/;
   for (const lang of ['zh', 'ms']) {
     const r = await page.evaluate((l) => {
       setLang(l);
-      // @ts-ignore アプリ側のグローバル。info.hara7.why はja変更後まだzh/msに無いキー
-      return infoWhy('hara7');
+      // @ts-ignore アプリ側のグローバル。フォールバックを確かめるため辞書から一時的にキーを消す
+      const saved = I18N[l]['info.hara7.why'];
+      delete I18N[l]['info.hara7.why'];
+      // @ts-ignore
+      const result = infoWhy('hara7');
+      I18N[l]['info.hara7.why'] = saved; // 元に戻す
+      return result;
     }, lang);
     expect(r, `${lang}: infoWhy('hara7')`).toContain('mitophagy');
     expect(JA.test(r), `${lang}: infoWhy('hara7') に日本語(かな)が出ている: ${r}`).toBe(false);

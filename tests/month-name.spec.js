@@ -43,7 +43,7 @@ test('ms辞書に月名だけ目印を入れると見出しに反映される（
   await skipOnboarding(page);
   await page.goto('/index.html');
   await page.evaluate(() => {
-    // @ts-ignore アプリ側のグローバル: ms辞書は普段は空({})。month.9だけ目印を注入する
+    // @ts-ignore アプリ側のグローバル: month.9だけ目印で上書きする（実際の訳"September"は英語と同綴りのため）
     I18N.ms['month.9'] = 'Sept-ms';
     // @ts-ignore
     setLang('ms');
@@ -56,4 +56,23 @@ test('ms辞書に月名だけ目印を入れると見出しに反映される（
   const hdr = await page.locator('#hdrDate').textContent();
   expect(hdr).toContain('Sept-ms');
   expect(hdr).not.toContain('September');
+});
+
+// v1.72翻訳投入の回帰テスト: ms の月名は9月だけ英語と綴りが同じ("September")なので、
+// 8月で確認する（修正前はI18N.msにmonth.1〜12が無く英語"August"へフォールバックして落ちる）。
+test('ms表示の日付見出しは月名がマレー語になる（8月="Ogos"で確認。9月は英語と同綴りのため避ける）', async ({ page }) => {
+  // 2026-08-13(木) 09:00 に固定。週表示の木曜(dates[3])も同じ8月に収まる
+  await page.clock.install({ time: new Date(2026, 7, 13, 9, 0, 0) });
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  await page.evaluate(() => setLang('ms'));
+
+  const md = await page.evaluate(() => fmtJP('2026-08-14'));
+  expect(md).toContain('Ogos');
+  expect(md).not.toContain('August');
+
+  const hdr = await page.locator('#hdrDate').textContent();
+  expect(hdr).toContain('Ogos');
+  expect(hdr).not.toContain('September');
+  expect(hdr).not.toContain('August');
 });
