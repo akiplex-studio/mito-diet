@@ -1,6 +1,6 @@
 // @ts-check
-// v1.72: 4言語対応の土台（zh/ms は辞書が空。翻訳は別工程）。
-// ここで確認するのは仕組みだけ：<html lang>の切り替え、フォールバック（zh/ms→en）、
+// v1.72: 4言語対応（zh/ms に翻訳を投入。ja が変わった9キー（腹七分目まわり）だけ未収録）。
+// ここで確認するのは：<html lang>の切り替え、翻訳の反映、未収録キーのフォールバック（zh/ms→en、jaへは落ちない）、
 // 端末の言語からの判定（zh-TW/ms-MY/ko-KR等）、解析APIへ送るlang。
 const { test, expect } = require('@playwright/test');
 const { skipOnboarding } = require('./helpers');
@@ -49,10 +49,26 @@ test('zh表示は簡体字フォントのスタックに切り替わる（日本
   expect(after).not.toContain('Noto Sans JP');
 });
 
-test('zh/msは辞書が空でも、画面に日本語ではなく英語が出る（en へのフォールバック）', async ({ page }) => {
+// v1.72翻訳投入の回帰テスト: 修正前（I18N.zh/I18N.ms が空）はここが必ず "Daily missions"
+// （英語フォールバック）になり落ちる。翻訳投入後はzh/msそれぞれの実際の訳文になる。
+test('zh/msでは翻訳された文言が画面に出る（辞書投入の回帰確認）', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
-  const JA = /[ぁ-んァ-ヴ一-龥]/;
+  const texts = await page.evaluate(() => {
+    setLang('zh');
+    const home_zh = document.querySelector('#todoCard h2 span[data-i18n="ui.home.missions"]').textContent.trim();
+    setLang('ms');
+    const home_ms = document.querySelector('#todoCard h2 span[data-i18n="ui.home.missions"]').textContent.trim();
+    return { home_zh, home_ms };
+  });
+  expect(texts.home_zh).toBe('每日任务');
+  expect(texts.home_ms).toBe('Misi harian');
+});
+
+test('zh/msでは日本語が残らず、通常キーは翻訳・アプリ名は "Mito Life"', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  const JA = /[ぁ-んァ-ヴ]/;
 
   for (const lang of ['zh', 'ms']) {
     const texts = await page.evaluate((l) => {
@@ -65,23 +81,25 @@ test('zh/msは辞書が空でも、画面に日本語ではなく英語が出る
       };
     }, lang);
     for (const [k, v] of Object.entries(texts)) {
-      expect(JA.test(v), `${lang}: ${k} に日本語が出ている: ${v}`).toBe(false);
+      expect(JA.test(v), `${lang}: ${k} に日本語(かな)が出ている: ${v}`).toBe(false);
     }
-    // en の実際の文言と一致する（フォールバックが機能している証拠）
-    expect(texts.home).toContain('Daily missions');
     expect(texts.appName).toBe('Mito Life');
   }
 });
 
-test('tOrのfallback（保存名）も、zh/msではenを優先しjaへは落ちない', async ({ page }) => {
+test('tOrのfallback（ja変更で未収録のinfo.hara7.why）は、zh/msではenへ落ちる（jaへは落ちない）', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
-  const r = await page.evaluate(() => {
-    setLang('zh');
-    // item.bodyweight.name は en辞書にあるので、zh(空)→enの順で "Bodyweight..." が返るはず
-    return itemName({ id: 'bodyweight', name: '自重トレ（家でできる腕立て・スクワット）' });
-  });
-  expect(r).toContain('Bodyweight');
+  const JA = /[ぁ-んァ-ヴ]/;
+  for (const lang of ['zh', 'ms']) {
+    const r = await page.evaluate((l) => {
+      setLang(l);
+      // @ts-ignore アプリ側のグローバル。info.hara7.why はja変更後まだzh/msに無いキー
+      return infoWhy('hara7');
+    }, lang);
+    expect(r, `${lang}: infoWhy('hara7')`).toContain('mitophagy');
+    expect(JA.test(r), `${lang}: infoWhy('hara7') に日本語(かな)が出ている: ${r}`).toBe(false);
+  }
 });
 
 test('端末の言語からappLang()を判定する（zh-TW→zh / ms-MY→ms / ko-KR→en）', async ({ page }) => {
