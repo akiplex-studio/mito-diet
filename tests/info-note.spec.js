@@ -175,7 +175,7 @@ test('zh表示では、腹七分目の研究メモが中国語の訳文で出る
   });
   const note = page.locator('#infoBody .info-note');
   await expect(note).toHaveCount(1);
-  await expect(note).toContainText('研究备注');
+  await expect(note).toContainText('研究附注');
   await expect(note).toContainText('饥饿会促进线粒体自噬');
   const bodyText = await page.locator('#infoBody').textContent();
   expect(bodyText).not.toContain('Research note');
@@ -194,7 +194,7 @@ const ZH_MS_NOTE_CHECK = {
     ms: 'Ini telah diukur secara langsung pada otot manusia',
   },
 };
-const NOTE_LABEL_BY_LANG = { zh: '研究备注', ms: 'Nota kajian' };
+const NOTE_LABEL_BY_LANG = { zh: '研究附注', ms: 'Nota kajian' };
 
 for (const [id, byLang] of Object.entries(ZH_MS_NOTE_CHECK)) {
   for (const [lang, expectedNote] of Object.entries(byLang)) {
