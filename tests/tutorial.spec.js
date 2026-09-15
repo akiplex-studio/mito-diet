@@ -39,8 +39,8 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
   await answerNum(page, 68);                       // 目標体重
   await answerChoice(page, 'よく動く');            // 活動量
 
-  // tips 3枚
-  await expect(page.locator('#tutImg')).toBeVisible();
+  // HTML図解 3枚
+  await expect(page.locator('#tutTipPage')).toHaveAttribute('data-tip-page', '1');
   await page.locator('#tutNext').click();
   await page.waitForTimeout(400);
   await page.locator('#tutNext').click();
@@ -75,7 +75,7 @@ test('初回起動でチュートリアルが出て、答えた内容が保存�
   expect(saved.targets).toBe(true);
 });
 
-test('tipsは「次へ」で1枚ずつめくれ、最後だけボタンが変わる', async ({ page }) => {
+test('HTML図解は「次へ」で1枚ずつめくれ、最後だけボタンが変わる', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
 
@@ -84,15 +84,18 @@ test('tipsは「次へ」で1枚ずつめくれ、最後だけボタンが変わ
   await page.locator('#btnReadTips').click();
   await expect(page.locator('#tutorial')).toBeVisible();
 
-  const src1 = await page.locator('#tutImg').getAttribute('src');
+  await expect(page.locator('#tutTipPage')).toHaveAttribute('data-tip-page', '1');
+  await expect(page.locator('#tutTipPage')).toContainText('痩せるのではなく、増やす。');
   await expect(page.locator('#tutNext')).toHaveText('次へ');
   await page.locator('#tutNext').click();
   await page.waitForTimeout(400);
-  const src2 = await page.locator('#tutImg').getAttribute('src');
-  expect(src2).not.toBe(src1);              // 絵が入れ替わっている
+  await expect(page.locator('#tutTipPage')).toHaveAttribute('data-tip-page', '2');
+  await expect(page.locator('#tutTipPage')).toContainText('足し算で食べる。');
 
   await page.locator('#tutNext').click();
   await page.waitForTimeout(400);
+  await expect(page.locator('#tutTipPage')).toHaveAttribute('data-tip-page', '3');
+  await expect(page.locator('#tutTipPage')).toContainText('息が弾む波');
   await expect(page.locator('#tutNext')).toHaveText('とじる');   // 3枚目
   await page.locator('#tutNext').click();
   await expect(page.locator('#tutorial')).toBeHidden();
@@ -161,25 +164,30 @@ test('最初に呼び名を聞き、次のセリフでその名前を呼ぶ', as
   expect(await page.evaluate(() => DB.profile.name)).toBe(null);  // 最後まで進むまで保存しない
 });
 
-test('図解は端末の言語で日本語版と英語版が切り替わる', async ({ page }) => {
+test('図解は画像内文字を使わず、アプリの言語でHTML表示される', async ({ page }) => {
   await skipOnboarding(page);
   await page.goto('/index.html');
+  await page.evaluate(() => setLang('en'));
+  await page.locator('nav.footer button[data-tab="settings"]').click();
+  await page.locator('#btnReadTips').click();
+  await expect(page.locator('#tutTipPage')).toContainText('Grow more Mito.');
+  await expect(page.locator('#tutTipPage img').first()).toHaveAttribute('src', /^data:image\/webp;base64,/);
+  await expect(page.locator('#tutNext')).toHaveText('Next');
 
-  const r = await page.evaluate(() => {
-    const ja = TIPS_IMGS_JA, en = TIPS_IMGS_EN;
-    const pick = (lang) => { DB.lang = lang; const v = tipsImgs(); delete DB.lang; return v; };
-    return {
-      jaCount: ja.length, enCount: en.length,
-      別物: ja.every((s, i) => s !== en[i]),
-      ja選択: pick('ja') === ja,
-      en選択: pick('en') === en,
-    };
+  await page.evaluate(() => setLang('zh'));
+  await expect(page.locator('#tutTipPage')).toContainText('不是减掉，而是增加。');
+  expect(await page.locator('#tutTipPage').getAttribute('data-tip-page')).toBe('1');
+});
+
+test('HTML図解の動的キーは4言語・3枚すべてに存在する', async ({ page }) => {
+  await skipOnboarding(page);
+  await page.goto('/index.html');
+  const missing = await page.evaluate(() => {
+    const keys = Object.keys(I18N.ja).filter(key => key.startsWith('tut.tips'));
+    return ['ja', 'en', 'zh', 'ms'].flatMap(lang =>
+      keys.filter(key => !Object.hasOwn(I18N[lang], key)).map(key => `${lang}:${key}`));
   });
-  expect(r.jaCount).toBe(3);
-  expect(r.enCount).toBe(3);   // 2枚目の英語版もそろっている
-  expect(r.別物).toBe(true);
-  expect(r.ja選択).toBe(true);
-  expect(r.en選択).toBe(true);
+  expect(missing).toEqual([]);
 });
 
 /* --- v1.63: i18n（Step 1: 骨組みとUIラベル） --- */
